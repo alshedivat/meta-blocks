@@ -1,0 +1,5 @@
+# Model that shares embeddings across tasks.
+model:
+  name: embed_ff
+  build_kwargs:
+    num_classes: 20

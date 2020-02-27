@@ -1,0 +1,11 @@
+adapt:
+  name: proto
+
+model:
+  name: proto
+
+train:
+  adapt: {}
+
+eval:
+  adapt: {}

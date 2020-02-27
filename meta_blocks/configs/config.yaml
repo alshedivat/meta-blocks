@@ -1,0 +1,17 @@
+defaults:
+  - hydra/launcher: ray
+  - experiment: ???
+  - evaluation: ???
+  - dataset: ???
+  - adaptation: ???
+
+ray:
+  init:
+    num_cpus: 8
+    num_gpus: 1
+  remote:
+    num_gpus: 0.2
+
+run:
+  s3_bucket: null
+  seed: 1

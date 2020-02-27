@@ -1,0 +1,18 @@
+adapt:
+  name: maml
+  batch_size: 50
+  first_order: false
+  inner_optimizer:
+    name: sgd
+    learning_rate: 0.002
+
+model:
+  name: embed_ff
+
+train:
+  adapt:
+    num_inner_steps: 4
+
+eval:
+  adapt:
+    num_inner_steps: 8

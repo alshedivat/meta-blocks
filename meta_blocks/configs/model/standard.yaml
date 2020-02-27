@@ -1,0 +1,5 @@
+# Standard feed-forward model.
+model:
+  name: standard_ff
+  build_kwargs:
+    num_classes: 20

@@ -1,0 +1,26 @@
+train:
+  dataset:
+    num_classes: 20
+  meta:
+    batch_size: 40
+  optimizer:
+    name: adam
+    learning_rate: 0.005
+  tasks:
+    - set_name: train
+      log_dir: train/baseline
+      labels_per_step: 60
+      config:
+        name: supervised
+        num_query_shots: 1
+        num_support_shots: 1
+        max_labeled_points: 1200000
+        init_labeled_points: 12000
+      sampler:
+        name: uniform
+        stratified: false
+  max_steps: 20000
+  log_interval: 100
+  save_interval: 400
+  budget_interval: 2000
+  do_reinit: true
