@@ -1,11 +1,10 @@
 # Meta-Blocks: A modular toolbox for accelerating meta-learning research
 <img src="https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks.png?raw=true" alt="logo" width="400px" style="display: block; margin-left: auto; margin-right: auto"/>
 
-**Change the logo here**.
 
 ----
 
-This section is reserved for showing badges. To add:
+**This section is reserved for badges. To add**:
 
 PyPI Badge | Travis CI Badge | Circle CI Badge | docs Badge | Coverage Badge
 
@@ -33,7 +32,7 @@ As shown in the Figure below, it contains xxx modules, and each of them can be t
 
 ---
 
-###Installation
+### Installation
 
 
 It is recommended to use **pip** for installation. Please make sure
@@ -59,7 +58,7 @@ It is recommended to use **pip** for installation. Please make sure
 
 ---
 
-###Example
+### Example
 
 We should provide a minimal example so people could run immediately. Ideally the running time should be within a few mins.
 
@@ -67,7 +66,7 @@ We should provide a minimal example so people could run immediately. Ideally the
 ----
 
 
-###Development Status
+### Development Status
 
 
 **Meta-Blocks** is currently **under development** as of Feb, 2020.
@@ -76,7 +75,7 @@ We should provide a minimal example so people could run immediately. Ideally the
 
 ----
 
-###Citing Meta-Blocks
+### Citing Meta-Blocks
 
 **Meta-Blocks** paper can be accessed [here]().
 If you use Meta-Blocks in a scientific publication, we would appreciate citations to the following paper (to be fixed):
