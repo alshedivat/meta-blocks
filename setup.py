@@ -14,7 +14,8 @@ this_directory = path.abspath(path.dirname(__file__))
 
 # read the contents of README.rst
 def readme():
-    readme_path = path.join(this_directory, "README.rst")
+    # readme_path = path.join(this_directory, "README.rst")
+    readme_path = path.join(this_directory, "README.md")
     with open(readme_path, encoding="utf-8") as fp:
         return fp.read()
 
@@ -31,7 +32,8 @@ setup(
     version=__version__,
     description="A modular toolbox for accelerating meta-learning research :rocket:",
     long_description=readme(),
-    long_description_content_type="text/x-rst",
+    # long_description_content_type="text/x-rst",
+    long_description_content_type='text/markdown',
     url="https://github.com/alshedivat/meta-blocks",
     author="Maruan Al-Shedivat, Yue Zhao",
     author_email="alshedivat@cs.cmu.edu, zhaoy@cmu.edu",
