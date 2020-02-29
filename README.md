@@ -1,5 +1,5 @@
-# Meta-Blocks: A modular toolbox for accelerating meta-learning research
-<img src="https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks.png?raw=true" alt="logo" width="400px" style="display: block; margin-left: auto; margin-right: auto"/>
+# A Modular Toolbox for Accelerating Meta-learning Research :rocket:
+<p align="center"><img src="https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks.png?raw=true" alt="logo" width="400px" /></p>
 
 
 ----
@@ -19,14 +19,14 @@ As shown in the Figure below, it contains xxx modules, and each of them can be t
 **Meta-Blocks** is featured for (3-4 highlighted points):
 
 * **Unified APIs, detailed documentation, and interactive examples** across various meta-learning algorithms
-* **Advanced and latest models**, such as MAML [1] and Reptile [2]
+* **Advanced and latest models**, such as MAML [1], Reptile [2], Protonets [3]
 * **Customizable modules** for quick prototyping on new meta-learning algorithms
 * **Change the bullet points above** and add more (should have around 4 points)
 
 **Key Links and Resources**:
 
 
-* [View the latest codes on Github](https://github.com/yzhao062/pyod)
+* [View the latest code on Github]()
 * [Execute Interactive Jupyter Notebooks]()
 * [Documentation and APIs]()
 
@@ -102,6 +102,8 @@ or
 
 ### Reference
 
-[1] Finn, C., Abbeel, P. and Levine, S., 2017, August. Model-agnostic meta-learning for fast adaptation of deep networks. *ICML*.
+[1] Finn, C., Abbeel, P. and Levine, S. Model-agnostic meta-learning for fast adaptation of deep networks. ICML 2017.
 
-[2] Nichol, A., Achiam, J. and Schulman, J., 2018. On first-order meta-learning algorithms. arXiv preprint arXiv:1803.02999.
+[2] Nichol, A., Achiam, J. and Schulman, J. On first-order meta-learning algorithms. arXiv preprint arXiv:1803.02999.
+
+[3] Snell, J., Swersky, K. and Zemel, R. Prototypical networks for few-shot learning. NeurIPS 2017.
