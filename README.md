@@ -9,7 +9,7 @@
 PyPI Badge | Travis CI Badge | Circle CI Badge | docs Badge | Coverage Badge
 
 
-**Meta-Blocks** is modular toolbox for ...
+**Meta-Blocks** is a modular toolbox for ...
 **[This paragraph should roughly discuss what is the library for:]**
 
 As shown in the Figure below, it contains xxx modules, and each of them can be tailored to ...
@@ -43,6 +43,14 @@ It is recommended to use **pip** for installation. Please make sure
    pip install meta-blocks            # normal install
    pip install --upgrade meta-blocks  # or update if needed
    pip install --pre meta-blocks      # or include pre-release version for new features
+```
+
+Alternatively, you could clone and run setup.py file:
+
+```
+   git clone https://github.com/alshedivat/meta-blocks.git
+   cd meta-blocks
+   pip install .
 ```
 
 **Required Dependencies**\ :
