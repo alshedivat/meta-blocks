@@ -14,15 +14,20 @@ import os
 import sys
 from os.path import dirname, abspath
 
-sys.path.insert(0, abspath('..'))
+sys.path.insert(0, abspath('../'))
+sys.path.insert(0, abspath('../..'))
+
+# sys.path.append(os.path.abspath('../..'))
+# sys.path.append(os.path.abspath('../'))
+
 meta_blocks_dir = dirname(dirname(abspath(__file__)))
 
-version_path = os.path.join(meta_blocks_dir, 'meta-blocks', 'version.py')
+version_path = os.path.join(meta_blocks_dir, 'meta_blocks', 'version.py')
 exec(open(version_path).read())
 
 # -- Project information -----------------------------------------------------
 
-project = 'meta-blocks'
+project = 'meta_blocks'
 copyright = '2020, Maruan Al-Shedivat, Yue Zhao'
 author = 'Maruan Al-Shedivat, Yue Zhao'
 
@@ -118,7 +123,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'meta-blocks.tex', 'meta-blocks Documentation',
+    (master_doc, 'meta_blocks.tex', 'meta_blocks Documentation',
      'Maruan Al-Shedivat, Yue Zhao', 'manual'),
 ]
 
@@ -127,7 +132,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'meta-blocks', 'meta-blocks Documentation',
+    (master_doc, 'meta_blocks', 'meta_blocks Documentation',
      [author], 1)
 ]
 
@@ -137,8 +142,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'meta-blocks', 'meta-blocks Documentation',
-     author, 'meta-blocks', 'A modular toolbox for accelerating meta-learning research',
+    (master_doc, 'meta_blocks', 'meta_blocks Documentation',
+     author, 'meta_blocks', 'A modular toolbox for accelerating meta-learning research',
      'Miscellaneous'),
 ]
 
