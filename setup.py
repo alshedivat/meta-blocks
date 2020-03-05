@@ -5,7 +5,7 @@ from os import path
 from io import open
 
 # get __version__ from _version.py
-ver_file = path.join("meta_blocks", "version.py")
+ver_file = path.join("meta-blocks", "version.py")
 with open(ver_file) as fp:
     exec(fp.read())
 
@@ -49,7 +49,7 @@ setup(
      ],
      packages=find_packages(exclude=["tests"]),
      package_data={
-         "meta_blocks": [
+         "meta-blocks": [
              "configs/*.yaml",
              "configs/**/*.yaml",
              "configs/**/**/*.yaml",
