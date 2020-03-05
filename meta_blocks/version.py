@@ -1,4 +1,4 @@
-"""``meta-blocks`` is a modular toolbox for accelerating meta-learning research :rocket:"""
+"""``meta_blocks`` is a modular toolbox for accelerating meta-learning research :rocket:"""
 # Author: Maruan Al-Shedivat, Yue Zhao
 # License: BSD 3-Clause
 
