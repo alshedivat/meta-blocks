@@ -19,38 +19,53 @@ tf.enable_resource_variables()
 
 
 class Maml(base.AdaptationStrategy):
-    """MAML-based model adaptation."""
+    """MAML-based model adaptation.
+
+    Parameters
+    ----------
+    model : object
+        The model being adapted.
+
+    optimizer : object
+        The optimizer to use for meta-training.
+
+    tasks : tuple of Tasks
+        A tuple of tasks that provide access to data.
+
+    batch_size: int, optional (default: 16)
+        Batch size used at adaptation time.
+
+    inner_optimizer : Optimizer, optional (default: None)
+        The optimizer to use for inner loop updates.
+
+    first_order : bool, optional (default: False)
+            The description string.
+
+    mode : str, optional (default: common.ModeKeys.TRAIN)
+            The description string.
+
+    name : str, optional (default: "Maml")
+            The description string.
+
+    \*\*kwargs : dict, optional
+        Additional arguments
+    """
 
     def __init__(
-        self,
-        model,
-        optimizer,
-        tasks,
-        batch_size=16,
-        inner_optimizer=None,
-        first_order=False,
-        mode=common.ModeKeys.TRAIN,
-        name="Maml",
-        **kwargs,
+            self,
+            model,
+            optimizer,
+            tasks,
+            batch_size=16,
+            inner_optimizer=None,
+            first_order=False,
+            mode=common.ModeKeys.TRAIN,
+            name="Maml",
+            **kwargs,
     ):
-        """Instantiate Maml.
 
-        Args:
-            model : Model
-                The model being adapted.
-            optimizer : Optimizer
-                The optimizer to use for meta-training.
-            tasks : tuple of Tasks
-                A tuple of tasks that provide access to data.
-            batch_size : int (default: 16)
-                Batch size used at adaptation time.
-            inner_optimizer : Optimizer (default: None)
-                The optimizer to use for inner loop updates
-            first_order : bool (default: False)
-            mode : str (default: common.ModeKeys.TRAIN)
-            name : str (default: "Maml")
-            **kwargs
-        """
+        # Instantiate Maml.
+
         super(Maml, self).__init__(
             model=model,
             optimizer=optimizer,
@@ -79,29 +94,46 @@ class Maml(base.AdaptationStrategy):
         return [(self._adapt_steps_ph, num_inner_steps)]
 
     def _build_adapted_params(
-        self,
-        inputs,
-        labels,
-        init_params,
-        num_steps,
-        back_prop=False,
-        parallel_iterations=1,
-        shuffle=True
+            self,
+            inputs,
+            labels,
+            init_params,
+            num_steps,
+            back_prop=False,
+            parallel_iterations=1,
+            shuffle=True
     ):
         """Builds adapted model parameters dynamically using tf.while_loop.
 
-        Args:
-            inputs: tf.Tensor
-            labels: tf.Tensor
-            init_params: dict of tf.Tensors
-            num_steps: int or tf.Tensor <int32> []
-            back_prop: bool (default: False)
-            parallel_iterations: int (default: 1)
-            shuffle: bool (default: True)
+        Parameters
+        ----------
+        inputs :
+            The description string.
+
+        labels :
+            The description string.
+
+        init_params : dict of tf.Tensors
+            The description string.
+
+        num_steps : int or tf.Tensor <int32> []
+            The description string.
+
+        back_prop : bool, optional (default: False)
+            The description string.
+
+        parallel_iterations : int, optional (default=1)
+            The description string.
+
+        shuffle : bool, optional (default=True)
+            The description string.
 
         Returns:
-            adapted_params: dict of tf.Tensors
+        -------
+        adapted_params: dict of tf.Tensors
+            The description string.
         """
+
         # Build batched indices.
         # <int32> [batch_size * num_steps].
         indices = tf.math.mod(

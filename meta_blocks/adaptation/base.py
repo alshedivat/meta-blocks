@@ -32,8 +32,10 @@ class AdaptationStrategy(abc.ABC):
         A tuple of tasks that provide access to data.
 
     mode : str
+        The description string.
 
     name : str
+        The description string.
 
     \*\*kwargs : dict, optional
         Additional arguments
