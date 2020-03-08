@@ -18,30 +18,39 @@ tf.enable_resource_variables()
 
 
 class AdaptationStrategy(abc.ABC):
-    """Base base class for meta-trainable adaptation strategies."""
+    """Base base class for meta-trainable adaptation strategies.
+
+    Parameters
+    ----------
+    model : object
+        The model being adapted.
+
+    optimizer : object
+        The optimizer to use for meta-training.
+
+    tasks : tuple of Tasks
+        A tuple of tasks that provide access to data.
+
+    mode : str
+
+    name : str
+
+    \*\*kwargs : dict, optional
+        Additional arguments
+    """
 
     def __init__(
-        self,
-        model,
-        optimizer,
-        tasks,
-        mode=common.ModeKeys.TRAIN,
-        name="AdaptationStrategy",
-        **kwargs,
+            self,
+            model,
+            optimizer,
+            tasks,
+            mode=common.ModeKeys.TRAIN,
+            name="AdaptationStrategy",
+            **kwargs,
     ):
-        """Instantiates an AdaptationStrategy.
 
-        Args:
-            model : Model
-                The model being adapted.
-            optimizer : Optimizer
-                The optimizer to use for meta-training.
-            tasks : tuple of Tasks
-                A tuple of tasks that provide access to data.
-            name: str
-            mode: str
-            **kwargs
-        """
+        # Instantiates an AdaptationStrategy.
+
         self.model = model
         self.optimizer = optimizer
         self.tasks = tasks
