@@ -1,0 +1,6 @@
+# Adam optimizer for meta-learning.
+train:
+  opt_name: adam
+  opt_kwargs:
+    beta1: 0.
+    learning_rate: 0.005

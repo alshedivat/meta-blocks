@@ -1,0 +1,7 @@
+defaults:
+  - test: ???
+  - dataset: ???
+  - adaptation: ???
+
+run:
+  seed: 1

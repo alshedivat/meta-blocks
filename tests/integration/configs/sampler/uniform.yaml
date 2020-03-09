@@ -1,0 +1,6 @@
+# Uniform sampling.
+adapt:
+  sampler:
+    name: uniform
+    kwargs:
+      stratified: false
