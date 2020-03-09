@@ -19,30 +19,39 @@ tf.enable_resource_variables()
 
 
 class Proto(base.AdaptationStrategy):
-    """Proto-based model adaptation."""
+    """Proto-based model adaptation.
+
+    Parameters
+    ----------
+    model : object
+        The model being adapted.
+
+    optimizer : object
+        The optimizer to use for meta-training.
+
+    tasks : tuple of Tasks
+        A tuple of tasks that provide access to data.
+
+    mode : str, optional (default: common.ModeKeys.TRAIN)
+            The description string.
+
+    name : str, optional (default: "Maml")
+            The description string.
+
+    \*\*kwargs : dict, optional
+        Additional arguments
+    """
 
     def __init__(
-        self,
-        model,
-        optimizer,
-        tasks,
-        mode=common.ModeKeys.TRAIN,
-        name="Proto",
-        **kwargs,
+            self,
+            model,
+            optimizer,
+            tasks,
+            mode=common.ModeKeys.TRAIN,
+            name="Proto",
+            **kwargs,
     ):
-        """Instantiate Proto.
-
-        Args:
-            model : Model
-                The model being adapted.
-            optimizer : Optimizer (default: None)
-                The optimizer to use for meta-training.
-            tasks : tuple of Tasks
-                A tuple of tasks that provide data iterators.
-            mode : str (default: common.ModeKeys.TRAIN)
-            name : str (default: "Proto")
-            **kwargs
-        """
+        # Instantiate Proto
         if not isinstance(model, models.base.ProtoModel):
             raise ValueError("Proto-based adaptation expects a ProtoModel.")
         super(Proto, self).__init__(
@@ -65,14 +74,14 @@ class Proto(base.AdaptationStrategy):
         return self.model
 
     def _build_prototypes(
-        self,
-        inputs,
-        labels,
-        emb_size,
-        num_classes,
-        back_prop=True,
-        parallel_iterations=16,
-        eps=1e-7,
+            self,
+            inputs,
+            labels,
+            emb_size,
+            num_classes,
+            back_prop=True,
+            parallel_iterations=16,
+            eps=1e-7,
     ):
         """Builds adapted model parameters dynamically using tf.while_loop."""
         indices = tf.range(tf.shape(inputs)[0])

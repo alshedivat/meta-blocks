@@ -18,41 +18,51 @@ tf.enable_resource_variables()
 
 
 class Reptile(maml.Maml):
-    """
-    Reptile model adaptation.
+    """Reptile model adaptation.
 
     Algorithmically, adaptation is identical to first-order MAML.
     The difference is in how meta-update is performed.
+
+    Parameters
+    ----------
+    model : object
+        The model being adapted.
+
+    optimizer : object
+        The optimizer to use for meta-training.
+
+    tasks : tuple of Tasks
+        A tuple of tasks that provide access to data.
+
+    batch_size: int, optional (default: 16)
+        Batch size used at adaptation time.
+
+    inner_optimizer : Optimizer, optional (default: None)
+        The optimizer to use for inner loop updates.
+
+    mode : str, optional (default: common.ModeKeys.TRAIN)
+            The description string.
+
+    name : str, optional (default: "Reptile")
+            The description string.
+
+    \*\*kwargs : dict, optional
+        Additional arguments
     """
 
     def __init__(
-        self,
-        model,
-        optimizer,
-        tasks,
-        batch_size=16,
-        inner_optimizer=None,
-        mode=common.ModeKeys.TRAIN,
-        name="Reptile",
-        **kwargs,
+            self,
+            model,
+            optimizer,
+            tasks,
+            batch_size=16,
+            inner_optimizer=None,
+            mode=common.ModeKeys.TRAIN,
+            name="Reptile",
+            **kwargs,
     ):
-        """Instantiate Reptile.
+        # Instantiate Reptile.
 
-        Args:
-            model : Model
-                The model being adapted.
-            optimizer : Optimizer (default: None)
-                The optimizer to use for meta-training.
-            tasks : tuple of Tasks
-                A tuple of tasks that provide data iterators.
-            batch_size : int (default: 16)
-                Batch size used at adaptation time.
-            inner_optimizer : dict (default: None)
-                Keyword arguments for the inner loop optimizer.
-            mode : str (default: common.ModeKeys.TRAIN)
-            name : str (default: "Reptile")
-            **kwargs
-        """
         super(Reptile, self).__init__(
             model=model,
             optimizer=optimizer,
@@ -62,11 +72,11 @@ class Reptile(maml.Maml):
             first_order=True,
             mode=mode,
             name=name,
-            **kwargs,
-        )
+            **kwargs)
 
     def _build_meta_train(self):
-        """Builds meta-update op."""
+        """Internal fucntion for building meta-update op.
+        """
         meta_grads = collections.defaultdict(list)
         with tf.name_scope("meta-learning"):
             # Build meta-loss.
@@ -77,8 +87,7 @@ class Reptile(maml.Maml):
             if self.model.global_parameters:
                 for i, loss in enumerate(losses):
                     grads_and_vars = self.optimizer.compute_gradients(
-                        loss, self.model.global_parameters
-                    )
+                        loss, self.model.global_parameters)
                     for g, v in grads_and_vars:
                         meta_grads[v].append(g)
 
@@ -90,12 +99,14 @@ class Reptile(maml.Maml):
 
             # Build meta-train op.
             meta_train_op = self.optimizer.apply_gradients(
-                [(tf.reduce_mean(g, axis=0), v) for v, g in meta_grads.items()]
-            )
+                [(tf.reduce_mean(g, axis=0), v) for v, g in
+                 meta_grads.items()])
 
             return meta_loss, meta_train_op
 
     def _build_adaptation(self):
+        """Internal method for building adaption
+        """
         # Placeholder for the number of adaptation steps.
         self._adapt_steps_ph = tf.placeholder(dtype=tf.int32)
 
@@ -115,8 +126,7 @@ class Reptile(maml.Maml):
                         labels=labels,
                         init_params=self.model.adaptable_parameters,
                         num_steps=self._adapt_steps_ph,
-                        back_prop=False,
-                    ),
+                        back_prop=False),
                     # If no support data, use initial parameters.
                     false_fn=lambda: self.model.adaptable_parameters,
                 )

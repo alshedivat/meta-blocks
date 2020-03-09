@@ -83,7 +83,8 @@ class Maml(base.AdaptationStrategy):
         self._adapted_params = None
 
     def get_adapted_model(self, *, params=None, task_id=None):
-        """Returns a model with the specified adapted parameters."""
+        """Returns a model with the specified adapted parameters.
+        """
         if params is None:
             params = self._adapted_params[task_id]
         self.model.custom_getter = utils.make_custom_getter(params)
@@ -93,16 +94,14 @@ class Maml(base.AdaptationStrategy):
         """Constructs a feed list from the arguments."""
         return [(self._adapt_steps_ph, num_inner_steps)]
 
-    def _build_adapted_params(
-            self,
-            inputs,
-            labels,
-            init_params,
-            num_steps,
-            back_prop=False,
-            parallel_iterations=1,
-            shuffle=True
-    ):
+    def _build_adapted_params(self,
+                              inputs,
+                              labels,
+                              init_params,
+                              num_steps,
+                              back_prop=False,
+                              parallel_iterations=1,
+                              shuffle=True):
         """Builds adapted model parameters dynamically using tf.while_loop.
 
         Parameters

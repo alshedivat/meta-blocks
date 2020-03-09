@@ -19,11 +19,16 @@ def make_custom_getter(custom_variables):
     in the same order. Non-trainable variables are obtained using the
     default getter for the current variable scope.
 
-    Args:
-        custom_variables: A dict of tensors replacing the trainable variables.
+    Parameters
+    ----------
+    custom_variables : dict
+        A dict of tensors replacing the trainable variables.
 
-    Returns:
+    Returns
+    -------
+    custom_getter : var
         The return a custom getter.
+
     """
 
     def custom_getter(getter, name, **kwargs):
@@ -37,17 +42,61 @@ def make_custom_getter(custom_variables):
 
 
 def build_new_parameters(loss, params, optimizer, first_order=False):
-    """Builds new parameters by performing an optimization step."""
+    """Builds new parameters by performing an optimization step.
+
+    Parameters
+    ----------
+    loss :
+        The description string.
+
+    params :
+        The description string.
+
+    optimizer :
+        The description string.
+
+    first_order : bool, optional (default: False)
+        The description string.
+
+    Returns
+    -------
+    to_be_refactored :
+        The description string.
+    """
     param_names, param_values = zip(*params.items())
     grads_and_vars = optimizer.compute_gradients(loss, param_values)
     # Prevent backprop through the gradients, if necessary.
     if first_order:
         grads_and_vars = [(tf.stop_gradient(g), v) for g, v in grads_and_vars]
+
+    # todo: this should be refactor as var_name = dict(zip(param_names, optimizer.compute_updates(grads_and_vars))) and then return the var_name
+    # which is good for documentation
     return dict(zip(param_names, optimizer.compute_updates(grads_and_vars)))
 
 
 def build_prototypes(embeddings, labels, num_classes):
-    """Builds new prototypes by aggregating embeddings."""
+    """Builds new prototypes by aggregating embeddings.
+
+    Parameters
+    ----------
+    embeddings :
+        The description string.
+
+    labels : The description string.
+        The description string.
+
+    num_classes : int
+        The description string.
+
+    Returns
+    -------
+    prototypes :
+        The description string.
+
+    class_counts :
+        The description string.
+
+    """
     # <float32> [num_inputs, num_classes].
     labels_onehot = tf.one_hot(labels, num_classes)
     # <float32> [num_classes, emb_dim].
