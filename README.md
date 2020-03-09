@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks.png?raw=true" alt="logo" width="400px" /></p>
+<p align="center"><img src="https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks-2d.png?raw=true" alt="logo" width="400px" /></p>
 
 <h3 align="center">A Modular Toolbox for Accelerating Meta-Learning Research :rocket:</h3>
 
