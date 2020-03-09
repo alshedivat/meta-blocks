@@ -5,8 +5,8 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from .. import common
-from . import maml
+from meta_blocks import common
+from meta_blocks.adaptation import maml
 
 __all__ = ["Reptile"]
 

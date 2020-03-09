@@ -7,7 +7,7 @@ import tensorflow.compat.v1 as tf
 
 from typing import Tuple
 
-from ..tasks import SupervisedTask
+from meta_blocks.tasks import SupervisedTask
 
 # Transition to V2 will happen in stages.
 tf.disable_v2_behavior()

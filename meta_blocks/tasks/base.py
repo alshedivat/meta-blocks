@@ -7,7 +7,7 @@ import tensorflow.compat.v1 as tf
 
 from typing import Dict, List, Tuple
 
-from .. import datasets
+from meta_blocks import datasets
 
 logger = logging.getLogger(__name__)
 

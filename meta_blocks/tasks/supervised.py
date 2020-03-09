@@ -7,8 +7,8 @@ import tensorflow.compat.v1 as tf
 
 from typing import List, Tuple
 
-from .. import datasets
-from . import base
+from meta_blocks import datasets
+from meta_blocks.tasks import base
 
 logger = logging.getLogger(__name__)
 

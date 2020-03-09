@@ -9,9 +9,9 @@ import time
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from .. import common
-from .. import datasets
-from . import utils
+from meta_blocks import common
+from meta_blocks import datasets
+from meta_blocks.experiment import utils
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def eval_step(cfg, exp, sess, **kwargs):
     return results
 
 
-def evaluate(cfg, lock):
+def evaluate(cfg, lock=None):
     """Runs the evaluation process for the provided config."""
     # Set random seeds.
     random.seed(cfg.run.seed)
@@ -67,14 +67,16 @@ def evaluate(cfg, lock):
 
     with utils.session(gpu_allow_growth=True) as sess:
         # Build and initialize.
-        lock.acquire()
+        if lock is not None:
+            lock.acquire()
         exp = utils.build_and_initialize(
             cfg=cfg,
             sess=sess,
             categories=categories,
             mode=common.ModeKeys.EVAL
         )
-        lock.release()
+        if lock is not None:
+            lock.release()
 
         # Setup logging and saving.
         writers = [

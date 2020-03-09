@@ -11,7 +11,7 @@ from typing import Any, Callable, List, Optional, Tuple
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from . import base
+from meta_blocks.datasets import base
 
 logger = logging.getLogger(__name__)
 

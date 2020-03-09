@@ -4,10 +4,10 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from .. import common
-from .. import models
-from . import base
-from . import utils
+from meta_blocks import common
+from meta_blocks import models
+from meta_blocks.adaptation import base
+from meta_blocks.adaptation import utils
 
 __all__ = ["Proto"]
 

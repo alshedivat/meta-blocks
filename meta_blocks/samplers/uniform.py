@@ -4,8 +4,8 @@ import tensorflow.compat.v1 as tf
 
 from typing import Optional, Tuple
 
-from ..tasks import SupervisedTask
-from . import base
+from meta_blocks.tasks import SupervisedTask
+from meta_blocks.samplers import base
 
 # Transition to V2 will happen in stages.
 tf.disable_v2_behavior()

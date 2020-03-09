@@ -1,5 +1,5 @@
-from .base import *
-from .supervised import *
+from meta_blocks.tasks.base import *
+from meta_blocks.tasks.supervised import *
 
 
 def get_distribution(

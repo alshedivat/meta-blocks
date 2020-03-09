@@ -5,8 +5,8 @@ import logging
 
 from multiprocessing import Process, Lock
 
-from .experiment.train import train
-from .experiment.eval import evaluate
+from meta_blocks.experiment.train import train
+from meta_blocks.experiment.eval import evaluate
 
 logger = logging.getLogger(__name__)
 

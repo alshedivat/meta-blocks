@@ -2,7 +2,7 @@
 
 import tensorflow.compat.v1 as tf
 
-from . import base
+from meta_blocks.models import base
 
 __all__ = ["StandardFeedForwardModel", "EmbedFeedForwardModel", "ProtoModel"]
 

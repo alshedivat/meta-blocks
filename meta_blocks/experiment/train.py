@@ -7,9 +7,9 @@ import random
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from .. import common
-from .. import datasets
-from . import utils
+from meta_blocks import common
+from meta_blocks import datasets
+from meta_blocks.experiment import utils
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def train_step(cfg, exp, sess, **kwargs):
     return losses
 
 
-def train(cfg, lock):
+def train(cfg, lock=None):
     """Runs the training process for the provided config."""
     # Set random seeds.
     random.seed(cfg.run.seed)
@@ -75,7 +75,8 @@ def train(cfg, lock):
         saver = tf.train.Saver()
 
         # Do meta-learning iterations.
-        lock.acquire()
+        if lock is not None:
+            lock.acquire()
         logger.info("Training...")
         for i in range(cfg.train.max_steps):
             # Training step.
@@ -112,4 +113,5 @@ def train(cfg, lock):
                     )
                 if cfg.train.do_reinit:
                     sess.run(tf.global_variables_initializer())
-        lock.release()
+        if lock is not None:
+            lock.release()

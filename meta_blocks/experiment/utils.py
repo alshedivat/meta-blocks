@@ -6,13 +6,13 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from .. import adaptation
-from .. import common
-from .. import datasets
-from .. import models
-from .. import optimizers
-from .. import samplers
-from .. import tasks
+from meta_blocks import adaptation
+from meta_blocks import common
+from meta_blocks import datasets
+from meta_blocks import models
+from meta_blocks import optimizers
+from meta_blocks import samplers
+from meta_blocks import tasks
 
 logger = logging.getLogger(__name__)
 

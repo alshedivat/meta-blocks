@@ -13,8 +13,8 @@ import random
 
 import tensorflow.compat.v1 as tf
 
-from . import base
-from . import utils
+from meta_blocks.datasets import base
+from meta_blocks.datasets import utils
 
 logger = logging.getLogger(__name__)
 

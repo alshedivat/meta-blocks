@@ -4,10 +4,10 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from .. import common
-from .. import optimizers
-from . import base
-from . import utils
+from meta_blocks import common
+from meta_blocks import optimizers
+from meta_blocks.adaptation import base
+from meta_blocks.adaptation import utils
 
 __all__ = ["Maml"]
 

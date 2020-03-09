@@ -1,5 +1,5 @@
-from .base import *
-from .uniform import *
+from meta_blocks.samplers.base import *
+from meta_blocks.samplers.uniform import *
 
 
 def get(name, build=True, **kwargs):

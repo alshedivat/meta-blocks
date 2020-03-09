@@ -1,7 +1,7 @@
-from .base import *
-from .maml import *
-from .proto import *
-from .reptile import *
+from meta_blocks.adaptation.base import *
+from meta_blocks.adaptation.maml import *
+from meta_blocks.adaptation.proto import *
+from meta_blocks.adaptation.reptile import *
 
 
 def get(name, build=True, **kwargs):
