@@ -2,79 +2,29 @@ eval:
   dataset:
     num_classes: 5
   meta:
-    batch_size: 30
+    batch_size: 20
   tasks:
     # Train.
-#    - set_name: train
-#      log_dir: eval/train/oracle_1shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 1
-#        max_labeled_points: 1000
-#      sampler:
-#        name: uniform
-#        stratified: true
-#    - set_name: train
-#      log_dir: eval/train/baseline_1shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 1
-#        max_labeled_points: 1000
-#      sampler:
-#        name: uniform
-#        stratified: false
-#    - set_name: train
-#      log_dir: eval/train/active_1shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 1
-#        max_labeled_points: 1000
-#      sampler:
-#        name: cluster
-#        soft: true
-#        stratified: false
-#        batch_size: 1
-#        num_inner_steps: 4
-#        kmeans_kwargs:
-#          n_clusters: 5
-#    - set_name: train
-#      log_dir: eval/train/oracle_5shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 5
-#        max_labeled_points: 3000
-#      sampler:
-#        name: uniform
-#        stratified: true
-#    - set_name: train
-#      log_dir: eval/train/baseline_5shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 5
-#        max_labeled_points: 3000
-#      sampler:
-#        name: uniform
-#        stratified: false
-#    - set_name: train
-#      log_dir: eval/train/active_5shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 5
-#        max_labeled_points: 3000
-#      sampler:
-#        name: cluster
-#        soft: true
-#        stratified: false
-#        batch_size: 1
-#        num_inner_steps: 4
-#        kmeans_kwargs:
-#          n_clusters: 5
+    - set_name: train
+      log_dir: eval/train/oracle_1shot
+      config:
+        name: supervised
+        num_query_shots: 1
+        num_support_shots: 1
+        max_labeled_points: 1000
+      sampler:
+        name: uniform
+        stratified: true
+    - set_name: train
+      log_dir: eval/train/oracle_5shot
+      config:
+        name: supervised
+        num_query_shots: 1
+        num_support_shots: 5
+        max_labeled_points: 5000
+      sampler:
+        name: uniform
+        stratified: true
     # Valid.
     - set_name: valid
       log_dir: eval/valid/oracle_1shot
@@ -86,101 +36,16 @@ eval:
       sampler:
         name: uniform
         stratified: true
-#    - set_name: valid
-#      log_dir: eval/valid/baseline_1shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 1
-#        max_labeled_points: 1000
-#      sampler:
-#        name: uniform
-#        stratified: false
-    - set_name: valid
-      log_dir: eval/valid/active_1shot
-      config:
-        name: supervised
-        num_query_shots: 1
-        num_support_shots: 1
-        max_labeled_points: 1000
-      sampler:
-        name: cluster_margin
-        soft: true
-        stratified: false
-        batch_size: 1
-        num_inner_steps: 4
-        kmeans_kwargs:
-          n_clusters: 5
-    - set_name: valid
-      log_dir: eval/valid/oracle_3shot
-      config:
-        name: supervised
-        num_query_shots: 1
-        num_support_shots: 3
-        max_labeled_points: 2000
-      sampler:
-        name: uniform
-        stratified: true
-#    - set_name: valid
-#      log_dir: eval/valid/baseline_3shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 3
-#        max_labeled_points: 2000
-#      sampler:
-#        name: uniform
-#        stratified: false
-    - set_name: valid
-      log_dir: eval/valid/active_3shot
-      config:
-        name: supervised
-        num_query_shots: 1
-        num_support_shots: 3
-        max_labeled_points: 2000
-      sampler:
-        name: cluster_margin
-        soft: true
-        stratified: false
-        batch_size: 1
-        num_inner_steps: 4
-        kmeans_kwargs:
-          n_clusters: 5
     - set_name: valid
       log_dir: eval/valid/oracle_5shot
       config:
         name: supervised
         num_query_shots: 1
         num_support_shots: 5
-        max_labeled_points: 3000
+        max_labeled_points: 5000
       sampler:
         name: uniform
         stratified: true
-#    - set_name: valid
-#      log_dir: eval/valid/baseline_5shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 5
-#        max_labeled_points: 3000
-#      sampler:
-#        name: uniform
-#        stratified: false
-    - set_name: valid
-      log_dir: eval/valid/active_5shot
-      config:
-        name: supervised
-        num_query_shots: 1
-        num_support_shots: 5
-        max_labeled_points: 3000
-      sampler:
-        name: cluster_margin
-        soft: true
-        stratified: false
-        batch_size: 1
-        num_inner_steps: 4
-        kmeans_kwargs:
-          n_clusters: 5
     # Test.
     - set_name: test
       log_dir: eval/test/oracle_1shot
@@ -192,100 +57,15 @@ eval:
       sampler:
         name: uniform
         stratified: true
-#    - set_name: test
-#      log_dir: eval/test/baseline_1shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 1
-#        max_labeled_points: 1000
-#      sampler:
-#        name: uniform
-#        stratified: false
-    - set_name: test
-      log_dir: eval/test/active_1shot
-      config:
-        name: supervised
-        num_query_shots: 1
-        num_support_shots: 1
-        max_labeled_points: 1000
-      sampler:
-        name: cluster_margin
-        soft: true
-        stratified: false
-        batch_size: 1
-        num_inner_steps: 4
-        kmeans_kwargs:
-          n_clusters: 5
-    - set_name: test
-      log_dir: eval/test/oracle_3shot
-      config:
-        name: supervised
-        num_query_shots: 1
-        num_support_shots: 3
-        max_labeled_points: 2000
-      sampler:
-        name: uniform
-        stratified: true
-#    - set_name: test
-#      log_dir: eval/test/baseline_3shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 3
-#        max_labeled_points: 2000
-#      sampler:
-#        name: uniform
-#        stratified: false
-    - set_name: test
-      log_dir: eval/test/active_3shot
-      config:
-        name: supervised
-        num_query_shots: 1
-        num_support_shots: 3
-        max_labeled_points: 2000
-      sampler:
-        name: cluster_margin
-        soft: true
-        stratified: false
-        batch_size: 1
-        num_inner_steps: 4
-        kmeans_kwargs:
-          n_clusters: 5
     - set_name: test
       log_dir: eval/test/oracle_5shot
       config:
         name: supervised
         num_query_shots: 1
         num_support_shots: 5
-        max_labeled_points: 3000
+        max_labeled_points: 5000
       sampler:
         name: uniform
         stratified: true
-#    - set_name: test
-#      log_dir: eval/test/baseline_5shot
-#      config:
-#        name: supervised
-#        num_query_shots: 1
-#        num_support_shots: 5
-#        max_labeled_points: 3000
-#      sampler:
-#        name: uniform
-#        stratified: false
-    - set_name: test
-      log_dir: eval/test/active_5shot
-      config:
-        name: supervised
-        num_query_shots: 1
-        num_support_shots: 5
-        max_labeled_points: 3000
-      sampler:
-        name: cluster_margin
-        soft: true
-        stratified: false
-        batch_size: 1
-        num_inner_steps: 4
-        kmeans_kwargs:
-          n_clusters: 5
   repetitions: 1
   wait_time: 5

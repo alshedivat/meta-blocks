@@ -2,11 +2,9 @@
 
 import hydra
 import logging
-import os
 
 from multiprocessing import Process, Lock
 
-from .experiment import aws_utils
 from .experiment.train import train
 from .experiment.eval import evaluate
 
@@ -36,11 +34,6 @@ def main(cfg):
     # Join processes.
     for p in processes:
         p.join(timeout=cfg.run.timeout)
-
-    # Upload to S3 if bucket specified.
-    # TODO: add resume functionality.
-    if cfg.run.s3_bucket is not None:
-        aws_utils.upload_all_to_s3(os.getcwd(), cfg.run.s3_bucket)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,6 @@ import abc
 
 import numpy as np
 import tensorflow.compat.v1 as tf
-import tensorflow_probability as tfp
 
 from typing import Tuple
 
@@ -45,8 +44,8 @@ class Sampler(abc.ABC):
     def select_indices(size, scores, indices=None, soft=False) -> tf.Tensor:
         """Selects indices of the instances to label given the scores."""
         if soft:
-            sampler = tfp.distributions.Uniform()
-            z = -tf.math.log(-tf.math.log(sampler.sample(tf.shape(scores))))
+            uniform_samples = tf.random.uniform(tf.shape(scores))
+            z = -tf.math.log(-tf.math.log(uniform_samples))
             scores = tf.add(scores, z)
         with tf.control_dependencies([tf.assert_greater(tf.size(scores), 0)]):
             size = tf.minimum(size, tf.size(scores))
