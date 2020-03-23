@@ -18,8 +18,16 @@ __all__ = ["Category", "DataPool", "Dataset", "MetaDataset"]
 
 class Category(abc.ABC):
     """An abstract class for representing different categories of instances.
-
     Provides access to the underlying data through the tf.data API.
+
+    Parameters
+    ----------
+    data_dir : str
+        The data directory.
+
+    name : str
+        The description string.
+
     """
 
     def __init__(self, data_dir: str, name: str) -> None:
@@ -112,7 +120,18 @@ class DataPool(object):
 
 
 class Dataset(object):
-    """Generates dataset tensors by pulling data from specified categories."""
+    """Generates dataset tensors by pulling data from specified categories.
+
+    Parameters
+    ----------
+    num_classes : int
+        The number of classes.
+
+    name : str, optional (default="Dataset")
+        The name of dataset.
+
+    kwargs
+    """
 
     def __init__(self, num_classes: int, name: str = "Dataset", **kwargs):
         self.num_classes = num_classes
@@ -133,6 +152,20 @@ class Dataset(object):
         return tf.reduce_sum([tf.shape(dt)[0] for dt in self.data_tensors])
 
     def build(self, output_types, output_shapes):
+        """The description string.
+
+        Parameters
+        ----------
+        output_types :
+            The description string.
+
+        output_shapes :
+            The description string.
+
+        Returns
+        -------
+        self : object
+        """
         if not self.built:
             data_tensors = []
             string_handle_phs = []
@@ -159,7 +192,7 @@ class Dataset(object):
         pass
 
     def get_feed_list(
-        self, string_handles: Tuple[str]
+            self, string_handles: Tuple[str]
     ) -> List[Tuple[tf.Tensor, str]]:
         """Returns tensors with data and a feed dict with dependencies."""
         if len(string_handles) != self.num_classes:
@@ -173,12 +206,12 @@ class MetaDataset(object):
     Dataset = Dataset
 
     def __init__(
-        self,
-        data_pool: DataPool,
-        num_classes: int,
-        batch_size: int,
-        name: str = "MetaDataset",
-        **kwargs
+            self,
+            data_pool: DataPool,
+            num_classes: int,
+            batch_size: int,
+            name: str = "MetaDataset",
+            **kwargs
     ):
         """Instantiates a MetaDataset."""
         self.data_pool = data_pool
@@ -214,9 +247,8 @@ class MetaDataset(object):
             self.built = True
         return self
 
-    def get_feed_list_batch(
-        self, requests: Tuple[Tuple[int]]
-    ) -> List[List[Tuple[tf.Tensor, str]]]:
+    def get_feed_list_batch(self, requests: Tuple[Tuple[int]]) -> List[
+        List[Tuple[tf.Tensor, str]]]:
         """Returns a feed list for the requested meta-batch of datasets."""
         if len(requests) > self.batch_size:
             raise ValueError("The dataset request is incompatible.")
@@ -225,7 +257,5 @@ class MetaDataset(object):
         for n, category_ids in enumerate(requests):
             feed_lists.append(
                 self._dataset_batch[n].get_feed_list([
-                    self.data_pool.category_handles[i] for i in category_ids
-                ])
-            )
+                    self.data_pool.category_handles[i] for i in category_ids]))
         return feed_lists

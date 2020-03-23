@@ -20,12 +20,14 @@ class Sampler(abc.ABC):
     stateful = False
 
     def __init__(self, stratified=False, name="Sampler"):
-        """
-        Instantiates a Sampler.
+        """Instantiates a Sampler.
 
-        Args:
-            stratified: bool
-            name: str
+        Parameters
+        ----------
+        stratified : bool, optional (default=False)
+            If set to True, use stratification.
+
+        name : str, optional (default="Sampler")
         """
         self.stratified = stratified
         self.name = name
@@ -33,7 +35,8 @@ class Sampler(abc.ABC):
         self._built = False
 
     def build(self, *args, **kwargs):
-        """Builds sampler internals."""
+        """Builds sampler internals.
+        """
         if not self._built:
             with tf.name_scope(self.name):
                 self._build(*args, **kwargs)
@@ -42,7 +45,26 @@ class Sampler(abc.ABC):
 
     @staticmethod
     def select_indices(size, scores, indices=None, soft=False) -> tf.Tensor:
-        """Selects indices of the instances to label given the scores."""
+        """Selects indices of the instances to label given the scores.
+
+        Parameters
+        ----------
+        size : int
+            The description string.
+
+        scores :
+            The description string.
+
+        indices :
+            The description string.
+
+        soft : bool, optional (default=False)
+            The description string.
+
+        Returns
+        -------
+            The description string.
+        """
         if soft:
             uniform_samples = tf.random.uniform(tf.shape(scores))
             z = -tf.math.log(-tf.math.log(uniform_samples))
@@ -106,9 +128,9 @@ class Sampler(abc.ABC):
         return cluster_sizes, unique_clusters
 
     @staticmethod
-    def select_indices_stratified(
-        size, scores, clusters, indices=None, soft=False, parallel_iterations=8,
-    ) -> tf.Tensor:
+    def select_indices_stratified(size, scores, clusters, indices=None,
+                                  soft=False,
+                                  parallel_iterations=8, ) -> tf.Tensor:
         """Selects indices of the instances to label given the scores."""
         # size_per_cluster: <int32> [num_unique_clusters].
         # unique_clusters: <int32> [num_unique_clusters].
@@ -133,7 +155,8 @@ class Sampler(abc.ABC):
                 ),
                 false_fn=lambda: tf.constant([], dtype=tf.int32)
             )
-            return [tf.add(step, 1), selected_indices.write(step, selected_idx)]
+            return [tf.add(step, 1),
+                    selected_indices.write(step, selected_idx)]
 
         # Select indices for each cluster cluster.
         _, selected_indices_ta = tf.while_loop(
@@ -171,11 +194,11 @@ class Sampler(abc.ABC):
 
     @abc.abstractmethod
     def select_labeled(
-        self,
-        size: int,
-        sess: tf.Session,
-        tasks: Tuple[SupervisedTask],
-        **kwargs
+            self,
+            size: int,
+            sess: tf.Session,
+            tasks: Tuple[SupervisedTask],
+            **kwargs
     ) -> Tuple[np.ndarray]:
         """Return an actively selected labeled data points from the dataset."""
         raise NotImplementedError("Abstract Method")
