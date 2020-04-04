@@ -38,7 +38,16 @@ class Experiment(
 
 @contextlib.contextmanager
 def session(gpu_allow_growth=True, log_device_placement=False):
-    """Sets up an experiment and returns a tf.Session."""
+    """Sets up an experiment and returns a tf.Session.
+
+    Parameters
+    ----------
+    gpu_allow_growth : bool, optional (default=True)
+        The description string.
+
+    log_device_placement : bool, optional (default=False)
+        The description string.
+    """
     # Reset TF graph.
     tf.reset_default_graph()
 
@@ -57,7 +66,27 @@ def session(gpu_allow_growth=True, log_device_placement=False):
 
 
 def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
-    """Builds and initializes all parts of the graph."""
+    """Builds and initializes all parts of the graph.
+
+    Parameters
+    ----------
+    cfg : Type and default value.
+        The description string.
+
+    sess : Type and default value.
+        The description string.
+
+    categories : Type and default value.
+        The description string.
+
+    mode : Type and default value.
+        The description string.
+
+    Returns
+    -------
+    Experiment : Type and default value.
+        The description string.
+    """
     # Build and initialize data pools.
     data_pools = {
         task.set_name: datasets.get_datapool(

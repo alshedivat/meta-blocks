@@ -14,7 +14,24 @@ def bytes_feature_list(value):
 
 
 def deserialize_image(serialized_example, channels, shape=None):
-    """Deserializes a single example that contains an image."""
+    """Deserializes a single example that contains an image.
+
+    Parameters
+    ----------
+    serialized_example : Type and default value.
+        The description string.
+
+    channels : Type and default value.
+        The description string.
+
+    shape : Type and default value.
+        The description string.
+
+    Returns
+    -------
+    image : Type and default value.
+        The description string.
+    """
     schema = {"image_raw": tf.io.FixedLenFeature([], tf.string)}
     features = tf.io.parse_single_example(serialized_example, features=schema)
     image = tf.io.decode_image(features["image_raw"], channels=channels)

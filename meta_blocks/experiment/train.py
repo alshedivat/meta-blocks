@@ -22,7 +22,26 @@ tf.get_logger().setLevel(logging.ERROR)
 
 
 def train_step(cfg, exp, sess, **kwargs):
-    """Performs one meta-training step."""
+    """Performs one meta-training step.
+
+    Parameters
+    ----------
+    cfg : Type and default value.
+        The description string.
+
+    exp : Type and default value.
+        The description string.
+
+    sess : Type and default value.
+        The description string.
+
+    kwargs
+
+    Returns
+    -------
+    losses : Type and default value.
+        The description string.
+    """
     # Sample from the task distribution.
     feed_lists = [
         td.sample_task_feed() + ml.get_feed_list(**cfg.train.adapt)
@@ -41,7 +60,16 @@ def train_step(cfg, exp, sess, **kwargs):
 
 
 def train(cfg, lock=None):
-    """Runs the training process for the provided config."""
+    """Runs the training process for the provided config.
+
+    Parameters
+    ----------
+    cfg : Type and default value.
+        The description string.
+
+    lock : Type and default value.
+        The description string.
+    """
     # Set random seeds.
     random.seed(cfg.run.seed)
     np.random.seed(cfg.run.seed)
@@ -97,15 +125,14 @@ def train(cfg, lock=None):
                     writer.add_summary(summary, i)
                     writer.flush()
             # Save model.
-            if i % cfg.train.save_interval == 0 or i + 1 == cfg.train.max_steps:
+            if i % cfg.train.save_interval == 0 \
+                    or i + 1 == cfg.train.max_steps:
                 checkpoint_path = os.path.join(os.getcwd(), "model.ckpt")
                 saver.save(sess, checkpoint_path, global_step=i)
             # Update task distribution (if necessary).
             # TODO: make this more flexible.
-            if (
-                cfg.train.budget_interval is not None
-                and i % cfg.train.budget_interval == 0
-            ):
+            if cfg.train.budget_interval is not None \
+                    and i % cfg.train.budget_interval == 0:
                 for td, task in zip(exp.task_dists, cfg.train.tasks):
                     td.expand(
                         num_labeled_points=(task.labels_per_step * i),

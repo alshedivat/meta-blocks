@@ -19,7 +19,8 @@ class _OmniglotModelMixin(base.Model):
         inputs_ph = tf.placeholder(
             dtype=tf.float32, shape=(None, 28, 28), name="inputs"
         )
-        labels_ph = tf.placeholder(dtype=tf.int32, shape=(None,), name="labels")
+        labels_ph = tf.placeholder(dtype=tf.int32, shape=(None,),
+                                   name="labels")
         return inputs_ph, labels_ph
 
 
@@ -66,9 +67,8 @@ class EmbedFeedForwardModel(base.FeedForwardModel, _OmniglotModelMixin):
 
 
 class EmbedFeedForwardV2Model(base.FeedForwardModel, _OmniglotModelMixin):
-    """
-    The standard feed-forward model for Omniglot dataset with a few final layers
-    being adaptable.
+    """The standard feed-forward model for Omniglot dataset with a few final
+    layers being adaptable.
     """
 
     EMB_SIZE = 196
@@ -96,7 +96,8 @@ class EmbedFeedForwardV2Model(base.FeedForwardModel, _OmniglotModelMixin):
 
 
 class ProtoModel(base.ProtoModel, _OmniglotModelMixin):
-    """The model that uses prototypes to compute logits for Omniglot dataset."""
+    """The model that uses prototypes to compute logits for Omniglot dataset.
+    """
 
     EMB_SIZE = 64
 

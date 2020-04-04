@@ -66,14 +66,35 @@ class Category(abc.ABC):
 
     @abc.abstractmethod
     def _build(self, *args, **kwargs):
-        """Builds tf.datasets.Dataset for the underlying datasets resources.
-        Must be implemented by a subclass.
+        """Internal fucntion for building tf.datasets.Dataset for the
+        underlying datasets resources. Must be implemented by a subclass.
         """
         raise NotImplementedError("Abstract Method")
 
 
 class DataPool(object):
-    """Represents a pool of data."""
+    """Represents a pool of data.
+
+    Parameters
+    ----------
+    categories : The description string.
+        The description string.
+
+    name : str, optional (default='DataPool')
+        The description string.
+
+
+    Attributes
+    ----------
+    num_categories : Type and default value.
+        The description string.
+
+    category_handles : Type and default value.
+        The description string.
+
+    output_shapes : Type and default value.
+        The description string.
+    """
 
     def __init__(self, categories: List[Category], name: str = "DataPool"):
         """Instantiates a DataPool."""
@@ -82,7 +103,6 @@ class DataPool(object):
 
         # Internals.
         self._category_handles = None
-
         self.built = False
 
     @property
@@ -131,6 +151,14 @@ class Dataset(object):
         The name of dataset.
 
     kwargs
+
+    Attributes
+    ----------
+    data_tensors : Type and default value.
+        The description string.
+
+    size : Type and default value.
+        The description string.
     """
 
     def __init__(self, num_classes: int, name: str = "Dataset", **kwargs):
@@ -156,10 +184,10 @@ class Dataset(object):
 
         Parameters
         ----------
-        output_types :
+        output_types : Type and default value.
             The description string.
 
-        output_shapes :
+        output_shapes : Type and default value.
             The description string.
 
         Returns

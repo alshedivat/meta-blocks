@@ -24,7 +24,26 @@ tf.get_logger().setLevel(logging.ERROR)
 
 
 def eval_step(cfg, exp, sess, **kwargs):
-    """Performs one evaluation step."""
+    """Performs one evaluation step.
+
+    Parameters
+    ----------
+    cfg : Type and default value.
+        The description string.
+
+    exp : Type and default value.
+        The description string.
+
+    sess : Type and default value.
+        The description string.
+
+    kwargs
+
+    Returns
+    -------
+    results : Type and default value.
+        The description string.
+    """
     # Re-initialize task distributions if samplers are stateful.
     for td in exp.task_dists:
         if td.sampler.stateful:
