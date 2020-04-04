@@ -9,22 +9,20 @@
 PyPI Badge | Travis CI Badge | Circle CI Badge | docs Badge | Coverage Badge
 
 
-**Meta-Blocks** is a modular toolbox for ...
-**[This paragraph should roughly discuss what is the library for:]**
+**Meta-Blocks** is a modular toolbox for research, experimentation, and reproducible benchmarking of learning-to-learn algorithms.
+The toolbox provides flexible APIs for working with `MetaDatasets`, `TaskDistributions`, and `MetaLearners` (see the figure below).
+The APIs make it easy to implement a variety of meta-learning algorithms, run them on well-established benchmarks, or add your own meta-learning problems to the suite and benchmark algorithms on them. 
 
-As shown in the Figure below, it contains xxx modules, and each of them can be tailored to ...
+ ![System Illustration](docs/figs/system_illustration.png)
 
- ![System Illustration](https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/system_illustration.png?raw=true)
+**Meta-Blocks** package comes with:
 
-**Meta-Blocks** is featured for (3-4 highlighted points):
+* **Flexible APIs, detailed documentation, and multiple examples.**
+* **Popular models and algorithms** such as MAML [1], Reptile [2], Protonets [3].
+* **Supervised and unsupervised meta-learning** setups compatible with all algorithms.
+* **Customizable modules and utility functions** for quick prototyping on new meta-learning algorithms.
 
-* **Unified APIs, detailed documentation, and interactive examples** across various meta-learning algorithms
-* **Advanced and latest models**, such as MAML [1], Reptile [2], Protonets [3]
-* **Customizable modules** for quick prototyping on new meta-learning algorithms
-* **Change the bullet points above** and add more (should have around 4 points)
-
-**Key Links and Resources**:
-
+**Links and Resources**:
 
 * [View the latest code on Github]()
 * [Execute Interactive Jupyter Notebooks]()
