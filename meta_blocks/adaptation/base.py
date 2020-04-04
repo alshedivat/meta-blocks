@@ -37,7 +37,7 @@ class AdaptationStrategy(abc.ABC):
     name : str
         The description string.
 
-    \*\*kwargs : dict, optional
+    kwargs : dict, optional
         Additional arguments
     """
 

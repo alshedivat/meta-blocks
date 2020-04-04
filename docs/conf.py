@@ -143,7 +143,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'meta_blocks', 'meta_blocks Documentation',
-     author, 'meta_blocks', 'A modular toolbox for accelerating meta-learning research',
+     author, 'meta_blocks',
+     'A modular toolbox for accelerating meta-learning research',
      'Miscellaneous'),
 ]
 

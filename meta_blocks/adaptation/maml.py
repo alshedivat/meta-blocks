@@ -47,7 +47,7 @@ class Maml(base.AdaptationStrategy):
     name : str, optional (default: "Maml")
             The description string.
 
-    \*\*kwargs : dict, optional
+    kwargs : dict, optional
         Additional arguments
     """
 
