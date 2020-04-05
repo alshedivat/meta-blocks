@@ -43,17 +43,17 @@ It is recommended to use **pip** for installation. Please make sure
 
 
 ```shell
-   pip install meta-blocks            # normal install
-   pip install --upgrade meta-blocks  # or update if needed
-   pip install --pre meta-blocks      # or include pre-release version for new features
+$ pip install meta-blocks            # normal install
+$ pip install --upgrade meta-blocks  # or update if needed
+$ pip install --pre meta-blocks      # or include pre-release version for new features
 ```
 
 Alternatively, you could clone and run setup.py file:
 
 ```
-   git clone https://github.com/alshedivat/meta-blocks.git
-   cd meta-blocks
-   pip install .
+$ git clone https://github.com/alshedivat/meta-blocks.git
+$ cd meta-blocks
+$ pip install .
 ```
 
 **Required Dependencies**\ :
@@ -69,18 +69,30 @@ Alternatively, you could clone and run setup.py file:
 
 ---
 
-### Example
+### Examples
 
-We should provide a minimal example so people could run immediately. Ideally the running time should be within a few mins.
+TODO:
+We should provide a minimal example so people could run immediately.
+Ideally, the running time should be within a few mins.
 
 
 ----
 
 
-### Development Status
+### Development
+
+For development and contributions, please make sure to install pre-commit hooks to ensure proper code style and formatting:
+
+```shell
+$ pip install pre-commit      # install pre-commit
+$ pre-commit install          # install git hooks
+$ pre-commit run --all-files  # run pre-commit on all the files
+```
 
 
-**Meta-Blocks** is currently **under development** as of Feb, 2020.
+#### Status
+
+**Meta-Blocks** is currently **under development** as of Apr, 2020.
 
 **Watch & Star** to get the latest update! Also feel free to contact for suggestions and ideas.
 
@@ -88,25 +100,7 @@ We should provide a minimal example so people could run immediately. Ideally the
 
 ### Citing Meta-Blocks
 
-**Meta-Blocks** paper can be accessed [here]().
-If you use Meta-Blocks in a scientific publication, we would appreciate citations to the following paper (to be fixed):
-
-```
-    @inproceedings{zhao2020combo,
-      title={Combining Machine Learning Models and Scores using combo library},
-      author={Zhao, Yue and Wang, Xuejian and Cheng, Cheng and Ding, Xueying},
-      booktitle={Thirty-Fourth AAAI Conference on Artificial Intelligence},
-      month = {Feb},
-      year={2020},
-      address = {New York, USA}
-    }
-```
-
-or
-
-```
-    Zhao, Y., Wang, X., Cheng, C. and Ding, X., 2020. Combining Machine Learning Models and Scores using combo library. Thirty-Fourth AAAI Conference on Artificial Intelligence.
-```
+TODO: add citation information as soon as available.
 
 ----
 
