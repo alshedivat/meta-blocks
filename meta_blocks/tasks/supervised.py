@@ -1,11 +1,10 @@
 """Unsupervised tasks for meta-learning."""
 
 import logging
+from typing import List, Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
-
-from typing import List, Tuple
 
 from meta_blocks import datasets
 from meta_blocks.tasks import base
@@ -95,9 +94,7 @@ class SupervisedTask(base.Task):
         labels = [tf.fill(tf.shape(x)[:1], k) for k, x in enumerate(inputs)]
         return tf.concat(inputs, axis=0), tf.concat(labels, axis=0)
 
-    def _preprocess(
-        self, inputs, labels, back_prop=False, parallel_iterations=16
-    ):
+    def _preprocess(self, inputs, labels, back_prop=False, parallel_iterations=16):
         if self._preprocessor is not None:
             inputs = tf.map_fn(
                 dtype=tf.float32,
@@ -158,9 +155,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         seed: int = 42,
     ):
         super(SupervisedTaskDistribution, self).__init__(
-            meta_dataset=meta_dataset,
-            num_query_shots=num_query_shots,
-            name=name,
+            meta_dataset=meta_dataset, num_query_shots=num_query_shots, name=name
         )
         self.num_support_shots = num_support_shots
         self.max_labeled_points = max_labeled_points
@@ -245,9 +240,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
                 )
                 for _ in range(self.meta_batch_size)
             )
-            feed_list_batch = self.meta_dataset.get_feed_list_batch(
-                requests_batch
-            )
+            feed_list_batch = self.meta_dataset.get_feed_list_batch(requests_batch)
             # Get request kwargs.
             request_kwargs_batch = [
                 [v for _, v in feed_list[self.num_classes :]]
@@ -271,9 +264,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
                 self._requested_kwargs.append(request_kwargs_batch[i])
                 self._requested_labels = requested_labels_so_far
 
-    def sample_task_feed(
-        self, replace: bool = True
-    ) -> List[Tuple[tf.Tensor, str]]:
+    def sample_task_feed(self, replace: bool = True) -> List[Tuple[tf.Tensor, str]]:
         """Samples a meta-batch of tasks and returns a feed list."""
         # Sample a meta-batch of tasks.
         indices_batch = self._rng.choice(

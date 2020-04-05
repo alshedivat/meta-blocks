@@ -1,12 +1,12 @@
 """Entry point for running experiments."""
 
-import hydra
 import logging
+from multiprocessing import Lock, Process
 
-from multiprocessing import Process, Lock
+import hydra
 
-from meta_blocks.experiment.train import train
 from meta_blocks.experiment.eval import evaluate
+from meta_blocks.experiment.train import train
 
 logger = logging.getLogger(__name__)
 

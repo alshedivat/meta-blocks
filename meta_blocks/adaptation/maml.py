@@ -4,10 +4,8 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from meta_blocks import common
-from meta_blocks import optimizers
-from meta_blocks.adaptation import base
-from meta_blocks.adaptation import utils
+from meta_blocks import common, optimizers
+from meta_blocks.adaptation import base, utils
 
 __all__ = ["Maml"]
 
@@ -136,15 +134,12 @@ class Maml(base.AdaptationStrategy):
         # Build batched indices.
         # <int32> [batch_size * num_steps].
         indices = tf.math.mod(
-            tf.range(self._batch_size * num_steps, dtype=tf.int32),
-            tf.shape(inputs)[0],
+            tf.range(self._batch_size * num_steps, dtype=tf.int32), tf.shape(inputs)[0]
         )
         if shuffle:
             indices = tf.random.shuffle(indices)
         # <int32> [num_steps, batch_size].
-        batched_indices = tf.reshape(
-            indices, shape=(num_steps, self._batch_size)
-        )
+        batched_indices = tf.reshape(indices, shape=(num_steps, self._batch_size))
 
         def cond_fn(step, _unused_params):
             return tf.less(step, num_steps)

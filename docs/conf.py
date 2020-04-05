@@ -12,7 +12,7 @@
 #
 import os
 import sys
-from os.path import dirname, abspath
+from os.path import abspath, dirname
 
 sys.path.insert(0, abspath("../"))
 sys.path.insert(0, abspath("../.."))
@@ -22,6 +22,7 @@ sys.path.insert(0, abspath("../.."))
 
 meta_blocks_dir = dirname(dirname(abspath(__file__)))
 
+__version__ = None
 version_path = os.path.join(meta_blocks_dir, "meta_blocks", "version.py")
 exec(open(version_path).read())
 
@@ -92,12 +93,7 @@ html_static_path = ["_static"]
 #
 # html_sidebars = {}
 html_sidebars = {
-    "**": [
-        "globaltoc.html",
-        "relations.html",
-        "sourcelink.html",
-        "searchbox.html",
-    ]
+    "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
 }
 
 # -- Options for HTMLHelp output ---------------------------------------------
@@ -132,16 +128,14 @@ latex_documents = [
         "meta_blocks Documentation",
         "Maruan Al-Shedivat, Yue Zhao",
         "manual",
-    ),
+    )
 ]
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, "meta_blocks", "meta_blocks Documentation", [author], 1)
-]
+man_pages = [(master_doc, "meta_blocks", "meta_blocks Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -157,7 +151,7 @@ texinfo_documents = [
         "meta_blocks",
         "A modular toolbox for accelerating meta-learning research",
         "Miscellaneous",
-    ),
+    )
 ]
 
 # -- Extension configuration -------------------------------------------------

@@ -1,5 +1,5 @@
-from meta_blocks.datasets.base import *
 from meta_blocks.datasets import omniglot_v2 as omniglot
+from meta_blocks.datasets.base import *
 
 
 def get_categories(name, data_dir, **kwargs):

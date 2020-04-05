@@ -1,10 +1,8 @@
-from meta_blocks.tasks.base import *
-from meta_blocks.tasks.supervised import *
+from meta_blocks.tasks.base import Task, TaskDistribution
+from meta_blocks.tasks.supervised import SupervisedTask, SupervisedTaskDistribution
 
 
-def get_distribution(
-    name, meta_dataset, build=True, name_suffix=None, **kwargs
-):
+def get_distribution(name, meta_dataset, build=True, name_suffix=None, **kwargs):
     if name == "supervised":
         dist_name = "STD" + f"_{name_suffix}" if name_suffix is not None else ""
         task_dist = SupervisedTaskDistribution(

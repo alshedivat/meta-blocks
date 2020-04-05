@@ -1,11 +1,10 @@
 """Base classes and functionality for sampling."""
 
 import abc
+from typing import Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
-
-from typing import Tuple
 
 from meta_blocks.tasks import SupervisedTask
 
@@ -90,9 +89,7 @@ class Sampler(abc.ABC):
             available_clusters = tf.where(cluster_mask)[:, 0]
             # Uniformly select clusters from available.
             indices = tf.random.uniform(
-                dtype=tf.int32,
-                shape=(size_left,),
-                maxval=tf.size(available_clusters),
+                dtype=tf.int32, shape=(size_left,), maxval=tf.size(available_clusters)
             )
             cluster_indices = tf.gather(available_clusters, indices, axis=0)
             cluster_sizes = tf.tensor_scatter_nd_add(
@@ -117,11 +114,7 @@ class Sampler(abc.ABC):
         _, _, cluster_sizes = tf.while_loop(
             cond=cond_fn,
             body=body_fn,
-            loop_vars=[
-                size_left_init,
-                cluster_counts_left_init,
-                cluster_sizes_init,
-            ],
+            loop_vars=[size_left_init, cluster_counts_left_init, cluster_sizes_init],
             back_prop=False,
             parallel_iterations=parallel_iterations,
             name="stratified-sampling",
@@ -131,7 +124,7 @@ class Sampler(abc.ABC):
 
     @staticmethod
     def select_indices_stratified(
-        size, scores, clusters, indices=None, soft=False, parallel_iterations=8,
+        size, scores, clusters, indices=None, soft=False, parallel_iterations=8
     ) -> tf.Tensor:
         """Selects indices of the instances to label given the scores."""
         # size_per_cluster: <int32> [num_unique_clusters].
@@ -166,9 +159,7 @@ class Sampler(abc.ABC):
             loop_vars=[
                 tf.constant(0),
                 tf.TensorArray(
-                    dtype=tf.int32,
-                    infer_shape=False,
-                    size=tf.size(unique_clusters),
+                    dtype=tf.int32, infer_shape=False, size=tf.size(unique_clusters)
                 ),
             ],
             back_prop=False,
@@ -195,11 +186,7 @@ class Sampler(abc.ABC):
 
     @abc.abstractmethod
     def select_labeled(
-        self,
-        size: int,
-        sess: tf.Session,
-        tasks: Tuple[SupervisedTask],
-        **kwargs
+        self, size: int, sess: tf.Session, tasks: Tuple[SupervisedTask], **kwargs
     ) -> Tuple[np.ndarray]:
         """Return an actively selected labeled data points from the dataset."""
         raise NotImplementedError("Abstract Method")

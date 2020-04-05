@@ -1,6 +1,4 @@
-from meta_blocks.models import base
-from meta_blocks.models import omniglot
-
+from meta_blocks.models import base, omniglot
 from meta_blocks.models.base import Model
 
 

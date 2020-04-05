@@ -6,13 +6,15 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from meta_blocks import adaptation
-from meta_blocks import common
-from meta_blocks import datasets
-from meta_blocks import models
-from meta_blocks import optimizers
-from meta_blocks import samplers
-from meta_blocks import tasks
+from meta_blocks import (
+    adaptation,
+    common,
+    datasets,
+    models,
+    optimizers,
+    samplers,
+    tasks,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +24,7 @@ tf.enable_resource_variables()
 
 
 class Experiment(
-    collections.namedtuple(
-        "Experiment", ("meta_learners", "samplers", "task_dists")
-    )
+    collections.namedtuple("Experiment", ("meta_learners", "samplers", "task_dists"))
 ):
     """Represents built entities for the Experiment.
 
@@ -147,9 +147,7 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
     # Build samplers.
     samplers_list = [
         samplers.get(
-            learner=meta_learners[i],
-            tasks=task_dists[i].task_batch,
-            **task.sampler,
+            learner=meta_learners[i], tasks=task_dists[i].task_batch, **task.sampler
         )
         for i, task in enumerate(cfg[mode].tasks)
     ]
@@ -162,7 +160,5 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
         task_dist.initialize(sampler=sampler, sess=sess)
 
     return Experiment(
-        meta_learners=meta_learners,
-        samplers=samplers_list,
-        task_dists=task_dists,
+        meta_learners=meta_learners, samplers=samplers_list, task_dists=task_dists
     )

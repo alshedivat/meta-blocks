@@ -2,10 +2,9 @@
 
 import abc
 import logging
+from typing import Dict, List, Tuple
 
 import tensorflow.compat.v1 as tf
-
-from typing import Dict, List, Tuple
 
 from meta_blocks import datasets
 
@@ -17,9 +16,7 @@ __all__ = ["Task", "TaskDistribution"]
 class Task(abc.ABC):
     """Abstract base class for tasks."""
 
-    def __init__(
-        self, dataset, num_query_shots=1, name="Task",
-    ):
+    def __init__(self, dataset, num_query_shots=1, name="Task"):
         """Instantiates a Task.
 
         Args:

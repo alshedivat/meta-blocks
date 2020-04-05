@@ -13,8 +13,7 @@ import random
 
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets import base
-from meta_blocks.datasets import utils
+from meta_blocks.datasets import base, utils
 
 logger = logging.getLogger(__name__)
 
@@ -97,9 +96,7 @@ class OmniglotCategory(base.Category):
         # Write features to a TFRecords file.
         with tf.python_io.TFRecordWriter(tfrecord_path) as writer:
             for feature in features:
-                example = tf.train.Example(
-                    features=tf.train.Features(feature=feature)
-                )
+                example = tf.train.Example(features=tf.train.Features(feature=feature))
                 writer.write(example.SerializeToString())
 
         logger.info("Done.")
@@ -127,13 +124,9 @@ class OmniglotCategory(base.Category):
             tfrecord_path, num_parallel_reads=num_parallel_reads
         )
         if shuffle:
-            self._dataset = self._dataset.shuffle(
-                shuffle_buffer_size, seed=seed
-            )
+            self._dataset = self._dataset.shuffle(shuffle_buffer_size, seed=seed)
         self._size = (
-            self._dataset_size
-            if size is None
-            else min(size, self._dataset_size)
+            self._dataset_size if size is None else min(size, self._dataset_size)
         )
         self._dataset = self._dataset.repeat().batch(self._size)
 
@@ -156,8 +149,7 @@ class OmniglotDataset(base.Dataset):
 
     def _get_preprocess_kwargs(self):
         return tuple(
-            {"rotation": random.sample(self.rotations, 1)[0]}
-            for _ in self._categories
+            {"rotation": random.sample(self.rotations, 1)[0]} for _ in self._categories
         )
 
     @classmethod
@@ -174,9 +166,7 @@ class OmniglotDataset(base.Dataset):
 
     @classmethod
     def preprocess(cls, example, rotation=0, **kwargs):
-        image = utils.deserialize_image(
-            example, channels=1, shape=cls.RAW_IMG_SHAPE
-        )
+        image = utils.deserialize_image(example, channels=1, shape=cls.RAW_IMG_SHAPE)
         image = tf.image.resize(image, size=cls.PREPROC_IMG_SHAPE[:-1])
         image = tf.image.rot90(image, k=rotation)
         return image
@@ -188,11 +178,7 @@ class OmniglotMetaDataset(base.MetaDataset):
     Dataset = OmniglotDataset
 
     def __init__(
-        self,
-        categories,
-        num_classes,
-        max_distinct_datasets=None,
-        rotations=(0,),
+        self, categories, num_classes, max_distinct_datasets=None, rotations=(0,)
     ):
         super(OmniglotMetaDataset, self).__init__(
             categories=categories,

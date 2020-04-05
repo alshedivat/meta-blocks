@@ -4,10 +4,8 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from meta_blocks import common
-from meta_blocks import models
-from meta_blocks.adaptation import base
-from meta_blocks.adaptation import utils
+from meta_blocks import common, models
+from meta_blocks.adaptation import base, utils
 
 __all__ = ["Proto"]
 
@@ -131,9 +129,7 @@ class Proto(base.AdaptationStrategy):
         for i, task in enumerate(self.tasks):
             inputs, labels = task.query_tensors
             self.model.prototypes = self._prototypes[i]
-            loss = self.model.build_loss(
-                inputs, labels, num_classes=task.num_classes
-            )
+            loss = self.model.build_loss(inputs, labels, num_classes=task.num_classes)
             meta_losses.append(loss)
         return meta_losses
 
@@ -168,8 +164,7 @@ class Proto(base.AdaptationStrategy):
                     ),
                     # If no support data, use random prototypes.
                     false_fn=lambda: tf.random.normal(
-                        shape=(task.num_classes, self.model.EMB_SIZE),
-                        stddev=emb_stddev,
+                        shape=(task.num_classes, self.model.EMB_SIZE), stddev=emb_stddev
                     ),
                 )
             )

@@ -4,12 +4,11 @@ import glob
 import logging
 import os
 import random
-
-from PIL import Image
 from typing import Any, Callable, List, Optional, Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
+from PIL import Image
 
 from meta_blocks.datasets import base
 
@@ -178,9 +177,7 @@ class OmniglotDataset(base.Dataset):
     def get_feed_list(
         self, data_arrays: Tuple[np.ndarray]
     ) -> List[Tuple[tf.Tensor, Any]]:
-        feed_list = [
-            (ph, array) for array, ph in zip(data_arrays, self._data_tensors)
-        ]
+        feed_list = [(ph, array) for array, ph in zip(data_arrays, self._data_tensors)]
         rotations = random.choices(self._rotations, k=self.num_classes)
         feed_list.append((self._rotations_ph, rotations))
         return feed_list

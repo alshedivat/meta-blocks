@@ -1,5 +1,5 @@
-from meta_blocks.samplers.base import *
-from meta_blocks.samplers.uniform import *
+from meta_blocks.samplers.base import Sampler
+from meta_blocks.samplers.uniform import UniformSampler
 
 
 def get(name, build=True, **kwargs):

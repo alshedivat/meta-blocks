@@ -2,24 +2,22 @@
 
 import glob
 import logging
-import pytest
 import os
 import shutil
 import tempfile
 import urllib.request
 import zipfile
 
+import pytest
 from hydra._internal.hydra import GlobalHydra, Hydra
 
-from meta_blocks.experiment.train import train
 from meta_blocks.experiment.eval import evaluate
+from meta_blocks.experiment.train import train
 
 logger = logging.getLogger(__name__)
 
 AVAILABLE_METHODS = {"maml", "fomaml", "reptile", "proto"}
-OMNIGLOT_URL = (
-    "https://raw.githubusercontent.com/brendenlake/omniglot/master/python/"
-)
+OMNIGLOT_URL = "https://raw.githubusercontent.com/brendenlake/omniglot/master/python/"
 
 
 def get_hydra():
@@ -50,9 +48,7 @@ def test_omniglot_integration(adaptation_method):
             extracted_dir = os.path.join(dir_path, name.split(".")[0])
             for category_dir in glob.glob(os.path.join(extracted_dir, "*")):
                 category_name = os.path.basename(category_dir)
-                shutil.move(
-                    category_dir, os.path.join(omniglot_dir, category_name)
-                )
+                shutil.move(category_dir, os.path.join(omniglot_dir, category_name))
 
     with tempfile.TemporaryDirectory() as dir_path:
         # Fetch Omniglot.

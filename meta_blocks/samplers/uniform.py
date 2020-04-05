@@ -1,11 +1,11 @@
 """Uniform sampling."""
 
-import tensorflow.compat.v1 as tf
-
 from typing import Optional, Tuple
 
-from meta_blocks.tasks import SupervisedTask
+import tensorflow.compat.v1 as tf
+
 from meta_blocks.samplers import base
+from meta_blocks.tasks import SupervisedTask
 
 # Transition to V2 will happen in stages.
 tf.disable_v2_behavior()

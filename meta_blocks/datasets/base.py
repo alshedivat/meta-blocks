@@ -2,10 +2,9 @@
 
 import abc
 import logging
+from typing import Callable, List, Optional, Tuple
 
 import tensorflow.compat.v1 as tf
-
-from typing import Callable, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -133,9 +132,7 @@ class DataPool(object):
     def initialize(self, sess):
         """Initializes all managed data categories within the given session."""
         logger.info(f"Initializing {self.name}...")
-        self._category_handles = sess.run(
-            [c.string_handle for c in self.categories]
-        )
+        self._category_handles = sess.run([c.string_handle for c in self.categories])
         return self
 
 
@@ -219,9 +216,7 @@ class Dataset(object):
         """Returns a function for input preprocessing or None."""
         pass
 
-    def get_feed_list(
-        self, string_handles: Tuple[str]
-    ) -> List[Tuple[tf.Tensor, str]]:
+    def get_feed_list(self, string_handles: Tuple[str]) -> List[Tuple[tf.Tensor, str]]:
         """Returns tensors with data and a feed dict with dependencies."""
         if len(string_handles) != self.num_classes:
             raise ValueError("Incorrect number of string handles provided.")

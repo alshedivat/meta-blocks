@@ -1,10 +1,10 @@
-from setuptools import setup, find_packages
-
-# read the contents of README file
-from os import path
 from io import open
+from os import path
 
-# get __version__ from _version.py
+from setuptools import find_packages, setup
+
+# Get __version__ from _version.py.
+__version__ = None
 ver_file = path.join("meta_blocks", "version.py")
 with open(ver_file) as fp:
     exec(fp.read())
@@ -12,7 +12,7 @@ with open(ver_file) as fp:
 this_directory = path.abspath(path.dirname(__file__))
 
 
-# read the contents of README.rst
+# Read the contents of README.rst.
 def readme():
     # readme_path = path.join(this_directory, "README.rst")
     readme_path = path.join(this_directory, "README.md")
@@ -20,7 +20,7 @@ def readme():
         return fp.read()
 
 
-# read the contents of requirements.txt
+# Read the contents of requirements.txt.
 def requirements():
     requirements_path = path.join(this_directory, "requirements.txt")
     with open(requirements_path, encoding="utf-8") as fp:
@@ -55,7 +55,7 @@ setup(
             "configs/**/**/*.yaml",
             "configs/**/**/**/*.yaml",
             "configs/**/**/**/**/*.yaml",
-        ],
+        ]
     },
     install_requires=requirements(),
     setup_requires=["setuptools>=38.6.0"],

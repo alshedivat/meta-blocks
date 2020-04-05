@@ -9,8 +9,7 @@ import time
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from meta_blocks import common
-from meta_blocks import datasets
+from meta_blocks import common, datasets
 from meta_blocks.experiment import utils
 
 logger = logging.getLogger(__name__)
@@ -96,9 +95,7 @@ def evaluate(cfg, lock=None):
 
         # Setup logging and saving.
         writers = [
-            tf.summary.FileWriter(
-                logdir=os.path.join(os.getcwd(), task.log_dir)
-            )
+            tf.summary.FileWriter(logdir=os.path.join(os.getcwd(), task.log_dir))
             for task in cfg[common.ModeKeys.EVAL].tasks
         ]
         accuracy_ph = tf.placeholder(tf.float32, shape=())
@@ -132,8 +129,6 @@ def evaluate(cfg, lock=None):
                 log += f" - {td.name} acc: {100 * result['acc']:.2f}"
             logger.info(log)
             for result, td, writer in zip(results, exp.task_dists, writers):
-                summary = sess.run(
-                    merged, feed_dict={accuracy_ph: result["acc"]}
-                )
+                summary = sess.run(merged, feed_dict={accuracy_ph: result["acc"]})
                 writer.add_summary(summary, step)
                 writer.flush()
