@@ -69,7 +69,9 @@ def build_new_parameters(loss, params, optimizer, first_order=False):
     # Prevent backprop through the gradients, if necessary.
     if first_order:
         grads_and_vars = [(tf.stop_gradient(g), v) for g, v in grads_and_vars]
-    new_params = dict(zip(param_names, optimizer.compute_updates(grads_and_vars)))
+    new_params = dict(
+        zip(param_names, optimizer.compute_updates(grads_and_vars))
+    )
     return new_params
 
 

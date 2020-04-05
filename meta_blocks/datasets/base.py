@@ -133,9 +133,9 @@ class DataPool(object):
     def initialize(self, sess):
         """Initializes all managed data categories within the given session."""
         logger.info(f"Initializing {self.name}...")
-        self._category_handles = sess.run([
-            c.string_handle for c in self.categories
-        ])
+        self._category_handles = sess.run(
+            [c.string_handle for c in self.categories]
+        )
         return self
 
 
@@ -220,7 +220,7 @@ class Dataset(object):
         pass
 
     def get_feed_list(
-            self, string_handles: Tuple[str]
+        self, string_handles: Tuple[str]
     ) -> List[Tuple[tf.Tensor, str]]:
         """Returns tensors with data and a feed dict with dependencies."""
         if len(string_handles) != self.num_classes:
@@ -234,12 +234,12 @@ class MetaDataset(object):
     Dataset = Dataset
 
     def __init__(
-            self,
-            data_pool: DataPool,
-            num_classes: int,
-            batch_size: int,
-            name: str = "MetaDataset",
-            **kwargs
+        self,
+        data_pool: DataPool,
+        num_classes: int,
+        batch_size: int,
+        name: str = "MetaDataset",
+        **kwargs,
     ):
         """Instantiates a MetaDataset."""
         self.data_pool = data_pool
@@ -270,13 +270,14 @@ class MetaDataset(object):
                 for ds in self._dataset_batch:
                     ds.build(
                         output_types=self.data_pool.output_types,
-                        output_shapes=self.data_pool.output_shapes
+                        output_shapes=self.data_pool.output_shapes,
                     )
             self.built = True
         return self
 
-    def get_feed_list_batch(self, requests: Tuple[Tuple[int]]) -> List[
-        List[Tuple[tf.Tensor, str]]]:
+    def get_feed_list_batch(
+        self, requests: Tuple[Tuple[int]]
+    ) -> List[List[Tuple[tf.Tensor, str]]]:
         """Returns a feed list for the requested meta-batch of datasets."""
         if len(requests) > self.batch_size:
             raise ValueError("The dataset request is incompatible.")
@@ -284,6 +285,8 @@ class MetaDataset(object):
         feed_lists = []
         for n, category_ids in enumerate(requests):
             feed_lists.append(
-                self._dataset_batch[n].get_feed_list([
-                    self.data_pool.category_handles[i] for i in category_ids]))
+                self._dataset_batch[n].get_feed_list(
+                    [self.data_pool.category_handles[i] for i in category_ids]
+                )
+            )
         return feed_lists

@@ -89,10 +89,7 @@ def evaluate(cfg, lock=None):
         if lock is not None:
             lock.acquire()
         exp = utils.build_and_initialize(
-            cfg=cfg,
-            sess=sess,
-            categories=categories,
-            mode=common.ModeKeys.EVAL
+            cfg=cfg, sess=sess, categories=categories, mode=common.ModeKeys.EVAL
         )
         if lock is not None:
             lock.release()

@@ -41,13 +41,13 @@ class Proto(base.AdaptationStrategy):
     """
 
     def __init__(
-            self,
-            model,
-            optimizer,
-            tasks,
-            mode=common.ModeKeys.TRAIN,
-            name="Proto",
-            **kwargs,
+        self,
+        model,
+        optimizer,
+        tasks,
+        mode=common.ModeKeys.TRAIN,
+        name="Proto",
+        **kwargs,
     ):
         # Instantiate Proto
         if not isinstance(model, models.base.ProtoModel):
@@ -72,14 +72,14 @@ class Proto(base.AdaptationStrategy):
         return self.model
 
     def _build_prototypes(
-            self,
-            inputs,
-            labels,
-            emb_size,
-            num_classes,
-            back_prop=True,
-            parallel_iterations=16,
-            eps=1e-7,
+        self,
+        inputs,
+        labels,
+        emb_size,
+        num_classes,
+        back_prop=True,
+        parallel_iterations=16,
+        eps=1e-7,
     ):
         """Builds adapted model parameters dynamically using tf.while_loop."""
         indices = tf.range(tf.shape(inputs)[0])

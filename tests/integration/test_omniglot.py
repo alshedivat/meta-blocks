@@ -17,7 +17,9 @@ from meta_blocks.experiment.eval import evaluate
 logger = logging.getLogger(__name__)
 
 AVAILABLE_METHODS = {"maml", "fomaml", "reptile", "proto"}
-OMNIGLOT_URL = "https://raw.githubusercontent.com/brendenlake/omniglot/master/python/"
+OMNIGLOT_URL = (
+    "https://raw.githubusercontent.com/brendenlake/omniglot/master/python/"
+)
 
 
 def get_hydra():
@@ -33,9 +35,8 @@ def get_hydra():
         return global_hydra.hydra
 
 
-@pytest.mark.parametrize('adaptation_method', AVAILABLE_METHODS)
+@pytest.mark.parametrize("adaptation_method", AVAILABLE_METHODS)
 def test_omniglot_integration(adaptation_method):
-
     def fetch_omniglot(dir_path):
         omniglot_dir = os.path.join(dir_path, "omniglot")
         os.makedirs(omniglot_dir, exist_ok=False)
@@ -66,9 +67,9 @@ def test_omniglot_integration(adaptation_method):
                 f"adaptation={adaptation_method}",
                 f"dataset=omniglot",
                 f"test=omniglot",
-                f"data.read_config.data_dir={data_path}"
+                f"data.read_config.data_dir={data_path}",
             ],
-            strict=False
+            strict=False,
         )
         # Run train and eval.
         logger.info(f"Training...")

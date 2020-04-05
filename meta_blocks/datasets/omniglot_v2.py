@@ -23,7 +23,7 @@ __all__ = [
     "OmniglotCategory",
     "OmniglotDataPool",
     "OmniglotDataset",
-    "OmniglotMetaDataset"
+    "OmniglotMetaDataset",
 ]
 
 
@@ -50,17 +50,15 @@ def get_categories(
             categories.append(OmniglotCategory(char_dir, char_name))
     if shuffle:
         random.shuffle(categories)
-    categories_dict = {
-        "train": categories[:num_train_categories]
-    }
+    categories_dict = {"train": categories[:num_train_categories]}
     if num_valid_categories is not None:
-        categories_dict["valid"] = (
-            categories[num_train_categories:][:num_valid_categories]
-        )
+        categories_dict["valid"] = categories[num_train_categories:][
+            :num_valid_categories
+        ]
     if num_test_categories is not None:
-        categories_dict["test"] = (
-            categories[num_train_categories:][-num_test_categories:]
-        )
+        categories_dict["test"] = categories[num_train_categories:][
+            -num_test_categories:
+        ]
     return categories_dict
 
 
@@ -85,9 +83,7 @@ class OmniglotCategory(base.Category):
         image = tf.image.rot90(image, k=rotation)
         return image
 
-    def _build(
-        self, max_size=None, shuffle=True
-    ):
+    def _build(self, max_size=None, shuffle=True):
         # Infer dataset size.
         filepaths = glob.glob(os.path.join(self.data_dir, "*.png"))
         if shuffle:
@@ -136,7 +132,7 @@ class OmniglotDataset(base.Dataset):
         self,
         num_classes: int,
         rotations: Tuple[int] = (0,),
-        name: str = "OmniglotDataset"
+        name: str = "OmniglotDataset",
     ):
         self.name = name
         self.num_classes = num_classes
@@ -157,7 +153,7 @@ class OmniglotDataset(base.Dataset):
                     data_ph = tf.placeholder(
                         dtype=output_types,
                         shape=(None,) + output_shapes,
-                        name=f"data_class_{k}"
+                        name=f"data_class_{k}",
                     )
                     data_tensors.append(data_ph)
                 # Rotations.
@@ -175,6 +171,7 @@ class OmniglotDataset(base.Dataset):
                 image, rotation=self._rotations_ph[label]
             )
             return image
+
         if len(self._rotations) > 1:
             return _inner
 
@@ -204,8 +201,8 @@ class OmniglotMetaDataset(base.MetaDataset):
         feed_lists = []
         for n, category_ids in enumerate(requests):
             feed_lists.append(
-                self._dataset_batch[n].get_feed_list([
-                    self.data_pool.categories[i].dataset for i in category_ids
-                ])
+                self._dataset_batch[n].get_feed_list(
+                    [self.data_pool.categories[i].dataset for i in category_ids]
+                )
             )
         return feed_lists

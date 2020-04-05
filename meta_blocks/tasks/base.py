@@ -18,10 +18,7 @@ class Task(abc.ABC):
     """Abstract base class for tasks."""
 
     def __init__(
-        self,
-        dataset,
-        num_query_shots=1,
-        name="Task",
+        self, dataset, num_query_shots=1, name="Task",
     ):
         """Instantiates a Task.
 
@@ -92,7 +89,7 @@ class TaskDistribution(abc.ABC):
         self,
         meta_dataset: datasets.MetaDataset,
         num_query_shots: int = 1,
-        name: str = "TaskDistribution"
+        name: str = "TaskDistribution",
     ):
         self.meta_dataset = meta_dataset
         self.num_query_shots = num_query_shots

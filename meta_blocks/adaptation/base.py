@@ -40,13 +40,13 @@ class AdaptationStrategy(abc.ABC):
     """
 
     def __init__(
-            self,
-            model,
-            optimizer,
-            tasks,
-            mode=common.ModeKeys.TRAIN,
-            name="AdaptationStrategy",
-            **kwargs,
+        self,
+        model,
+        optimizer,
+        tasks,
+        mode=common.ModeKeys.TRAIN,
+        name="AdaptationStrategy",
+        **kwargs,
     ):
 
         # Instantiates an AdaptationStrategy.

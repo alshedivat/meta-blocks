@@ -73,7 +73,9 @@ def compute_adam_updates(self, grads_and_vars):
             # m_t = beta1 * m + (1 - beta1) * g_t.
             m = self.get_slot(var, "m")
             m_t = tf.assign(
-                m, beta1_t * m + grad * (1 - beta1_t), use_locking=self._use_locking
+                m,
+                beta1_t * m + grad * (1 - beta1_t),
+                use_locking=self._use_locking,
             )
 
             # v_t = beta2 * v + (1 - beta2) * (g_t * g_t).
@@ -90,10 +92,14 @@ def compute_adam_updates(self, grads_and_vars):
         with tf.control_dependencies(var_updates):
             beta1_power, beta2_power = self._get_beta_accumulators()
             update_beta1 = tf.assign(
-                beta1_power, beta1_power * self._beta1_t, use_locking=self._use_locking
+                beta1_power,
+                beta1_power * self._beta1_t,
+                use_locking=self._use_locking,
             )
             update_beta2 = tf.assign(
-                beta2_power, beta2_power * self._beta2_t, use_locking=self._use_locking
+                beta2_power,
+                beta2_power * self._beta2_t,
+                use_locking=self._use_locking,
             )
 
         # Compute updated variables.
@@ -134,7 +140,9 @@ def compute_sgd_updates(self, grads_and_vars):
         updated_vars = []
         for var, var_update in zip(var_list, var_updates):
             assert var_updates is not None
-            updated_vars.append((var - var_update) if var_update is not None else var)
+            updated_vars.append(
+                (var - var_update) if var_update is not None else var
+            )
 
     return updated_vars
 

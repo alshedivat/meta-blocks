@@ -50,9 +50,7 @@ class SupervisedTask(base.Task):
             name: str (default: "SupervisedTask")
         """
         super(SupervisedTask, self).__init__(
-            dataset=dataset,
-            num_query_shots=num_query_shots,
-            name=name
+            dataset=dataset, num_query_shots=num_query_shots, name=name
         )
 
         # Internals.
@@ -125,16 +123,19 @@ class SupervisedTask(base.Task):
         self._query_tensors = self._preprocess(inputs, labels)
         # Build support tensors.
         start_index = end_index
-        self._support_inputs_raw, self._support_labels_raw = (
-            self._get_inputs_and_labels(start_index, None)
-        )
+        (
+            self._support_inputs_raw,
+            self._support_labels_raw,
+        ) = self._get_inputs_and_labels(start_index, None)
         self._support_inputs, self._support_labels = self._preprocess(
             self._support_inputs_raw, self._support_labels_raw
         )
-        self._support_tensors_raw = tuple(map(
-            lambda x: tf.gather(x, self._support_labeled_ids, axis=0),
-            (self._support_inputs_raw, self._support_labels_raw)
-        ))
+        self._support_tensors_raw = tuple(
+            map(
+                lambda x: tf.gather(x, self._support_labeled_ids, axis=0),
+                (self._support_inputs_raw, self._support_labels_raw),
+            )
+        )
         self._support_tensors = self._preprocess(*self._support_tensors_raw)
 
     def get_feed_list(self, support_labeled_ids):
@@ -154,12 +155,12 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         max_labeled_points: int = None,
         init_labeled_points: int = None,
         name: str = "SupervisedTaskDistribution",
-        seed: int = 42
+        seed: int = 42,
     ):
         super(SupervisedTaskDistribution, self).__init__(
             meta_dataset=meta_dataset,
             num_query_shots=num_query_shots,
-            name=name
+            name=name,
         )
         self.num_support_shots = num_support_shots
         self.max_labeled_points = max_labeled_points
@@ -197,7 +198,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
             SupervisedTask(
                 dataset=dataset,
                 num_query_shots=self.num_query_shots,
-                name=f"SupervisedTask_{i}"
+                name=f"SupervisedTask_{i}",
             ).build()
             for i, dataset in enumerate(self.meta_dataset.dataset_batch)
         )
@@ -239,17 +240,17 @@ class SupervisedTaskDistribution(base.TaskDistribution):
                     self._rng.choice(
                         self.meta_dataset.num_categories,
                         size=self.num_classes,
-                        replace=False
+                        replace=False,
                     )
                 )
                 for _ in range(self.meta_batch_size)
             )
-            feed_list_batch = (
-                self.meta_dataset.get_feed_list_batch(requests_batch)
+            feed_list_batch = self.meta_dataset.get_feed_list_batch(
+                requests_batch
             )
             # Get request kwargs.
             request_kwargs_batch = [
-                [v for _, v in feed_list[self.num_classes:]]
+                [v for _, v in feed_list[self.num_classes :]]
                 for feed_list in feed_list_batch
             ]
             # Sample support labeled ids for the requested tasks.
@@ -258,13 +259,11 @@ class SupervisedTaskDistribution(base.TaskDistribution):
                 labels_per_step=self.num_classes,
                 sess=sess,
                 feed_dict=dict(sum(feed_list_batch, [])),
-                **kwargs
+                **kwargs,
             )
             # Save sampled information.
             for i, ids in enumerate(support_labeled_ids_batch):
-                requested_labels_so_far += (
-                    self.query_labels_per_task + len(ids)
-                )
+                requested_labels_so_far += self.query_labels_per_task + len(ids)
                 if requested_labels_so_far > num_labeled_points:
                     break
                 self._requested_ids.append(ids)
@@ -278,9 +277,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         """Samples a meta-batch of tasks and returns a feed list."""
         # Sample a meta-batch of tasks.
         indices_batch = self._rng.choice(
-            len(self._requests),
-            size=self.meta_batch_size,
-            replace=replace
+            len(self._requests), size=self.meta_batch_size, replace=replace
         )
         # Build feed list for the meta-batch of tasks.
         requests_batch = [self._requests[i] for i in indices_batch]
@@ -290,9 +287,9 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         task_feed = []
         for i, feed_list in enumerate(feed_list_batch):
             # Truncate feed list.
-            task_feed += feed_list[:self.num_classes]
+            task_feed += feed_list[: self.num_classes]
             # Add kwargs feed.
-            kwarg_keys = [k for k, _ in feed_list[self.num_classes:]]
+            kwarg_keys = [k for k, _ in feed_list[self.num_classes :]]
             task_feed += [(k, v) for k, v in zip(kwarg_keys, kwargs_batch[i])]
             # Add task-specific feed.
             task_feed += self._task_batch[i].get_feed_list(ids_batch[i])

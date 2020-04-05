@@ -85,7 +85,7 @@ def train(cfg, lock=None):
             cfg=cfg,
             sess=sess,
             categories=categories,
-            mode=common.ModeKeys.TRAIN
+            mode=common.ModeKeys.TRAIN,
         )
 
         # Setup logging and saving.
@@ -125,18 +125,18 @@ def train(cfg, lock=None):
                     writer.add_summary(summary, i)
                     writer.flush()
             # Save model.
-            if i % cfg.train.save_interval == 0 \
-                    or i + 1 == cfg.train.max_steps:
+            if i % cfg.train.save_interval == 0 or i + 1 == cfg.train.max_steps:
                 checkpoint_path = os.path.join(os.getcwd(), "model.ckpt")
                 saver.save(sess, checkpoint_path, global_step=i)
             # Update task distribution (if necessary).
             # TODO: make this more flexible.
-            if cfg.train.budget_interval is not None \
-                    and i % cfg.train.budget_interval == 0:
+            if (
+                cfg.train.budget_interval is not None
+                and i % cfg.train.budget_interval == 0
+            ):
                 for td, task in zip(exp.task_dists, cfg.train.tasks):
                     td.expand(
-                        num_labeled_points=(task.labels_per_step * i),
-                        sess=sess
+                        num_labeled_points=(task.labels_per_step * i), sess=sess
                     )
                 if cfg.train.do_reinit:
                     sess.run(tf.global_variables_initializer())

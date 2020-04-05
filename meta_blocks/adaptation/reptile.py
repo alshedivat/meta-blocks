@@ -49,15 +49,15 @@ class Reptile(maml.Maml):
     """
 
     def __init__(
-            self,
-            model,
-            optimizer,
-            tasks,
-            batch_size=16,
-            inner_optimizer=None,
-            mode=common.ModeKeys.TRAIN,
-            name="Reptile",
-            **kwargs,
+        self,
+        model,
+        optimizer,
+        tasks,
+        batch_size=16,
+        inner_optimizer=None,
+        mode=common.ModeKeys.TRAIN,
+        name="Reptile",
+        **kwargs,
     ):
         # Instantiate Reptile.
 
@@ -70,7 +70,8 @@ class Reptile(maml.Maml):
             first_order=True,
             mode=mode,
             name=name,
-            **kwargs)
+            **kwargs,
+        )
 
     def _build_meta_train(self):
         """Internal fucntion for building meta-update op.
@@ -85,7 +86,8 @@ class Reptile(maml.Maml):
             if self.model.global_parameters:
                 for i, loss in enumerate(losses):
                     grads_and_vars = self.optimizer.compute_gradients(
-                        loss, self.model.global_parameters)
+                        loss, self.model.global_parameters
+                    )
                     for g, v in grads_and_vars:
                         meta_grads[v].append(g)
 
@@ -97,8 +99,8 @@ class Reptile(maml.Maml):
 
             # Build meta-train op.
             meta_train_op = self.optimizer.apply_gradients(
-                [(tf.reduce_mean(g, axis=0), v) for v, g in
-                 meta_grads.items()])
+                [(tf.reduce_mean(g, axis=0), v) for v, g in meta_grads.items()]
+            )
 
             return meta_loss, meta_train_op
 
@@ -124,7 +126,8 @@ class Reptile(maml.Maml):
                         labels=labels,
                         init_params=self.model.adaptable_parameters,
                         num_steps=self._adapt_steps_ph,
-                        back_prop=False),
+                        back_prop=False,
+                    ),
                     # If no support data, use initial parameters.
                     false_fn=lambda: self.model.adaptable_parameters,
                 )

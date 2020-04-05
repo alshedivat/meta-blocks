@@ -92,13 +92,13 @@ class Sampler(abc.ABC):
             indices = tf.random.uniform(
                 dtype=tf.int32,
                 shape=(size_left,),
-                maxval=tf.size(available_clusters)
+                maxval=tf.size(available_clusters),
             )
             cluster_indices = tf.gather(available_clusters, indices, axis=0)
             cluster_sizes = tf.tensor_scatter_nd_add(
                 cluster_sizes,
                 indices=tf.expand_dims(cluster_indices, -1),
-                updates=tf.ones_like(cluster_indices, dtype=tf.int32)
+                updates=tf.ones_like(cluster_indices, dtype=tf.int32),
             )
             # Truncate cluster sizes as necessary.
             cluster_sizes = tf.minimum(cluster_sizes, cluster_counts)
@@ -118,7 +118,9 @@ class Sampler(abc.ABC):
             cond=cond_fn,
             body=body_fn,
             loop_vars=[
-                size_left_init, cluster_counts_left_init, cluster_sizes_init
+                size_left_init,
+                cluster_counts_left_init,
+                cluster_sizes_init,
             ],
             back_prop=False,
             parallel_iterations=parallel_iterations,
@@ -128,9 +130,9 @@ class Sampler(abc.ABC):
         return cluster_sizes, unique_clusters
 
     @staticmethod
-    def select_indices_stratified(size, scores, clusters, indices=None,
-                                  soft=False,
-                                  parallel_iterations=8, ) -> tf.Tensor:
+    def select_indices_stratified(
+        size, scores, clusters, indices=None, soft=False, parallel_iterations=8,
+    ) -> tf.Tensor:
         """Selects indices of the instances to label given the scores."""
         # size_per_cluster: <int32> [num_unique_clusters].
         # unique_clusters: <int32> [num_unique_clusters].
@@ -153,10 +155,9 @@ class Sampler(abc.ABC):
                     indices=cluster_indices,
                     soft=soft,
                 ),
-                false_fn=lambda: tf.constant([], dtype=tf.int32)
+                false_fn=lambda: tf.constant([], dtype=tf.int32),
             )
-            return [tf.add(step, 1),
-                    selected_indices.write(step, selected_idx)]
+            return [tf.add(step, 1), selected_indices.write(step, selected_idx)]
 
         # Select indices for each cluster cluster.
         _, selected_indices_ta = tf.while_loop(
@@ -194,11 +195,11 @@ class Sampler(abc.ABC):
 
     @abc.abstractmethod
     def select_labeled(
-            self,
-            size: int,
-            sess: tf.Session,
-            tasks: Tuple[SupervisedTask],
-            **kwargs
+        self,
+        size: int,
+        sess: tf.Session,
+        tasks: Tuple[SupervisedTask],
+        **kwargs
     ) -> Tuple[np.ndarray]:
         """Return an actively selected labeled data points from the dataset."""
         raise NotImplementedError("Abstract Method")

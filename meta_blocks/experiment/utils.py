@@ -33,6 +33,7 @@ class Experiment(
         samplers: list of `Sampler`s.
         task_dists: list of `TaskDistribution`s.
     """
+
     pass
 
 
@@ -93,7 +94,9 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
             dataset_name=cfg.data.name,
             categories=categories[task.set_name],
             name=f"DP_{task.log_dir.replace('/', '_')}",
-        ).build(**cfg.data.build_config).initialize(sess)
+        )
+        .build(**cfg.data.build_config)
+        .initialize(sess)
         for task in cfg[mode].tasks
     }
 
@@ -104,7 +107,7 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
             data_pool=data_pools[task.set_name],
             batch_size=cfg[mode].meta.batch_size,
             name=f"MD_{task.log_dir.replace('/', '_')}",
-            **cfg[mode].dataset
+            **cfg[mode].dataset,
         ).build()
         for task in cfg[mode].tasks
     }
@@ -124,7 +127,7 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
         tasks.get_distribution(
             meta_dataset=meta_datasets[task.set_name],
             name_suffix=task.log_dir.replace("/", "_"),
-            **task.config
+            **task.config,
         )
         for task in cfg[mode].tasks
     ]
@@ -146,7 +149,7 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
         samplers.get(
             learner=meta_learners[i],
             tasks=task_dists[i].task_batch,
-            **task.sampler
+            **task.sampler,
         )
         for i, task in enumerate(cfg[mode].tasks)
     ]

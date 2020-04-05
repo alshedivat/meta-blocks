@@ -8,9 +8,7 @@ def get_distribution(
     if name == "supervised":
         dist_name = "STD" + f"_{name_suffix}" if name_suffix is not None else ""
         task_dist = SupervisedTaskDistribution(
-            meta_dataset=meta_dataset,
-            name=dist_name,
-            **kwargs
+            meta_dataset=meta_dataset, name=dist_name, **kwargs
         )
     else:
         raise ValueError(f"Unknown task distribution: {name}")
