@@ -56,7 +56,7 @@ def train_step(cfg, exp, sess, **kwargs):
     return losses
 
 
-def train(cfg, lock=None):
+def train(cfg, lock=None, work_dir=None):
     """Runs the training process for the provided config.
 
     Parameters
@@ -66,7 +66,13 @@ def train(cfg, lock=None):
 
     lock : Type and default value.
         The description string.
+
+    work_dir : str, optional
     """
+    # Set working dir.
+    if work_dir is None:
+        work_dir = os.getcwd()
+
     # Set random seeds.
     random.seed(cfg.run.seed)
     np.random.seed(cfg.run.seed)
@@ -84,7 +90,7 @@ def train(cfg, lock=None):
 
         # Setup logging and saving.
         writers = [
-            tf.summary.FileWriter(logdir=os.path.join(os.getcwd(), task.log_dir))
+            tf.summary.FileWriter(logdir=os.path.join(work_dir, task.log_dir))
             for task in cfg[common.ModeKeys.TRAIN].tasks
         ]
         label_budget_ph = tf.placeholder(tf.int32, shape=())
@@ -115,7 +121,7 @@ def train(cfg, lock=None):
                     writer.flush()
             # Save model.
             if i % cfg.train.save_interval == 0 or i + 1 == cfg.train.max_steps:
-                checkpoint_path = os.path.join(os.getcwd(), "model.ckpt")
+                checkpoint_path = os.path.join(work_dir, "model.ckpt")
                 saver.save(sess, checkpoint_path, global_step=i)
             # Update task distribution (if necessary).
             # TODO: make this more flexible.

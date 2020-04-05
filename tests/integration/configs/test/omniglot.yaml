@@ -2,7 +2,7 @@ train:
   dataset:
     num_classes: 2
   meta:
-    batch_size: 5
+    batch_size: 4
   optimizer:
     name: adam
     beta1: 0.
@@ -26,7 +26,7 @@ eval:
   dataset:
     num_classes: 2
   meta:
-    batch_size: 5
+    batch_size: 4
   tasks:
     # Train.
     - set_name: train

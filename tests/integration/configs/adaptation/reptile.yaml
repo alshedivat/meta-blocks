@@ -1,6 +1,6 @@
 adapt:
   name: reptile
-  batch_size: 50
+  batch_size: 4
   inner_optimizer:
     name: sgd
     learning_rate: 0.0005
@@ -10,11 +10,11 @@ model:
 
 train:
   adapt:
-    num_inner_steps: 10
+    num_inner_steps: 4
   optimizer:
     name: sgd
     learning_rate: 1.0
 
 eval:
   adapt:
-    num_inner_steps: 50
+    num_inner_steps: 8

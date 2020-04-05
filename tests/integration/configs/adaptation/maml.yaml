@@ -1,6 +1,6 @@
 adapt:
   name: maml
-  batch_size: 50
+  batch_size: 4
   first_order: false
   inner_optimizer:
     name: sgd

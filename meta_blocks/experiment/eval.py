@@ -73,8 +73,12 @@ def eval_step(cfg, exp, sess, **kwargs):
     return results
 
 
-def evaluate(cfg, lock=None):
+def evaluate(cfg, lock=None, work_dir=None):
     """Runs the evaluation process for the provided config."""
+    # Set working dir.
+    if work_dir is None:
+        work_dir = os.getcwd()
+
     # Set random seeds.
     random.seed(cfg.run.seed)
     np.random.seed(cfg.run.seed)
@@ -95,7 +99,7 @@ def evaluate(cfg, lock=None):
 
         # Setup logging and saving.
         writers = [
-            tf.summary.FileWriter(logdir=os.path.join(os.getcwd(), task.log_dir))
+            tf.summary.FileWriter(logdir=os.path.join(work_dir, task.log_dir))
             for task in cfg[common.ModeKeys.EVAL].tasks
         ]
         accuracy_ph = tf.placeholder(tf.float32, shape=())
@@ -108,7 +112,7 @@ def evaluate(cfg, lock=None):
         old_checkpoint = None
         while step + 1 < cfg.train.max_steps:
             # Get latest checkpoint.
-            new_checkpoint = tf.train.latest_checkpoint(os.getcwd())
+            new_checkpoint = tf.train.latest_checkpoint(work_dir)
 
             # If no change, wait and continue.
             if new_checkpoint == old_checkpoint:
