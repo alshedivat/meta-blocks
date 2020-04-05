@@ -22,23 +22,21 @@ class AdaptationStrategy(abc.ABC):
 
     Parameters
     ----------
-    model : object
+    model : Model
         The model being adapted.
 
-    optimizer : object
-        The optimizer to use for meta-training.
+    optimizer : Optimizer
+        The optimizer used for computing meta-updates.
 
     tasks : tuple of Tasks
         A tuple of tasks that provide access to data.
 
-    mode : str
-        The description string.
+    mode : str, optional (default: common.ModeKeys.TRAIN)
+        Defines the mode of the computation graph (TRAIN or EVAL).
+        Note: this might be removed from the API down the line.
 
-    name : str
-        The description string.
-
-    kwargs : dict, optional
-        Additional arguments
+    name : str, optional (default: "AdaptationStrategy")
+        Name of the adaptation method.
     """
 
     def __init__(
@@ -120,7 +118,7 @@ class AdaptationStrategy(abc.ABC):
             logger.debug("Building meta-training op...")
             with tf.name_scope("meta-train"):
                 self.loss, self.train_op = self._build_meta_train()
-        else:  # self.mode in {common.ModeKeys.EVAL, common.ModeKeys.PREDICT}
+        else:  # self.mode == common.ModeKeys.EVAL.
             # Build query predictions and labels.
             logger.debug("Building predictions and labels...")
             with tf.name_scope("meta-eval"):

@@ -26,9 +26,8 @@ def make_custom_getter(custom_variables):
 
     Returns
     -------
-    custom_getter : var
-        The return a custom getter.
-
+    custom_getter : function
+        A custom getter function that can be used at TF graph construction time.
     """
 
     def custom_getter(getter, name, **kwargs):
@@ -42,36 +41,36 @@ def make_custom_getter(custom_variables):
 
 
 def build_new_parameters(loss, params, optimizer, first_order=False):
-    """Builds new parameters by performing an optimization step.
+    """Builds new parameters via an optimization step on the provided loss.
 
     Parameters
     ----------
-    loss :
-        The description string.
+    loss : <float32> [] tensor
+        A scalar tensor that represents the loss.
 
-    params :
-        The description string.
+    params : dict of variables or tensors
+        A dictionary of initial parameters.
 
-    optimizer :
-        The description string.
+    optimizer : Optimizer
+        An optimizer used for computing parameter updates.
 
     first_order : bool, optional (default: False)
-        The description string.
+        If True, gradients of the parameters computed by the optimizer are
+        added to the graph as constants. This will zeros out the second order
+        terms under subsequent differentiation.
 
     Returns
     -------
-    to_be_refactored :
-        The description string.
+    new_params : dict of tensors
+        A dictionary of update parameters.
     """
     param_names, param_values = zip(*params.items())
     grads_and_vars = optimizer.compute_gradients(loss, param_values)
     # Prevent backprop through the gradients, if necessary.
     if first_order:
         grads_and_vars = [(tf.stop_gradient(g), v) for g, v in grads_and_vars]
-
-    # todo: this should be refactor as var_name = dict(zip(param_names, optimizer.compute_updates(grads_and_vars))) and then return the var_name
-    # which is good for documentation
-    return dict(zip(param_names, optimizer.compute_updates(grads_and_vars)))
+    new_params = dict(zip(param_names, optimizer.compute_updates(grads_and_vars)))
+    return new_params
 
 
 def build_prototypes(embeddings, labels, num_classes):
@@ -79,23 +78,23 @@ def build_prototypes(embeddings, labels, num_classes):
 
     Parameters
     ----------
-    embeddings :
-        The description string.
+    embeddings : Tensor <float32> [num_inputs, emb_size]
+        A collection of embeddings for each input point.
 
-    labels : The description string.
-        The description string.
+    labels : Tensor <int32> [num_inputs]
+        Labels for each input point.
 
     num_classes : int
-        The description string.
+        The total number of classes.
 
     Returns
     -------
-    prototypes :
-        The description string.
+    prototypes : Tensor <float32> [num_classes, emb_size]
+        A collection of prototypical embeddings for each class.
+        Computed as a sum over embeddings of points corresponding to each class.
 
-    class_counts :
-        The description string.
-
+    class_counts : Tensor <float32> [num_classes].
+        A vector representing the number of points of each class.
     """
     # <float32> [num_inputs, num_classes].
     labels_onehot = tf.one_hot(labels, num_classes)

@@ -25,10 +25,10 @@ class Reptile(maml.Maml):
 
     Parameters
     ----------
-    model : object
+    model : Model
         The model being adapted.
 
-    optimizer : object
+    optimizer : Optimizer
         The optimizer to use for meta-training.
 
     tasks : tuple of Tasks
@@ -38,16 +38,14 @@ class Reptile(maml.Maml):
         Batch size used at adaptation time.
 
     inner_optimizer : Optimizer, optional (default: None)
-        The optimizer to use for inner loop updates.
+        The optimizer to use for computing inner loop updates.
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
-            The description string.
+        Defines the mode of the computation graph (TRAIN or EVAL).
+        Note: this might be removed from the API down the line.
 
     name : str, optional (default: "Reptile")
-            The description string.
-
-    \*\*kwargs : dict, optional
-        Additional arguments
+        Name of the adaptation method.
     """
 
     def __init__(

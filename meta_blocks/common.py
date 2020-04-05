@@ -6,4 +6,3 @@ class ModeKeys(object):
 
     TRAIN = "train"
     EVAL = "eval"
-    PREDICT = "infer"

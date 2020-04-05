@@ -19,27 +19,25 @@ tf.enable_resource_variables()
 
 
 class Proto(base.AdaptationStrategy):
-    """Proto-based model adaptation.
+    """Prototype-based model adaptation.
 
     Parameters
     ----------
-    model : object
+    model : Model
         The model being adapted.
 
-    optimizer : object
+    optimizer : Optimizer
         The optimizer to use for meta-training.
 
     tasks : tuple of Tasks
         A tuple of tasks that provide access to data.
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
-            The description string.
+        Defines the mode of the computation graph (TRAIN or EVAL).
+        Note: this might be removed from the API down the line.
 
-    name : str, optional (default: "Maml")
-            The description string.
-
-    \*\*kwargs : dict, optional
-        Additional arguments
+    name : str, optional (default: "Proto")
+        Name of the adaptation method.
     """
 
     def __init__(
