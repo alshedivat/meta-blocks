@@ -28,10 +28,17 @@ class Experiment(
 ):
     """Represents built entities for the Experiment.
 
-    Args:
-        meta_learners: list of `AdaptationStrategy`s.
-        samplers: list of `Sampler`s.
-        task_dists: list of `TaskDistribution`s.
+    Parameters
+    ----------
+
+    meta_learners: list of `AdaptationStrategy`s.
+        The description string.
+
+    samplers: list of `Sampler`s.
+        The description string.
+
+    task_dists: list of `TaskDistribution`s.
+        The description string.
     """
 
     pass

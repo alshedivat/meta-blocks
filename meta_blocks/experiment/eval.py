@@ -74,7 +74,19 @@ def eval_step(cfg, exp, sess, **kwargs):
 
 
 def evaluate(cfg, lock=None, work_dir=None):
-    """Runs the evaluation process for the provided config."""
+    """Runs the evaluation process for the provided config.
+
+    Parameters
+    ----------
+    cfg : Type and default value.
+        The description string.
+
+    lock : object, optional (default=None)
+        The description string.
+
+    work_dir : str, optional (default=None)
+        The description string.        
+    """
     # Set working dir.
     if work_dir is None:
         work_dir = os.getcwd()
@@ -91,9 +103,9 @@ def evaluate(cfg, lock=None, work_dir=None):
         # Build and initialize.
         if lock is not None:
             lock.acquire()
-        exp = utils.build_and_initialize(
-            cfg=cfg, sess=sess, categories=categories, mode=common.ModeKeys.EVAL
-        )
+        exp = utils.build_and_initialize(cfg=cfg, sess=sess,
+                                         categories=categories,
+                                         mode=common.ModeKeys.EVAL)
         if lock is not None:
             lock.release()
 
@@ -133,6 +145,7 @@ def evaluate(cfg, lock=None, work_dir=None):
                 log += f" - {td.name} acc: {100 * result['acc']:.2f}"
             logger.info(log)
             for result, td, writer in zip(results, exp.task_dists, writers):
-                summary = sess.run(merged, feed_dict={accuracy_ph: result["acc"]})
+                summary = sess.run(merged,
+                                   feed_dict={accuracy_ph: result["acc"]})
                 writer.add_summary(summary, step)
                 writer.flush()

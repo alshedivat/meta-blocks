@@ -21,26 +21,31 @@ __all__ = ["OmniglotCategory", "OmniglotDataset", "OmniglotMetaDataset"]
 
 
 def read_dataset(
-    data_dir,
-    num_train_categories=1000,
-    num_valid_categories=200,
-    num_test_categories=463,
+        data_dir,
+        num_train_categories=1000,
+        num_valid_categories=200,
+        num_test_categories=463,
 ):
+    """Iterate over the characters in a data directory.
+    The dataset is unaugmented and not split up into training and test sets.
+
+    Parameters
+    ----------
+    data_dir : str
+        A directory of alphabet directories.
+
+    num_train_categories : int, optional (default=1000)
+
+    num_valid_categories : int, optional (default=200)
+
+    num_test_categories : int, optional (default=463)
+
+    Returns
+    -------
+    train_test_val_set : dict
+        An iterable over Characters.
     """
-    Iterate over the characters in a data directory.
 
-    Args:
-      data_dir: a directory of alphabet directories.
-      num_train_categories: int (default: 1000)
-      num_valid_categories: int (default: 200)
-      num_test_categories: int (default: 463)
-
-    Returns:
-      An iterable over Characters.
-
-    The dataset is unaugmented and not split up into
-    training and test sets.
-    """
     categories = []
     for alphabet_name in sorted(os.listdir(data_dir)):
         alphabet_dir = os.path.join(data_dir, alphabet_name)
@@ -62,11 +67,22 @@ def read_dataset(
 
 
 class OmniglotCategory(base.Category):
-    """
-    A single character class.
+    """A single character class.
+
+    Parameters
+    ----------
+    data_dir : str
+        The description string.
+
+    name : str
+        The description string.
+
+    maybe_gen_tfrecords : bool, optional (default=False)
+        The description string.
     """
 
     def __init__(self, data_dir, name, maybe_gen_tfrecords=False):
+
         super(OmniglotCategory, self).__init__(data_dir, name)
         self._maybe_gen_tfrecords = maybe_gen_tfrecords
 
@@ -78,13 +94,11 @@ class OmniglotCategory(base.Category):
 
         # Generate TFRecords, if necessary.
         if os.path.exists(tfrecord_path):
-            logger.debug(
-                f"Category {self.name} in {self.data_dir} is already preprocessed. Skipping..."
-            )
+            logger.debug(f"Category {self.name} in {self.data_dir} "
+                         f"is already preprocessed. Skipping...")
             return
-        logger.debug(
-            f"Generating TFRecords for category {self.name} in {self.data_dir}..."
-        )
+        logger.debug(f"Generating TFRecords for category {self.name} "
+                     f"in {self.data_dir}...")
 
         # Read images and construct features.
         features = []
@@ -96,19 +110,20 @@ class OmniglotCategory(base.Category):
         # Write features to a TFRecords file.
         with tf.python_io.TFRecordWriter(tfrecord_path) as writer:
             for feature in features:
-                example = tf.train.Example(features=tf.train.Features(feature=feature))
+                example = tf.train.Example(
+                    features=tf.train.Features(feature=feature))
                 writer.write(example.SerializeToString())
 
         logger.info("Done.")
 
     def build(
-        self,
-        size=None,
-        shuffle=False,
-        num_parallel_reads=16,
-        shuffle_buffer_size=100,
-        seed=None,
-        **kwargs,
+            self,
+            size=None,
+            shuffle=False,
+            num_parallel_reads=16,
+            shuffle_buffer_size=100,
+            seed=None,
+            **kwargs,
     ):
         """Builds tf.data.Dataset for the underlying data resources."""
         tfrecord_path = os.path.join(self.data_dir, f"{self.name}.tfrecords")
@@ -124,9 +139,11 @@ class OmniglotCategory(base.Category):
             tfrecord_path, num_parallel_reads=num_parallel_reads
         )
         if shuffle:
-            self._dataset = self._dataset.shuffle(shuffle_buffer_size, seed=seed)
+            self._dataset = self._dataset.shuffle(shuffle_buffer_size,
+                                                  seed=seed)
         self._size = (
-            self._dataset_size if size is None else min(size, self._dataset_size)
+            self._dataset_size if size is None else min(size,
+                                                        self._dataset_size)
         )
         self._dataset = self._dataset.repeat().batch(self._size)
 
@@ -149,7 +166,8 @@ class OmniglotDataset(base.Dataset):
 
     def _get_preprocess_kwargs(self):
         return tuple(
-            {"rotation": random.sample(self.rotations, 1)[0]} for _ in self._categories
+            {"rotation": random.sample(self.rotations, 1)[0]} for _ in
+            self._categories
         )
 
     @classmethod
@@ -166,7 +184,8 @@ class OmniglotDataset(base.Dataset):
 
     @classmethod
     def preprocess(cls, example, rotation=0, **kwargs):
-        image = utils.deserialize_image(example, channels=1, shape=cls.RAW_IMG_SHAPE)
+        image = utils.deserialize_image(example, channels=1,
+                                        shape=cls.RAW_IMG_SHAPE)
         image = tf.image.resize(image, size=cls.PREPROC_IMG_SHAPE[:-1])
         image = tf.image.rot90(image, k=rotation)
         return image
@@ -178,7 +197,8 @@ class OmniglotMetaDataset(base.MetaDataset):
     Dataset = OmniglotDataset
 
     def __init__(
-        self, categories, num_classes, max_distinct_datasets=None, rotations=(0,)
+            self, categories, num_classes, max_distinct_datasets=None,
+            rotations=(0,)
     ):
         super(OmniglotMetaDataset, self).__init__(
             categories=categories,
