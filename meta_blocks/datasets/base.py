@@ -26,7 +26,6 @@ class Category(abc.ABC):
 
     name : str
         The description string.
-
     """
 
     def __init__(self, data_dir: str, name: str) -> None:
@@ -81,7 +80,6 @@ class DataPool(object):
 
     name : str, optional (default='DataPool')
         The description string.
-
 
     Attributes
     ----------

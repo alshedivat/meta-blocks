@@ -48,16 +48,16 @@ class Maml(base.AdaptationStrategy):
     """
 
     def __init__(
-        self,
-        model,
-        optimizer,
-        tasks,
-        batch_size=16,
-        inner_optimizer=None,
-        first_order=False,
-        mode=common.ModeKeys.TRAIN,
-        name="Maml",
-        **kwargs,
+            self,
+            model,
+            optimizer,
+            tasks,
+            batch_size=16,
+            inner_optimizer=None,
+            first_order=False,
+            mode=common.ModeKeys.TRAIN,
+            name="Maml",
+            **kwargs,
     ):
 
         # Instantiate Maml.
@@ -91,14 +91,14 @@ class Maml(base.AdaptationStrategy):
         return [(self._adapt_steps_ph, num_inner_steps)]
 
     def _build_adapted_params(
-        self,
-        inputs,
-        labels,
-        init_params,
-        num_steps,
-        back_prop=False,
-        parallel_iterations=1,
-        shuffle=True,
+            self,
+            inputs,
+            labels,
+            init_params,
+            num_steps,
+            back_prop=False,
+            parallel_iterations=1,
+            shuffle=True,
     ):
         """Builds adapted model parameters dynamically using tf.while_loop.
 
@@ -134,12 +134,14 @@ class Maml(base.AdaptationStrategy):
         # Build batched indices.
         # <int32> [batch_size * num_steps].
         indices = tf.math.mod(
-            tf.range(self._batch_size * num_steps, dtype=tf.int32), tf.shape(inputs)[0]
+            tf.range(self._batch_size * num_steps, dtype=tf.int32),
+            tf.shape(inputs)[0]
         )
         if shuffle:
             indices = tf.random.shuffle(indices)
         # <int32> [num_steps, batch_size].
-        batched_indices = tf.reshape(indices, shape=(num_steps, self._batch_size))
+        batched_indices = tf.reshape(indices,
+                                     shape=(num_steps, self._batch_size))
 
         def cond_fn(step, _unused_params):
             return tf.less(step, num_steps)
