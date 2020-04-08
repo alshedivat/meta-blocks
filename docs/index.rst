@@ -9,13 +9,15 @@ Welcome to meta-blocks's documentation!
 
 **Deployment & Documentation & Stats**
 
-To be finished.
+**WARNING:** Repository is under construction. Feel free to star and subscribe for updates, but the code will be unstable and might be changing under the hood until the first beta. 
 
 PyPI Badge | Travis CI Badge | Circle CI Badge | docs Badge | Coverage Badge
 
 
-**Meta-Blocks** is a modular toolbox for ...
-**[This paragraph should roughly discuss what is the library for:]**
+**Meta-Blocks** is a modular toolbox for research, experimentation, and reproducible benchmarking of learning-to-learn algorithms.
+The toolbox provides flexible APIs for working with **MetaDatasets**, **TaskDistributions**, and **MetaLearners** (see the figure below).
+The APIs make it easy to implement a variety of meta-learning algorithms, run them on well-established benchmarks,
+or add your own meta-learning problems to the suite and benchmark algorithms on them.
 
 As shown in the Figure below, it contains xxx modules, and each of them can be tailored to ...
 
@@ -23,12 +25,19 @@ As shown in the Figure below, it contains xxx modules, and each of them can be t
    :target: https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/system_illustration.png?raw=true
    :alt: System Illustration
 
-**Meta-Blocks** is featured for (3-4 highlighted points):
+**Meta-Blocks** package comes with:
 
-* **Unified APIs, detailed documentation, and interactive examples** across various meta-learning algorithms
-* **Advanced and latest models**, such as MAML :cite:`a-finn2017model`, Reptile :cite:`a-nichol2018first`, Protonets :cite:`a-snell2017prototypical`
-* **Customizable modules** for quick prototyping on new meta-learning algorithms
-* **Change the bullet points above** and add more (should have around 4 points)
+* **Flexible APIs, detailed documentation, and multiple examples.**
+* **Popular models and algorithms** such as MAML :cite:`a-finn2017model`, Reptile :cite:`a-nichol2018first`, Protonets :cite:`a-snell2017prototypical`
+* **Supervised and unsupervised meta-learning** setups compatible with all algorithms.
+* **Customizable modules and utility functions** for quick prototyping on new meta-learning algorithms.
+
+
+**Key Links and Resources**\ :
+
+* `View the latest codes on Github <https://github.com/alshedivat/meta-blocks/>`_
+* `Execute Interactive Jupyter Notebooks <https://github.com/alshedivat/meta-blocks/>`_
+* `Anomaly Detection Resources <https://github.com/alshedivat/meta-blocks/>`_
 
 
 ----
