@@ -25,21 +25,20 @@ def train_step(cfg, exp, sess, **kwargs):
 
     Parameters
     ----------
-    cfg : Type and default value.
-        The description string.
+    cfg : OmegaConf
+        The experiment configuration.
 
-    exp : Type and default value.
-        The description string.
+    exp : Experiment
+        The object that represents the experiment.
+        Contains `meta_learners`, `samplers`, and `task_dists`.
 
-    sess : Type and default value.
-        The description string.
-
-    kwargs
+    sess : tf.Session
+        The TF session used for executing the computation graph.
 
     Returns
     -------
-    losses : Type and default value.
-        The description string.
+    losses : list of floats
+        Loss functions computed for each meta-learner.
     """
     # Sample from the task distribution.
     feed_lists = [
@@ -61,13 +60,15 @@ def train(cfg, lock=None, work_dir=None):
 
     Parameters
     ----------
-    cfg : Type and default value.
-        The description string.
+    cfg : OmegaConf
+        The experiment configuration.
 
-    lock : Type and default value.
-        The description string.
+    lock : Lock
+        An object used for synchronizing training and evaluation processes.
 
     work_dir : str, optional
+        Working directory used for saving checkpoints, logs, etc.
+        If None, it is set to `os.getcwd()`.
     """
     # Set working dir.
     if work_dir is None:

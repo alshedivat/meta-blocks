@@ -1,4 +1,9 @@
-"""Base models for meta-learning."""
+"""
+Base models for meta-learning.
+
+Note: this module will be refactored to fully decouple model architectures from
+datasets and adapation algorithms.
+"""
 
 import abc
 import logging
@@ -30,18 +35,13 @@ class Model(abc.ABC):
         The number of classes.
 
     name : str, optional (default="Model")
-        The description string.
+        The name of the model.
 
     global_embeddings : bool, optional (default=False)
-        The description string.
+        Whether the make the embeddings computed by the model non-adaptable.
     """
 
-    def __init__(self, num_classes, name="Model", global_embeddings=False,
-                 **kwargs):
-        """
-
-
-        """
+    def __init__(self, num_classes, name="Model", global_embeddings=False, **kwargs):
         self.global_embeddings = global_embeddings
         self.num_classes = num_classes
         self.kwargs = kwargs
@@ -95,8 +95,7 @@ class Model(abc.ABC):
     @property
     def parameters(self):
         """Returns a dict of all trainable parameters."""
-        variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
-                                      scope=self.name)
+        variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name)
         return {var.name.split(":")[0]: var for var in variables}
 
     @abc.abstractmethod
@@ -112,8 +111,7 @@ class Model(abc.ABC):
             scope = f"{self.name}/global"
         else:
             scope = f"{self.name}/adaptable"
-        with tf.variable_scope(scope, custom_getter=self.custom_getter,
-                               reuse=reuse):
+        with tf.variable_scope(scope, custom_getter=self.custom_getter, reuse=reuse):
             # <float32> [num_inputs, emb_size].
             embeddings = self._build_embeddings(inputs_ph)
         return embeddings
@@ -128,8 +126,7 @@ class Model(abc.ABC):
     def build_logits(self, embeddings, reuse=True):
         """Builds logits on top the provided embeddings."""
         scope = f"{self.name}/adaptable"
-        with tf.variable_scope(scope, custom_getter=self.custom_getter,
-                               reuse=reuse):
+        with tf.variable_scope(scope, custom_getter=self.custom_getter, reuse=reuse):
             # <float32> [num_inputs, num_classes].
             logits = self._build_logits(embeddings)
         return logits
@@ -142,12 +139,12 @@ class Model(abc.ABC):
         raise NotImplementedError("Abstract Method")
 
     def build_loss(
-            self,
-            inputs_ph,
-            labels_ph,
-            num_classes=None,
-            use_sparse_softmax=False,
-            reuse=True,
+        self,
+        inputs_ph,
+        labels_ph,
+        num_classes=None,
+        use_sparse_softmax=False,
+        reuse=True,
     ):
         """Builds the model loss on top provided data placeholders."""
         with tf.name_scope(self.name):

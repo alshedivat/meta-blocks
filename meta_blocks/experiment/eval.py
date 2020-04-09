@@ -27,21 +27,20 @@ def eval_step(cfg, exp, sess, **kwargs):
 
     Parameters
     ----------
-    cfg : Type and default value.
-        The description string.
+    cfg : OmegaConf
+        The experiment configuration.
 
-    exp : Type and default value.
-        The description string.
+    exp : Experiment
+        The object that represents the experiment.
+        Contains `meta_learners`, `samplers`, and `task_dists`.
 
-    sess : Type and default value.
-        The description string.
-
-    kwargs
+    sess : tf.Session
+        The TF session used for executing the computation graph.
 
     Returns
     -------
-    results : Type and default value.
-        The description string.
+    results : list of dicts
+        List of dictionaries with eval metrics computed for each meta-learner.
     """
     # Re-initialize task distributions if samplers are stateful.
     for td in exp.task_dists:
@@ -78,14 +77,15 @@ def evaluate(cfg, lock=None, work_dir=None):
 
     Parameters
     ----------
-    cfg : Type and default value.
-        The description string.
+    cfg : OmegaConf
+        The experiment configuration.
 
-    lock : object, optional (default=None)
-        The description string.
+    lock : Lock
+        An object used for synchronizing training and evaluation processes.
 
-    work_dir : str, optional (default=None)
-        The description string.        
+    work_dir : str, optional
+        Working directory used for saving checkpoints, logs, etc.
+        If None, it is set to `os.getcwd()`.
     """
     # Set working dir.
     if work_dir is None:
@@ -103,9 +103,9 @@ def evaluate(cfg, lock=None, work_dir=None):
         # Build and initialize.
         if lock is not None:
             lock.acquire()
-        exp = utils.build_and_initialize(cfg=cfg, sess=sess,
-                                         categories=categories,
-                                         mode=common.ModeKeys.EVAL)
+        exp = utils.build_and_initialize(
+            cfg=cfg, sess=sess, categories=categories, mode=common.ModeKeys.EVAL
+        )
         if lock is not None:
             lock.release()
 
@@ -145,7 +145,6 @@ def evaluate(cfg, lock=None, work_dir=None):
                 log += f" - {td.name} acc: {100 * result['acc']:.2f}"
             logger.info(log)
             for result, td, writer in zip(results, exp.task_dists, writers):
-                summary = sess.run(merged,
-                                   feed_dict={accuracy_ph: result["acc"]})
+                summary = sess.run(merged, feed_dict={accuracy_ph: result["acc"]})
                 writer.add_summary(summary, step)
                 writer.flush()

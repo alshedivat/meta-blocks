@@ -48,16 +48,16 @@ class Maml(base.AdaptationStrategy):
     """
 
     def __init__(
-            self,
-            model,
-            optimizer,
-            tasks,
-            batch_size=16,
-            inner_optimizer=None,
-            first_order=False,
-            mode=common.ModeKeys.TRAIN,
-            name="Maml",
-            **kwargs,
+        self,
+        model,
+        optimizer,
+        tasks,
+        batch_size=16,
+        inner_optimizer=None,
+        first_order=False,
+        mode=common.ModeKeys.TRAIN,
+        name="Maml",
+        **kwargs,
     ):
 
         # Instantiate Maml.
@@ -91,57 +91,55 @@ class Maml(base.AdaptationStrategy):
         return [(self._adapt_steps_ph, num_inner_steps)]
 
     def _build_adapted_params(
-            self,
-            inputs,
-            labels,
-            init_params,
-            num_steps,
-            back_prop=False,
-            parallel_iterations=1,
-            shuffle=True,
+        self,
+        inputs,
+        labels,
+        init_params,
+        num_steps,
+        back_prop=False,
+        parallel_iterations=1,
+        shuffle=True,
     ):
         """Builds adapted model parameters dynamically using tf.while_loop.
 
         Parameters
         ----------
-        inputs :
-            The description string.
+        inputs : Tensor <float32> [num_samples, ...]
+            Inputs of the samples used for building adapted parameters.
 
-        labels :
-            The description string.
+        labels : Tensor <float32> [num_samples, num_classes]
+            Labels of the samples used for building adapted parameters.
 
-        init_params : dict of tf.Tensors
-            The description string.
+        init_params : dict of Tensors
+            A dictionary with initial parameters of the model.
 
-        num_steps : int or tf.Tensor <int32> []
-            The description string.
+        num_steps : int or Tensor <int32> []
+            Number of gradient steps used for adaptation.
 
         back_prop : bool, optional (default: False)
-            The description string.
+            Indicates whether backprop is allowed through the adapted parameters.
 
         parallel_iterations : int, optional (default=1)
-            The description string.
+            Parallel iterations parameter for the tf.while_loop.
 
         shuffle : bool, optional (default=True)
-            The description string.
+            Whether to shuffle the samples before batching.
 
         Returns:
         -------
-        adapted_params: dict of tf.Tensors
-            The description string.
+        adapted_params: dict of Tensors
+            A dictionary with adapted parameters of the model.
         """
 
         # Build batched indices.
         # <int32> [batch_size * num_steps].
         indices = tf.math.mod(
-            tf.range(self._batch_size * num_steps, dtype=tf.int32),
-            tf.shape(inputs)[0]
+            tf.range(self._batch_size * num_steps, dtype=tf.int32), tf.shape(inputs)[0]
         )
         if shuffle:
             indices = tf.random.shuffle(indices)
         # <int32> [num_steps, batch_size].
-        batched_indices = tf.reshape(indices,
-                                     shape=(num_steps, self._batch_size))
+        batched_indices = tf.reshape(indices, shape=(num_steps, self._batch_size))
 
         def cond_fn(step, _unused_params):
             return tf.less(step, num_steps)

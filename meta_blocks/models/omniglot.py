@@ -1,4 +1,9 @@
-"""Models for Omniglot datasets."""
+"""
+Models for Omniglot datasets.
+
+Note: this module will be refactored to fully decouple model architectures from
+datasets and adapation algorithms.
+"""
 
 import tensorflow.compat.v1 as tf
 
@@ -19,9 +24,7 @@ class _OmniglotModelMixin(base.Model):
         inputs_ph = tf.placeholder(
             dtype=tf.float32, shape=(None, 28, 28), name="inputs"
         )
-        labels_ph = tf.placeholder(dtype=tf.int32,
-                                   shape=(None,),
-                                   name="labels")
+        labels_ph = tf.placeholder(dtype=tf.int32, shape=(None,), name="labels")
         return inputs_ph, labels_ph
 
 

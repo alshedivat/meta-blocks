@@ -10,13 +10,12 @@
 [![PyPI Status Badge](https://badge.fury.io/py/meta-blocks.svg)](https://pypi.org/project/meta-blocks/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/meta-blocks)](https://pypi.org/project/meta-blocks/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
-PyPI Badge | Travis CI Badge | Circle CI Badge | docs Badge | Coverage Badge
+| docs Badge | Coverage Badge
 
 
 **Meta-Blocks** is a modular toolbox for research, experimentation, and reproducible benchmarking of learning-to-learn algorithms.
 The toolbox provides flexible APIs for working with `MetaDatasets`, `TaskDistributions`, and `MetaLearners` (see the figure below).
-The APIs make it easy to implement a variety of meta-learning algorithms, run them on well-established benchmarks, or add your own meta-learning problems to the suite and benchmark algorithms on them. 
+The APIs make it easy to implement a variety of meta-learning algorithms, run them on well-established and emerging benchmarks, and add your own meta-learning problems to the suite and benchmark algorithms on them. 
 
  ![System Illustration](docs/figs/system_illustration.png)
 

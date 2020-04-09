@@ -17,7 +17,7 @@ __all__ = ["Category", "DataPool", "Dataset", "MetaDataset"]
 
 class Category(abc.ABC):
     """An abstract class for representing different categories of instances.
-    Provides access to the underlying data through the tf.data API.
+    Provides access to the underlying data.
 
     Parameters
     ----------
@@ -25,7 +25,7 @@ class Category(abc.ABC):
         The data directory.
 
     name : str
-        The description string.
+        Name of the category.
     """
 
     def __init__(self, data_dir: str, name: str) -> None:
@@ -73,24 +73,28 @@ class Category(abc.ABC):
 class DataPool(object):
     """Represents a pool of data.
 
+    Note: auxiliary class; likely to be removed from the API.
+
     Parameters
     ----------
-    categories : The description string.
-        The description string.
+    categories : list of Categories
+        A list of categories representing the underlying data.
 
-    name : str, optional (default='DataPool')
-        The description string.
+    name : str, optional (default="DataPool")
+        The name of the data-pool.
 
     Attributes
     ----------
-    num_categories : Type and default value.
-        The description string.
+    num_categories : int
+        The total number of the categories in the data pool.
 
-    category_handles : Type and default value.
-        The description string.
+    category_handles : list of str
+        A list of string handles that identify iterators over the data in each
+        category. Allows to construct symbolic datasets that can pool data
+        from different subsets of categories.
 
-    output_shapes : Type and default value.
-        The description string.
+    output_shapes : TensorShapes
+        Shapes of the examples contained in the data pool.
     """
 
     def __init__(self, categories: List[Category], name: str = "DataPool"):
@@ -143,17 +147,15 @@ class Dataset(object):
         The number of classes.
 
     name : str, optional (default="Dataset")
-        The name of dataset.
-
-    kwargs
+        The name of the dataset.
 
     Attributes
     ----------
-    data_tensors : Type and default value.
-        The description string.
+    data_tensors : tuple of Tensors
+        A tuple of tensors/placeholders that contain data for each class.
 
-    size : Type and default value.
-        The description string.
+    size : Tensor <int32> []
+        The total number of samples in the dataset.
     """
 
     def __init__(self, num_classes: int, name: str = "Dataset", **kwargs):
@@ -175,15 +177,15 @@ class Dataset(object):
         return tf.reduce_sum([tf.shape(dt)[0] for dt in self.data_tensors])
 
     def build(self, output_types, output_shapes):
-        """The description string.
+        """Builds the dataset subgraph.
 
         Parameters
         ----------
-        output_types : Type and default value.
-            The description string.
+        output_types : TensorTypes
+            The expected types of the examples contained in the dataset.
 
-        output_shapes : Type and default value.
-            The description string.
+        output_shapes : TensorShapes
+            The expected shapes of the examples contained in the dataset.
 
         Returns
         -------

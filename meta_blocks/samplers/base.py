@@ -27,6 +27,7 @@ class Sampler(abc.ABC):
             If set to True, use stratification.
 
         name : str, optional (default="Sampler")
+            The name of the sampler.
         """
         self.stratified = stratified
         self.name = name
@@ -49,20 +50,23 @@ class Sampler(abc.ABC):
         Parameters
         ----------
         size : int
-            The description string.
+            Number of samples to label.
 
-        scores :
-            The description string.
+        scores : Tensor <float32> [num_samples]
+            A vector of scores that are used to select which sample to label.
 
-        indices :
-            The description string.
+        indices : Tensor <int32> [num_instances], optional
+            A vector of absolute indices of the samples in a larger collection.
+            If not None, the method returns `selected_indices` from `indices`.
+            Otherwise, `selected_indices` are relative.
 
         soft : bool, optional (default=False)
-            The description string.
+            Whether to select top indices softly by sampling a categorical
+            distribution with logits proportional to the scores.
 
         Returns
         -------
-            The description string.
+            selected_indices : Tensor <int32> [size]
         """
         if soft:
             uniform_samples = tf.random.uniform(tf.shape(scores))
@@ -126,7 +130,35 @@ class Sampler(abc.ABC):
     def select_indices_stratified(
         size, scores, clusters, indices=None, soft=False, parallel_iterations=8
     ) -> tf.Tensor:
-        """Selects indices of the instances to label given the scores."""
+        """Selects indices of the instances to label given the scores.
+
+        Parameters
+        ----------
+        size : int
+            Number of samples to label.
+
+        scores : Tensor <float32> [num_samples]
+            A vector of scores that are used to select which sample to label.
+
+        clusters : Tensor <int32> [num_samples]
+            A vector of cluster indices used for sampling stratification.
+
+        indices : Tensor <int32> [num_instances], optional
+            A vector of absolute indices of the samples in a larger collection.
+            If not None, the method returns `selected_indices` from `indices`.
+            Otherwise, `selected_indices` are relative.
+
+        soft : bool, optional (default=False)
+            Whether to select top indices softly by sampling a categorical
+            distribution with logits proportional to the scores.
+
+        parallel_iterations : int (default: 8)
+            Number of parallel iterations passed to tf.while_loop.
+
+        Returns
+        -------
+            selected_indices : Tensor <int32> [size]
+        """
         # size_per_cluster: <int32> [num_unique_clusters].
         # unique_clusters: <int32> [num_unique_clusters].
         size_per_cluster, unique_clusters = Sampler.stratify_by_cluster(

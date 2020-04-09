@@ -30,15 +30,11 @@ class Experiment(
 
     Parameters
     ----------
+    meta_learners: list of `AdaptationStrategy`s
 
-    meta_learners: list of `AdaptationStrategy`s.
-        The description string.
+    samplers: list of `Sampler`s
 
-    samplers: list of `Sampler`s.
-        The description string.
-
-    task_dists: list of `TaskDistribution`s.
-        The description string.
+    task_dists: list of `TaskDistribution`s
     """
 
     pass
@@ -51,10 +47,12 @@ def session(gpu_allow_growth=True, log_device_placement=False):
     Parameters
     ----------
     gpu_allow_growth : bool, optional (default=True)
-        The description string.
+        Used to configure tf.Session.
+        See tf.ConfigProto.gpu_options.allow_growth.
 
     log_device_placement : bool, optional (default=False)
-        The description string.
+        Used for debugging tensor placement on devices.
+        See tf.ConfigProto.log_device_placement.
     """
     # Reset TF graph.
     tf.reset_default_graph()
@@ -78,22 +76,24 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
 
     Parameters
     ----------
-    cfg : Type and default value.
-        The description string.
+    cfg : OmegaConf
+        The experiment configuration.
 
-    sess : Type and default value.
-        The description string.
+    sess : tf.Session
+        The TF session used for executing the computation graph.
 
-    categories : Type and default value.
-        The description string.
+    categories : dict of lists of Categories
+        Each list of Categories is used to construct meta-datasets.
 
-    mode : Type and default value.
-        The description string.
+    mode : str, optional (default: common.ModeKeys.TRAIN)
+        Defines the mode of the computation graph (TRAIN or EVAL).
+        Note: this is likely to be removed from the API down the line.
 
     Returns
     -------
-    Experiment : Type and default value.
-        The description string.
+    exp : Experiment
+        An object that represents the experiment.
+        Contains `meta_learners`, `samplers`, and `task_dists`.
     """
     # Build and initialize data pools.
     data_pools = {
