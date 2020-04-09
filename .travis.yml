@@ -1,0 +1,12 @@
+language: python
+python:
+  - 3.6
+  - 3.7
+install:
+  - pip install pytest-cov coveralls
+  - pip install -r requirements.txt
+  - pip install -e .
+script:
+  - py.test --cov-config .coveragerc --cov-report term-missing --cov=cen tests/
+after_success:
+  - coveralls
