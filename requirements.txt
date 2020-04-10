@@ -1,8 +1,8 @@
 albumentations
-hydra-core
+hydra-core>=0.11,<1.0
 numpy
 Pillow
 pre-commit
 scipy
 scikit-learn
-tensorflow>=2.1
+tensorflow>=2.0
