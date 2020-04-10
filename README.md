@@ -10,7 +10,8 @@
 [![PyPI Status Badge](https://badge.fury.io/py/meta-blocks.svg)](https://pypi.org/project/meta-blocks/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/meta-blocks)](https://pypi.org/project/meta-blocks/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-| docs Badge | Coverage Badge
+[![Documentation Status](https://readthedocs.org/projects/meta-blocks/badge/?version=latest)](https://meta-blocks.readthedocs.io/en/latest/?badge=latest)
+| Coverage Badge
 
 
 **Meta-Blocks** is a modular toolbox for research, experimentation, and reproducible benchmarking of learning-to-learn algorithms.
