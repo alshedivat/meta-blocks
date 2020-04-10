@@ -2,6 +2,8 @@ albumentations
 hydra-core
 numpy
 Pillow
+pre-commit
 scipy
 scikit-learn
+sphinxcontrib-bibtex
 tensorflow>=2.1
