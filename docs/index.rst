@@ -9,9 +9,20 @@ Welcome to meta-blocks's documentation!
 
 **Deployment & Documentation & Stats**
 
-**WARNING:** Repository is under construction. Feel free to star and subscribe for updates, but the code will be unstable and might be changing under the hood until the first beta. 
+**WARNING:** Repository is under construction. Feel free to star and subscribe for updates, but the code will be unstable and might be changing under the hood until the first beta.
 
 PyPI Badge | Travis CI Badge | Circle CI Badge | docs Badge | Coverage Badge
+
+.. image:: https://img.shields.io/pypi/v//meta-blocks.svg?color=brightgreen
+   :target: https://pypi.org/project//meta-blocks/
+   :alt: PyPI version
+
+.. image:: https://travis-ci.org/alshedivat/meta-blocks.svg?branch=master
+   :target: https://travis-ci.org/alshedivat/meta-blocks
+
+.. image:: https://readthedocs.org/projects/meta-blocks/badge/?version=latest
+   :target: https://meta-blocks.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 
 **Meta-Blocks** is a modular toolbox for research, experimentation, and reproducible benchmarking of learning-to-learn algorithms.
