@@ -1,10 +1,11 @@
 
-**Logo image is missing for now**
+**Logo image shoulkd be adjusted**
 
 .. image:: https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks-2d.png?raw=true
    :target: https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks-2d.png?raw=true
-   :width: 400px
+   :width: 200px
    :alt: Logo
+   :align: center
 
 
 ----
