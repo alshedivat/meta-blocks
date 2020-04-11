@@ -1,0 +1,8 @@
+-r dev.txt
+black
+coverage
+mypy
+pre-commit
+pytest
+setuptools
+twine

@@ -22,7 +22,7 @@ def readme():
 
 # Read the contents of requirements.txt.
 def requirements():
-    requirements_path = path.join(this_directory, "requirements.txt")
+    requirements_path = path.join(this_directory, "requirements/base.txt")
     with open(requirements_path, encoding="utf-8") as fp:
         return fp.read().splitlines()
 
