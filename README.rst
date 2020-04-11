@@ -1,5 +1,5 @@
 
-**Logo image shoulkd be adjusted**
+**Logo image should be adjusted**
 
 .. image:: https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks-2d.png?raw=true
    :target: https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/meta-blocks-2d.png?raw=true
@@ -7,6 +7,7 @@
    :alt: Logo
    :align: center
 
+A Modular Toolbox for Accelerating Meta-Learning Research :rocket:
 
 ----
 
