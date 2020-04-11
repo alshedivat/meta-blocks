@@ -29,7 +29,6 @@ The toolbox provides flexible APIs for working with **MetaDatasets**, **TaskDist
 The APIs make it easy to implement a variety of meta-learning algorithms, run them on well-established benchmarks,
 or add your own meta-learning problems to the suite and benchmark algorithms on them.
 
-As shown in the Figure below, it contains xxx modules, and each of them can be tailored to ...
 
 .. image:: https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/system_illustration.png?raw=true
    :target: https://github.com/alshedivat/meta-blocks/blob/master/docs/figs/system_illustration.png?raw=true
