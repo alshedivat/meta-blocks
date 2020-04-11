@@ -11,9 +11,8 @@ Welcome to meta-blocks's documentation!
 
 **WARNING:** Repository is under construction. Feel free to star and subscribe for updates, but the code will be unstable and might be changing under the hood until the first beta.
 
-PyPI Badge | Travis CI Badge | Circle CI Badge | docs Badge | Coverage Badge
 
-.. image:: https://img.shields.io/pypi/v//meta-blocks.svg?color=brightgreen
+.. image:: https://img.shields.io/pypi/v/meta-blocks.svg?color=brightgreen
    :target: https://pypi.org/project//meta-blocks/
    :alt: PyPI version
 
@@ -39,7 +38,7 @@ As shown in the Figure below, it contains xxx modules, and each of them can be t
 **Meta-Blocks** package comes with:
 
 * **Flexible APIs, detailed documentation, and multiple examples.**
-* **Popular models and algorithms** such as MAML :cite:`a-finn2017model`, Reptile :cite:`a-nichol2018first`, Protonets :cite:`a-snell2017prototypical`
+* **Popular models and algorithms** such as MAML :cite:`finn2017model`, Reptile :cite:`nichol2018first`, Protonets :cite:`snell2017prototypical`
 * **Supervised and unsupervised meta-learning** setups compatible with all algorithms.
 * **Customizable modules and utility functions** for quick prototyping on new meta-learning algorithms.
 
@@ -85,8 +84,6 @@ As shown in the Figure below, it contains xxx modules, and each of them can be t
 
 .. bibliography:: references.bib
    :cited:
-   :labelprefix: A
-   :keyprefix: a-
 
 
 
