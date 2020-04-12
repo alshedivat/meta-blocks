@@ -1,6 +1,7 @@
 albumentations
 hydra-core>=0.11,<1.0
 numpy
+omegaconf>=1.4,<2.0
 Pillow
 scipy
 scikit-learn

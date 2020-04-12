@@ -1,4 +1,4 @@
--r dev.txt
+-r base.txt
 black
 coverage
 mypy

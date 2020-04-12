@@ -9,7 +9,8 @@ import urllib.request
 import zipfile
 
 import pytest
-from hydra._internal.hydra import GlobalHydra, Hydra
+from hydra.experimental import compose as hydra_compose
+from hydra.experimental import initialize as hydra_init
 
 from meta_blocks.experiment.eval import evaluate
 from meta_blocks.experiment.train import train
@@ -19,18 +20,8 @@ logger = logging.getLogger(__name__)
 AVAILABLE_METHODS = {"maml", "fomaml", "reptile", "proto"}
 OMNIGLOT_URL = "https://raw.githubusercontent.com/brendenlake/omniglot/master/python/"
 
-
-def get_hydra():
-    global_hydra = GlobalHydra()
-    if not global_hydra.is_initialized():
-        return Hydra.create_main_hydra_file_or_module(
-            calling_file=__file__,
-            calling_module=None,
-            config_dir="configs",
-            strict=False,
-        )
-    else:
-        return global_hydra.hydra
+# Initialize hydra.
+hydra_init(config_dir="configs", strict=False)
 
 
 @pytest.mark.parametrize("adaptation_method", AVAILABLE_METHODS)
@@ -55,10 +46,8 @@ def test_omniglot_integration(adaptation_method):
         logger.info(f"Fetching omniglot...")
         fetch_omniglot(dir_path)
         data_path = os.path.join(dir_path, "omniglot")
-        # Parse hydra configs.
-        hydra = get_hydra()
-        cfg = hydra.compose_config(
-            "config.yaml",
+        cfg = hydra_compose(
+            config_file="config.yaml",
             overrides=[
                 f"adaptation={adaptation_method}",
                 f"dataset=omniglot",
