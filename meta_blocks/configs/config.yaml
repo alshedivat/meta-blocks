@@ -1,4 +1,6 @@
 defaults:
+  - hydra/job_logging: colorlog
+  - hydra/hydra_logging: colorlog
   - experiment: ???
   - evaluation: ???
   - dataset: ???

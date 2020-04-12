@@ -6,13 +6,14 @@
 
 **WARNING:** Repository is under construction. Feel free to star and subscribe for updates, but the code will be unstable and might be changing under the hood until the first beta. 
 
+----
+
 [![Build Status](https://travis-ci.org/alshedivat/meta-blocks.svg)](https://travis-ci.org/alshedivat/meta-blocks)
 [![Documentation Status](https://readthedocs.org/projects/meta-blocks/badge/?version=latest)](https://meta-blocks.readthedocs.io/en/latest/?badge=latest)
 [![PyPI Status Badge](https://badge.fury.io/py/meta-blocks.svg)](https://pypi.org/project/meta-blocks/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/meta-blocks)](https://pypi.org/project/meta-blocks/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 | Coverage Badge
-
 
 **Meta-Blocks** is a modular toolbox for research, experimentation, and reproducible benchmarking of learning-to-learn algorithms.
 The toolbox provides flexible APIs for working with `MetaDatasets`, `TaskDistributions`, and `MetaLearners` (see the figure below).
@@ -56,7 +57,7 @@ $ cd meta-blocks
 $ pip install .
 ```
 
-**Required Dependencies**\ :
+**Required Dependencies** :
 
 * albumentations
 * hydra-core
@@ -66,7 +67,6 @@ $ pip install .
 * scikit-learn
 * tensorflow>=2.1
 
-
 ---
 
 ### Examples
@@ -75,9 +75,7 @@ TODO:
 We should provide a minimal example so people could run immediately.
 Ideally, the running time should be within a few mins.
 
-
 ----
-
 
 ### Development
 
@@ -85,11 +83,7 @@ For development and contributions, please make sure to install pre-commit hooks 
 
 ```shell
 $ pip install pre-commit      # install pre-commit
-$ pre-commit install          # install git hooks
-$ pre-commit run --all-files  # run pre-commit on all the files
-```
-
-
+$ pre-commit install          # install git hooks $ pre-commit run --all-files  # run pre-commit on all the files ``` 
 #### Status
 
 **Meta-Blocks** is currently **under development** as of Apr, 2020.
