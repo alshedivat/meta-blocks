@@ -1,10 +1,11 @@
-from meta_blocks.models import base, omniglot
-from meta_blocks.models.base import Model
+from meta_blocks.models import classification
 
 
-def get(name, dataset_name, build=True, **kwargs):
-    if dataset_name == "omniglot":
-        model = omniglot.get(name, build=build, **kwargs)
+def get(name, **kwargs):
+    if name == "feed_forward":
+        model = classification.FeedForwardModel(**kwargs)
+    elif name == "proto":
+        model = classification.ProtoModel(**kwargs)
     else:
-        raise ValueError(f"Unsupported dataset: {dataset_name}")
+        raise ValueError(f"Unsupported dataset: {name}")
     return model
