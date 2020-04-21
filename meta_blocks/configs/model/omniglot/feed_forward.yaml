@@ -1,0 +1,3 @@
+# Standard feed-forward model.
+model:
+  name: feed_forward

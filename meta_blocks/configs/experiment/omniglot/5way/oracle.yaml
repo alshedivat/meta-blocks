@@ -10,7 +10,7 @@ train:
   tasks:
     - set_name: train
       log_dir: train/oracle
-      labels_per_step: 10
+      labels_per_step: 30
       config:
         name: supervised
         num_query_shots: 1
@@ -21,7 +21,7 @@ train:
         name: uniform
         stratified: true
   max_steps: 20000
-  log_interval: 300
-  save_interval: 300
+  log_interval: 10
+  save_interval: 100
   budget_interval: 3000
   do_reinit: true

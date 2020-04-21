@@ -21,7 +21,7 @@ train:
         name: uniform
         stratified: false
   max_steps: 20000
-  log_interval: 300
-  save_interval: 300
+  log_interval: 10
+  save_interval: 100
   budget_interval: 3000
   do_reinit: true

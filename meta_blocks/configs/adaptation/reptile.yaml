@@ -1,12 +1,9 @@
 adapt:
   name: reptile
-  batch_size: 50
+  batch_size: 10
   inner_optimizer:
     name: sgd
     learning_rate: 0.0005
-
-model:
-  name: embed_ff
 
 train:
   adapt:

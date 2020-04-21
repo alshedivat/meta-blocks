@@ -1,5 +1,3 @@
 # Proto-compatible model configuration.
 model:
   name: proto
-  build_kwargs:
-    num_classes: 20
