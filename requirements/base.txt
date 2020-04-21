@@ -6,4 +6,4 @@ omegaconf>=1.4,<2.0
 Pillow
 scipy
 scikit-learn
-tensorflow>=2.0
+tensorflow>=2.2

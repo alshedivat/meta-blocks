@@ -3,6 +3,14 @@ adapt:
 
 model:
   name: proto
+  embedding_dim: 32
+
+network:
+  name: simple_cnn
+  filters: [64, 64]
+  kernel_size: 3
+  strides: 2
+  padding: same
 
 train:
   adapt: {}
