@@ -55,7 +55,7 @@ def build_convnet(
     filters: List[int],
     kernel_size: Union[int, Tuple[int]],
     strides: Union[int, Tuple[int]] = (1, 1),
-    padding: str = "valid",
+    padding: str = "same",
     batch_norm: bool = False,
     pooling: Optional[str] = None,
     pooling_kwargs: Optional[dict] = None,

@@ -5,3 +5,4 @@ network:
   kernel_size: 3
   strides: 2
   padding: same
+  batch_norm: true

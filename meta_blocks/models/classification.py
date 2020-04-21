@@ -72,15 +72,15 @@ class ClassificationModel(abc.ABC):
         """
         raise NotImplementedError("Abstract Method")
 
-    def build_logits(self, inputs_ph):
+    def build_logits(self, inputs_ph, training=True):
         """Builds the logits for the provided inputs."""
         with tf.name_scope(self.name):
             # <float32> [num_inputs, num_classes].
-            logits = self._build_logits(inputs_ph)
+            logits = self._build_logits(inputs_ph, training=True)
         return logits
 
     @abc.abstractmethod
-    def _build_logits(self, inputs_ph):
+    def _build_logits(self, inputs_ph, training=True):
         """Builds a part of the model graph for computing output logits.
         Must be implemented in a subclass.
         """
@@ -91,7 +91,7 @@ class ClassificationModel(abc.ABC):
         with tf.name_scope(self.name):
             # Build logits.
             # <float32> [num_inputs, num_classes].
-            logits = self.build_logits(inputs_ph)
+            logits = self.build_logits(inputs_ph, training=True)
             # Build loss.
             # <float32> [num_inputs].
             loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -104,7 +104,7 @@ class ClassificationModel(abc.ABC):
         with tf.name_scope(self.name):
             # Build logits.
             # <float32> [num_inputs, num_classes].
-            logits = self.build_logits(inputs_ph)
+            logits = self.build_logits(inputs_ph, training=True)
             # Build predictions.
             # <float32> [num_inputs].
             preds = tf.argmax(logits, axis=-1, output_type=tf.int32)
@@ -162,10 +162,10 @@ class FeedForwardModel(ClassificationModel):
         if self.initial_parameters is None:
             self.initial_parameters = self.network.trainable_variables
 
-    def _build_logits(self, inputs_ph):
+    def _build_logits(self, inputs_ph, training=True):
         """Builds a part of the model graph for computing output logits."""
         # <float32> [num_inputs, num_classes].
-        logits = self.network(inputs_ph)
+        logits = self.network(inputs_ph, training=training)
         return logits
 
     @property
@@ -230,10 +230,10 @@ class ProtoModel(ClassificationModel):
         if self.initial_parameters is None:
             self.initial_parameters = self.network.trainable_variables
 
-    def _build_logits(self, inputs_ph):
+    def _build_logits(self, inputs_ph, training=True):
         """Builds logits using distances between inputs and prototypes."""
         # <float32> [None, embedding_dim].
-        embeddings = self.network(inputs_ph)
+        embeddings = self.network(inputs_ph, training=training)
 
         # TODO: generalize to other types of distances.
         # <float32> [None, num_classes].

@@ -100,9 +100,6 @@ def train(cfg, lock=None, work_dir=None):
             exp.checkpoint, directory=work_dir, max_to_keep=1
         )
 
-        # Initialize.
-        sess.run(tf.global_variables_initializer())
-
         # Do meta-learning iterations.
         if lock is not None:
             lock.acquire()

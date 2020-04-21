@@ -77,7 +77,6 @@ def custom_make_variable(
                 )
             return custom_variable
         else:
-            logger.warning(f"No match found for {canonical_name}.")
             variable = original_make_variable(name=name, **kwargs)
         return variable
 

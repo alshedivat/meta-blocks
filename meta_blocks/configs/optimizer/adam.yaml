@@ -1,4 +1,3 @@
-# Adam optimizer for meta-learning.
 train:
   opt_name: adam
   opt_kwargs:

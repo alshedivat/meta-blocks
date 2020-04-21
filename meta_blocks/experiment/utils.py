@@ -174,7 +174,7 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
     ]
 
     # Run global init.
-    # sess.run(tf.global_variables_initializer())
+    sess.run(tf.global_variables_initializer())
 
     # Initialize task distribution.
     for task_dist, sampler in zip(task_dists, samplers_list):

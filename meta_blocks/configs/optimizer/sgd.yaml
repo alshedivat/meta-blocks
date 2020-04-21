@@ -1,4 +1,3 @@
-# SGD optimizer for meta-learning.
 train:
   opt_name: sgd
   opt_kwargs:
