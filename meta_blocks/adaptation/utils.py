@@ -1,8 +1,15 @@
 """Adaptation utility functions."""
 
+import contextlib
 import logging
+from typing import Dict
 
 import tensorflow.compat.v1 as tf
+from tensorflow.python import ops
+from tensorflow.python.keras.engine import base_layer_utils
+from tensorflow.python.keras.engine.base_layer_utils import (
+    make_variable as original_make_variable,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -11,36 +18,79 @@ tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
 
-def make_custom_getter(custom_variables):
-    """Provides a custom getter for the given variables.
+def canonical_variable_name(variable_name: str, outer_scope: str):
+    """Returns the canonical variable name: `outer_scope/.../name`."""
+    name_parts = variable_name.split(":")[0].split("/")
+    for i, part in enumerate(name_parts):
+        if part == outer_scope:
+            return "/".join(name_parts[i:])
+    raise ValueError(f"Variable <{variable_name}> does not belong to <{outer_scope}>.")
 
-    The custom getter is such that whenever `get_variable` is called it
-    will replace any trainable variables with the tensors in `variables`,
-    in the same order. Non-trainable variables are obtained using the
-    default getter for the current variable scope.
+
+@contextlib.contextmanager
+def custom_make_variable(
+    canonical_custom_variables: Dict[str, tf.Tensor], outer_scope: str
+):
+    """A context manager that overrides `make_variable` with a custom function.
+
+    When building layers, Keras uses `make_variable` function to create weights
+    (kernels and biases for each layer). To build computation graphs that
+    consist of layers with adapted weights without implementing a whole new
+    custom library of layers, this function directly patches Keras internals.
+    Currently, this is the only solution compatible with Keras and TF2.
+    See: https://github.com/tensorflow/tensorflow/issues/33125.
+
+    This function wraps `make_variable` with a closure that infers the canonical
+    name of the variable being created (of the form `ModelName/.../var_name`)
+    and looks it up in the `custom_variables` dict that maps canonical names
+    to tensors. The function adheres the following logic:
+    - If there is a match, it does a few checks (shape, dtype, etc.) and returns
+      the found tensor instead of creating a new variable.
+    - If there is a match but checks fail, it throws an exception.
+    - If there are no matching `custom_variables`, it calls the original
+      `make_variable` utility function and returns a newly created variable.
 
     Parameters
     ----------
-    custom_variables : dict
-        A dict of tensors replacing the trainable variables.
+    canonical_custom_variables : dict
+        A dict of canonical variable names to tensors that must replace them.
 
-    Returns
-    -------
-    custom_getter : function
-        A custom getter function that can be used at TF graph construction time.
+    outer_scope : str
+        Name of the scope under which all variables are built.
+        This is usually the name of the model.
     """
 
-    def custom_getter(getter, name, **kwargs):
-        if name in custom_variables:
-            variable = custom_variables[name]
+    def _custom_make_variable(name, **kwargs):
+        # Create a variable using the original variable getter.
+        variable_name = f"{ops.get_name_scope()}/{name}"
+        canonical_name = canonical_variable_name(variable_name, outer_scope)
+        if canonical_name in canonical_custom_variables:
+            custom_variable = canonical_custom_variables[canonical_name]
+            # Check that custom_variable is a valid replacement.
+            if (
+                kwargs["shape"] != custom_variable.shape
+                or kwargs["dtype"] != custom_variable.dtype
+            ):
+                # TODO: raise a more specific exception.
+                raise Exception(
+                    f"{custom_variable} cannot replace for <{variable_name}>."
+                )
+            return custom_variable
         else:
-            variable = getter(name, **kwargs)
+            logger.warning(f"No match found for {canonical_name}.")
+            variable = original_make_variable(name=name, **kwargs)
         return variable
 
-    return custom_getter
+    try:
+        # Monkey-patch make_variable.
+        base_layer_utils.make_variable = _custom_make_variable
+        yield
+    finally:
+        # Monkey-unpatch make_variable.
+        base_layer_utils.make_variable = original_make_variable
 
 
-def build_new_parameters(loss, params, optimizer, first_order=False):
+def build_new_parameters(loss, parameters, optimizer, first_order=False):
     """Builds new parameters via an optimization step on the provided loss.
 
     Parameters
@@ -48,7 +98,7 @@ def build_new_parameters(loss, params, optimizer, first_order=False):
     loss : <float32> [] tensor
         A scalar tensor that represents the loss.
 
-    params : dict of variables or tensors
+    parameters : dict of variables or tensors
         A dictionary of initial parameters.
 
     optimizer : Optimizer
@@ -61,16 +111,16 @@ def build_new_parameters(loss, params, optimizer, first_order=False):
 
     Returns
     -------
-    new_params : dict of tensors
+    new_parameters : dict of tensors
         A dictionary of update parameters.
     """
-    param_names, param_values = zip(*params.items())
+    param_names, param_values = zip(*parameters.items())
     grads_and_vars = optimizer.compute_gradients(loss, param_values)
     # Prevent backprop through the gradients, if necessary.
     if first_order:
         grads_and_vars = [(tf.stop_gradient(g), v) for g, v in grads_and_vars]
-    new_params = dict(zip(param_names, optimizer.compute_updates(grads_and_vars)))
-    return new_params
+    new_parameters = dict(zip(param_names, optimizer.compute_updates(grads_and_vars)))
+    return new_parameters
 
 
 def build_prototypes(embeddings, labels, num_classes):

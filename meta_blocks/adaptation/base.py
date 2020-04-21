@@ -1,7 +1,6 @@
 """Base classes and functionality for model adaptation."""
 
 import abc
-import collections
 import logging
 
 import tensorflow.compat.v1 as tf
@@ -35,22 +34,11 @@ class AdaptationStrategy(abc.ABC):
         Defines the mode of the computation graph (TRAIN or EVAL).
         Note: this might be removed from the API down the line.
 
-    name : str, optional (default: "AdaptationStrategy")
+    name : str, optional
         Name of the adaptation method.
     """
 
-    def __init__(
-        self,
-        model,
-        optimizer,
-        tasks,
-        mode=common.ModeKeys.TRAIN,
-        name="AdaptationStrategy",
-        **kwargs,
-    ):
-
-        # Instantiates an AdaptationStrategy.
-
+    def __init__(self, model, optimizer, tasks, mode=common.ModeKeys.TRAIN, name=None):
         self.model = model
         self.optimizer = optimizer
         self.tasks = tasks
@@ -62,74 +50,63 @@ class AdaptationStrategy(abc.ABC):
 
         # Misc.
         self.mode = mode
-        self.name = name
+        self.name = name or self.__class__.__name__
         self.built = False
 
     @abc.abstractmethod
+    def _build_adapted_model(self, **kwargs):
+        """Builds adapted model graph. Must be implemented in a subclass."""
+        raise NotImplementedError("Abstract Method")
+
+    @abc.abstractmethod
     def _build_adaptation(self):
+        """Builds the adaptation graph. Must be implemented in a subclass."""
         raise NotImplementedError("Abstract Method")
 
-    @abc.abstractmethod
     def _build_meta_losses(self):
-        """Builds the the meta-loss."""
-        raise NotImplementedError("Abstract Method")
+        """Builds meta-losses for each task."""
+        meta_losses = []
+        for i, task in enumerate(self.tasks):
+            inputs, labels = task.query_tensors
+            with tf.name_scope(f"task{i}"):
+                adapted_model = self._build_adapted_model(task_id=i)
+                loss = adapted_model.build_loss(inputs, labels)
+                meta_losses.append(loss)
+        return meta_losses
 
-    @abc.abstractmethod
-    def _build_meta_eval(self):
-        """Builds predictions and labels for the query set."""
-        raise NotImplementedError("Abstract Method")
-
-    def _build_meta_train(self):
-        """Builds meta-update op."""
-        meta_grads = collections.defaultdict(list)
-        with tf.name_scope("meta-learning"):
-            # Build meta-loss.
-            losses = self._build_meta_losses()
-            meta_loss = tf.reduce_mean(losses)
-
-            # Build meta-gradients.
-            for loss in losses:
-                grads_and_vars = self.optimizer.compute_gradients(
-                    loss, self.model.parameters
-                )
-                for g, v in grads_and_vars:
-                    if g is None:
-                        continue
-                    meta_grads[v].append(g)
-
-            # Build meta-train op.
-            meta_train_op = self.optimizer.apply_gradients(
-                [(tf.reduce_mean(g, axis=0), v) for v, g in meta_grads.items()]
-            )
-
-            return meta_loss, meta_train_op
+    def _build_meta_learn(self):
+        """Builds meta-learning ops."""
+        meta_losses, preds_and_labels = [], []
+        for i, task in enumerate(self.tasks):
+            query_inputs, query_labels = task.query_tensors
+            with tf.name_scope(f"task{i}"):
+                adapted_model = self._build_adapted_model(task_id=i)
+                loss = adapted_model.build_loss(query_inputs, query_labels)
+                query_preds = adapted_model.build_predictions(query_inputs)
+                preds_and_labels.append((query_preds, query_labels))
+                meta_losses.append(loss)
+        # Build meta-loss and meta-train op.
+        meta_loss = tf.reduce_mean(meta_losses)
+        meta_train_op = self.optimizer.minimize(
+            meta_loss, var_list=self.model.initial_parameters
+        )
+        return meta_loss, meta_train_op, preds_and_labels
 
     def build(self):
         """Builds the graph for adaptation strategy."""
-        logger.info(f"Building {self.name}...")
-
-        # Build adaptation.
-        logger.info("Building adaptation graph...")
-        with tf.name_scope("adaptation"):
-            self._build_adaptation()
-
-        if self.mode == common.ModeKeys.TRAIN:
-            # Build meta-update op.
-            logger.debug("Building meta-training op...")
-            with tf.name_scope("meta-train"):
-                self.loss, self.train_op = self._build_meta_train()
-        else:  # self.mode == common.ModeKeys.EVAL.
-            # Build query predictions and labels.
-            logger.debug("Building predictions and labels...")
-            with tf.name_scope("meta-eval"):
-                self.preds_and_labels = self._build_meta_eval()
-
-        logger.debug("Done.")
-
-    @abc.abstractmethod
-    def get_adapted_model(self, **kwargs):
-        """Should return adapted model."""
-        raise NotImplementedError("Abstract Method")
+        logger.debug(f"Building {self.name}...")
+        with tf.name_scope(self.name):
+            # Build adaptation.
+            logger.debug("Building adaptation graph...")
+            with tf.name_scope("adaptation"):
+                self._build_adaptation()
+            # Build meta-losses, meta-update ops, meta-eval.
+            logger.debug("Building meta-learning ops...")
+            with tf.name_scope("meta-learn"):
+                self.loss, self.train_op, self.preds_and_labels = (
+                    self._build_meta_learn()
+                )
+            logger.debug("Done.")
 
     def get_feed_list(self, **kwargs):
         """No feed dict by default."""

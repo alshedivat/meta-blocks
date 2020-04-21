@@ -1,4 +1,4 @@
-"""Proto(net) adaptation strategies."""
+"""Prototypical adaptation strategies."""
 
 import logging
 
@@ -45,27 +45,19 @@ class Proto(base.AdaptationStrategy):
         tasks,
         mode=common.ModeKeys.TRAIN,
         name="Proto",
-        **kwargs,
+        **_unused_kwargs,
     ):
-        # Instantiate Proto
-        if not isinstance(model, models.base.ProtoModel):
-            raise ValueError("Proto-based adaptation expects a ProtoModel.")
         super(Proto, self).__init__(
-            model=model,
-            optimizer=optimizer,
-            tasks=tasks,
-            mode=mode,
-            name=name,
-            **kwargs,
+            model=model, optimizer=optimizer, tasks=tasks, mode=mode, name=name
         )
 
         # Inner loop.
-        self._prototypes = None
+        self.prototypes = None
 
-    def get_adapted_model(self, *, prototypes=None, task_id=None):
+    def _build_adapted_model(self, *, prototypes=None, task_id=None):
         """Returns a model with the specified prototypes."""
         if prototypes is None:
-            prototypes = self._prototypes[task_id]
+            prototypes = self.prototypes[task_id]
         self.model.prototypes = prototypes
         return self.model
 
@@ -73,8 +65,8 @@ class Proto(base.AdaptationStrategy):
         self,
         inputs,
         labels,
-        emb_size,
         num_classes,
+        embedding_dim,
         back_prop=True,
         parallel_iterations=16,
         eps=1e-7,
@@ -94,7 +86,7 @@ class Proto(base.AdaptationStrategy):
         def body_fn(step, prototypes, class_counts):
             x = tf.gather(inputs, batched_indices[step], axis=0)
             y = tf.gather(labels, batched_indices[step], axis=0)
-            embeddings = self.model.build_embeddings(x)
+            embeddings = self.model.network(x)
             new_prototypes, new_class_counts = utils.build_prototypes(
                 embeddings, y, num_classes
             )
@@ -105,9 +97,9 @@ class Proto(base.AdaptationStrategy):
             ]
 
         # Iterate through the data and compute average prototypes.
-        proto_shape = (num_classes, emb_size)
-        init_prototypes = tf.zeros(proto_shape)
-        init_class_counts = tf.zeros(proto_shape[:1])
+        prototypes_shape = (num_classes, embedding_dim)
+        init_prototypes = tf.zeros(prototypes_shape)
+        init_class_counts = tf.zeros(prototypes_shape[:1])
         _, cum_prototypes, cum_class_counts = tf.while_loop(
             cond=cond_fn,
             body=body_fn,
@@ -123,48 +115,30 @@ class Proto(base.AdaptationStrategy):
         # <float32> [num_classes, emb_dim].
         return tf.math.divide(cum_prototypes, cum_class_counts_eps)
 
-    def _build_meta_losses(self):
-        """Builds meta-losses for each task."""
-        meta_losses = []
-        for i, task in enumerate(self.tasks):
-            inputs, labels = task.query_tensors
-            self.model.prototypes = self._prototypes[i]
-            loss = self.model.build_loss(inputs, labels, num_classes=task.num_classes)
-            meta_losses.append(loss)
-        return meta_losses
-
-    def _build_meta_eval(self):
-        """Builds query predictions and labels."""
-        preds_and_labels = []
-        for i, task in enumerate(self.tasks):
-            inputs, labels = task.query_tensors
-            self.model.prototypes = self._prototypes[i]
-            preds = self.model.build_predictions(inputs)
-            preds_and_labels.append((preds, labels))
-        return preds_and_labels
-
     def _build_adaptation(self):
-        self._prototypes = []
+        """Builds the adaptation loop."""
+        self.prototypes = []
         for i, task in enumerate(self.tasks):
             unlabeled_inputs = task.unlabeled_support_inputs
             emb_stddev = tf.math.reduce_std(
-                tf.norm(self.model.build_embeddings(unlabeled_inputs), axis=-1)
+                tf.norm(self.model.network(unlabeled_inputs), axis=-1)
             )
             # Build prototypes.
             inputs, labels = task.support_tensors
-            self._prototypes.append(
+            self.prototypes.append(
                 tf.cond(
                     pred=tf.not_equal(tf.size(labels), 0),
                     true_fn=lambda: self._build_prototypes(
                         inputs=inputs,
                         labels=labels,
-                        emb_size=self.model.EMB_SIZE,
                         num_classes=task.num_classes,
+                        embedding_dim=self.model.embedding_dim,
                         back_prop=(self.mode == common.ModeKeys.TRAIN),
                     ),
                     # If no support data, use random prototypes.
                     false_fn=lambda: tf.random.normal(
-                        shape=(task.num_classes, self.model.EMB_SIZE), stddev=emb_stddev
+                        shape=(task.num_classes, self.model.embedding_dim),
+                        stddev=emb_stddev,
                     ),
                 )
             )
