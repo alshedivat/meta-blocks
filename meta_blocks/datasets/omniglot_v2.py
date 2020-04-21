@@ -130,12 +130,16 @@ class OmniglotDataset(base.Dataset):
     def __init__(
         self,
         num_classes: int,
+        data_shapes: tf.TensorShape,
+        data_types: tf.DType,
         rotations: Tuple[int] = (0,),
-        name: str = "OmniglotDataset",
+        name: Optional[str] = None,
     ):
-        self.name = name
         self.num_classes = num_classes
-        self._rotations = rotations
+        self.data_shapes = data_shapes
+        self.data_types = data_types
+        self.rotations = rotations
+        self.name = name or self.__class__.__name__
 
         # Internals.
         self._data_tensors = None
@@ -143,15 +147,15 @@ class OmniglotDataset(base.Dataset):
 
         self.built = False
 
-    def build(self, output_types, output_shapes):
+    def build(self):
         if not self.built:
             data_tensors = []
             with tf.name_scope(self.name):
                 # Data placeholders for each class.
                 for k in range(self.num_classes):
                     data_ph = tf.placeholder(
-                        dtype=output_types,
-                        shape=(None,) + output_shapes,
+                        shape=(None,) + self.data_shapes,
+                        dtype=self.data_types,
                         name=f"data_class_{k}",
                     )
                     data_tensors.append(data_ph)
@@ -171,14 +175,14 @@ class OmniglotDataset(base.Dataset):
             )
             return image
 
-        if len(self._rotations) > 1:
+        if len(self.rotations) > 1:
             return _inner
 
     def get_feed_list(
         self, data_arrays: Tuple[np.ndarray]
     ) -> List[Tuple[tf.Tensor, Any]]:
         feed_list = [(ph, array) for array, ph in zip(data_arrays, self._data_tensors)]
-        rotations = random.choices(self._rotations, k=self.num_classes)
+        rotations = random.choices(self.rotations, k=self.num_classes)
         feed_list.append((self._rotations_ph, rotations))
         return feed_list
 

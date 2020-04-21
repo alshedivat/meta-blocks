@@ -146,6 +146,12 @@ class Dataset(object):
     num_classes : int
         The number of classes.
 
+    output_types : TensorTypes
+        The expected types of the examples contained in the dataset.
+
+    output_shapes : TensorShapes
+        The expected shapes of the examples contained in the dataset.
+
     name : str, optional (default="Dataset")
         The name of the dataset.
 
@@ -158,9 +164,18 @@ class Dataset(object):
         The total number of samples in the dataset.
     """
 
-    def __init__(self, num_classes: int, name: str = "Dataset", **kwargs):
+    def __init__(
+        self,
+        num_classes: int,
+        data_shapes: tf.TensorShape,
+        data_types: tf.DType,
+        name: Optional[str] = None,
+        **kwargs,
+    ):
         self.num_classes = num_classes
-        self.name = name
+        self.data_shapes = data_shapes
+        self.data_types = data_types
+        self.name = name or self.__class__.__name__
 
         # Internals.
         self._data_tensors = None
@@ -176,16 +191,8 @@ class Dataset(object):
     def size(self) -> tf.Tensor:
         return tf.reduce_sum([tf.shape(dt)[0] for dt in self.data_tensors])
 
-    def build(self, output_types, output_shapes):
+    def build(self):
         """Builds the dataset subgraph.
-
-        Parameters
-        ----------
-        output_types : TensorTypes
-            The expected types of the examples contained in the dataset.
-
-        output_shapes : TensorShapes
-            The expected shapes of the examples contained in the dataset.
 
         Returns
         -------
@@ -201,8 +208,8 @@ class Dataset(object):
                     )
                     iterator = tf.data.Iterator.from_string_handle(
                         string_handle_ph,
-                        output_types=output_types,
-                        output_shapes=output_shapes,
+                        output_types=self.data_types,
+                        output_shapes=self.data_shapes,
                     )
                     data_tensor = iterator.get_next()
                     data_tensors.append(data_tensor)
@@ -244,7 +251,13 @@ class MetaDataset(object):
 
         # Internals.
         self._dataset_batch = tuple(
-            self.Dataset(self.num_classes, name=f"DS_{i}", **kwargs)
+            self.Dataset(
+                num_classes=self.num_classes,
+                data_shapes=self.data_pool.output_shapes,
+                data_types=self.data_pool.output_types,
+                name=f"DS_{i}",
+                **kwargs,
+            )
             for i in range(self.batch_size)
         )
 
@@ -263,10 +276,7 @@ class MetaDataset(object):
             logger.info(f"Building {self.name}...")
             with tf.name_scope(self.name):
                 for ds in self._dataset_batch:
-                    ds.build(
-                        output_types=self.data_pool.output_types,
-                        output_shapes=self.data_pool.output_shapes,
-                    )
+                    ds.build()
             self.built = True
         return self
 
