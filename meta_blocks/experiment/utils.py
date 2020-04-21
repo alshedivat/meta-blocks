@@ -11,6 +11,7 @@ from meta_blocks import (
     common,
     datasets,
     models,
+    networks,
     optimizers,
     samplers,
     tasks,
@@ -24,17 +25,21 @@ tf.enable_resource_variables()
 
 
 class Experiment(
-    collections.namedtuple("Experiment", ("meta_learners", "samplers", "task_dists"))
+    collections.namedtuple(
+        "Experiment", ("checkpoint", "meta_learners", "samplers", "task_dists")
+    )
 ):
     """Represents built entities for the Experiment.
 
     Parameters
     ----------
-    meta_learners: list of `AdaptationStrategy`s
+    checkpoint : tf.train.Checkpoint
 
-    samplers: list of `Sampler`s
+    meta_learners : list of `AdaptationStrategy`s
 
-    task_dists: list of `TaskDistribution`s
+    samplers : list of `Sampler`s
+
+    task_dists : list of `TaskDistribution`s
     """
 
     pass
@@ -66,7 +71,8 @@ def session(gpu_allow_growth=True, log_device_placement=False):
     sess = tf.Session(config=config)
 
     try:
-        yield sess
+        with sess.as_default():
+            yield sess
     finally:
         sess.close()
 
@@ -120,14 +126,22 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
     }
 
     # Build model.
+    network_builder = networks.get(**cfg.network)
     model = models.get(
-        dataset_name=cfg.data.name,
+        input_shapes=data_pools["train"].output_shapes,
+        input_types=data_pools["train"].output_types,
         num_classes=cfg[mode].dataset.num_classes,
+        network_builder=network_builder,
         **cfg.model,
-    )
+    ).build()
 
     # Build optimizer.
     optimizer = optimizers.get(**cfg.train.optimizer)
+
+    # Build checkpoint.
+    checkpoint = tf.train.Checkpoint(
+        model_state=model.initial_parameters, optimizer=optimizer
+    )
 
     # Build task distributions.
     task_dists = [
@@ -160,12 +174,15 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
     ]
 
     # Run global init.
-    sess.run(tf.global_variables_initializer())
+    # sess.run(tf.global_variables_initializer())
 
     # Initialize task distribution.
     for task_dist, sampler in zip(task_dists, samplers_list):
         task_dist.initialize(sampler=sampler, sess=sess)
 
     return Experiment(
-        meta_learners=meta_learners, samplers=samplers_list, task_dists=task_dists
+        checkpoint=checkpoint,
+        meta_learners=meta_learners,
+        samplers=samplers_list,
+        task_dists=task_dists,
     )

@@ -18,9 +18,6 @@ logger = logging.getLogger(__name__)
 tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
-# Disable deprecation warnings.
-tf.get_logger().setLevel(logging.ERROR)
-
 
 def eval_step(cfg, exp, sess, **kwargs):
     """Performs one evaluation step.
@@ -117,29 +114,29 @@ def evaluate(cfg, lock=None, work_dir=None):
         accuracy_ph = tf.placeholder(tf.float32, shape=())
         tf.summary.scalar("accuracy", accuracy_ph)
         merged = tf.summary.merge_all()
-        saver = tf.train.Saver()
 
         # Run continuous eval.
         step = 0
         old_checkpoint = None
         while step + 1 < cfg.train.max_steps:
             # Get latest checkpoint.
-            new_checkpoint = tf.train.latest_checkpoint(work_dir)
+            latest_checkpoint = tf.train.latest_checkpoint(work_dir)
 
             # If no change, wait and continue.
-            if new_checkpoint == old_checkpoint:
+            if latest_checkpoint == old_checkpoint:
                 time.sleep(cfg.eval.wait_time)
                 continue
 
             # Restore graph from the checkpoint.
-            saver.restore(sess, new_checkpoint)
-            old_checkpoint = new_checkpoint
+            status = exp.checkpoint.restore(latest_checkpoint)
+            status.assert_consumed().run_restore_ops()
+            old_checkpoint = latest_checkpoint
 
             # Run evaluation.
             results = eval_step(cfg, exp, sess)
 
             # Log results.
-            step = int(os.path.basename(new_checkpoint).split("-")[1])
+            step = int(os.path.basename(latest_checkpoint).split("-")[1])
             log = f"EVAL - step: {step}"
             for result, td in zip(results, exp.task_dists):
                 log += f" - {td.name} acc: {100 * result['acc']:.2f}"

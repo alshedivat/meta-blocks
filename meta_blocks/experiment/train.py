@@ -16,9 +16,6 @@ logger = logging.getLogger(__name__)
 tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
-# Disable deprecation warnings.
-tf.get_logger().setLevel(logging.ERROR)
-
 
 def train_step(cfg, exp, sess, **kwargs):
     """Performs one meta-training step.
@@ -99,7 +96,12 @@ def train(cfg, lock=None, work_dir=None):
         tf.summary.scalar("label_budget", label_budget_ph)
         tf.summary.scalar("loss", loss_ph)
         merged = tf.summary.merge_all()
-        saver = tf.train.Saver()
+        saver = tf.train.CheckpointManager(
+            exp.checkpoint, directory=work_dir, max_to_keep=1
+        )
+
+        # Initialize.
+        sess.run(tf.global_variables_initializer())
 
         # Do meta-learning iterations.
         if lock is not None:
@@ -122,8 +124,7 @@ def train(cfg, lock=None, work_dir=None):
                     writer.flush()
             # Save model.
             if i % cfg.train.save_interval == 0 or i + 1 == cfg.train.max_steps:
-                checkpoint_path = os.path.join(work_dir, "model.ckpt")
-                saver.save(sess, checkpoint_path, global_step=i)
+                saver.save(checkpoint_number=i)
             # Update task distribution (if necessary).
             # TODO: make this more flexible.
             if (
