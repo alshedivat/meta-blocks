@@ -76,7 +76,7 @@ class ClassificationModel(abc.ABC):
         """Builds the logits for the provided inputs."""
         with tf.name_scope(self.name):
             # <float32> [num_inputs, num_classes].
-            logits = self._build_logits(inputs_ph, training=True)
+            logits = self._build_logits(inputs_ph, training=training)
         return logits
 
     @abc.abstractmethod

@@ -1,8 +1,10 @@
 -r base.txt
 black
 coverage
+coveralls
 mypy
 pre-commit
 pytest
+pytest-cov
 setuptools
 twine

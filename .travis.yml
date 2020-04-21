@@ -7,6 +7,6 @@ install:
   - pip install -r requirements/base.txt
   - pip install -e .
 script:
-  - py.test --cov-config .coveragerc --cov-report term-missing --cov=cen tests/
+  - py.test --cov-config .coveragerc --cov-report term-missing --cov=meta_blocks tests/
 after_success:
   - coveralls
