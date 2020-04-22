@@ -77,6 +77,7 @@ def train(cfg, lock=None, work_dir=None):
     tf.set_random_seed(cfg.run.seed)
 
     # Get categories.
+    logger.debug(f"Reading {cfg.data.name} categories...")
     categories = datasets.get_categories(cfg.data.name, **cfg.data.read_config)
 
     # Setup the session.
@@ -109,10 +110,10 @@ def train(cfg, lock=None, work_dir=None):
             losses = train_step(cfg, exp, sess)
             # Log metrics.
             if i % cfg.train.log_interval == 0 or i + 1 == cfg.train.max_steps:
-                log = f"TRAIN - step: {i}"
+                log = f"step: {i}"
                 for loss, td in zip(losses, exp.task_dists):
-                    log += f" - requested labels: {td.requested_labels}"
-                    log += f" - {td.name} loss: {loss:.6f}"
+                    log += f"\n\trequested labels: {td.requested_labels}"
+                    log += f"\n\t{td.name} loss: {loss:.6f}"
                 logger.info(log)
                 for loss, td, writer in zip(losses, exp.task_dists, writers):
                     feed_dict = {loss_ph: loss, label_budget_ph: td.requested_labels}

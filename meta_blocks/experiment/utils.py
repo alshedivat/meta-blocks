@@ -3,7 +3,10 @@
 import collections
 import contextlib
 import logging
+import re
+import sys
 
+import colorlog
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import (
@@ -186,3 +189,29 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
         samplers=samplers_list,
         task_dists=task_dists,
     )
+
+
+class ExperimentFormatter(colorlog.ColoredFormatter):
+    """Custom log formatter that nicely indents multiline experiment logs."""
+
+    COLOR_REGEX = re.compile(r"\033\[[\d;]*m")
+
+    def formatMessage(self, record):
+        # Add nice multiline identation to the message.
+        original_message = record.message.strip()
+        # Reformat the original experiment message if it is multiline.
+        if "meta_blocks.experiment" in record.name and "\n" in original_message:
+            # Determine the length of everything besides the message.
+            record.message = ""
+            indent = len(self.COLOR_REGEX.sub("", self._style.format(record)))
+            # Indent message lines appropriately.
+            original_message_parts = original_message.split("\n")
+            reformatted_message = "\n".join(
+                # Message separator.
+                [original_message_parts[0]]
+                +
+                # Add extra white space indent to all lines after the first one.
+                [(" " * indent) + line.strip() for line in original_message_parts[1:]]
+            )
+            record.message = reformatted_message
+        return self._style.format(record)

@@ -225,7 +225,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         # Expand the number of requested labels.
         requested_labels_so_far = self._requested_labels
         while requested_labels_so_far < num_labeled_points:
-            logger.info(
+            logger.debug(
                 f"...requesting more labels: "
                 f"{requested_labels_so_far}/{num_labeled_points}"
             )

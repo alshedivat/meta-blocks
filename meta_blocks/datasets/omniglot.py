@@ -33,7 +33,6 @@ def get_categories(
     num_test_categories=463,
     shuffle=True,
 ):
-    logger.info("Reading Omniglot categories...")
     categories = []
     for alphabet_name in sorted(os.listdir(data_dir)):
         alphabet_dir = os.path.join(data_dir, alphabet_name)

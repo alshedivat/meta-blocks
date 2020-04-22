@@ -136,10 +136,11 @@ def evaluate(cfg, lock=None, work_dir=None):
             results = eval_step(cfg, exp, sess)
 
             # Log results.
-            step = int(os.path.basename(latest_checkpoint).split("-")[1])
-            log = f"EVAL - step: {step}"
+            checkpoint_name = os.path.basename(latest_checkpoint)
+            log = f"{'-' * 40}\n" f"evaluated: {checkpoint_name}"
             for result, td in zip(results, exp.task_dists):
-                log += f" - {td.name} acc: {100 * result['acc']:.2f}"
+                log += f"\n{td.name} acc: {100 * result['acc']:.2f}"
+            log += f"\n{'-' * 40}"
             logger.info(log)
             for result, td, writer in zip(results, exp.task_dists, writers):
                 summary = sess.run(merged, feed_dict={accuracy_ph: result["acc"]})

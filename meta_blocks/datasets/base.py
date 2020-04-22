@@ -125,7 +125,7 @@ class DataPool(object):
     def build(self, **kwargs):
         """Builds all managed data categories."""
         if not self.built:
-            logger.info(f"Building {self.name}...")
+            logger.debug(f"Building {self.name}...")
             for c in self.categories:
                 c.build(**kwargs)
             self.built = True
@@ -133,7 +133,7 @@ class DataPool(object):
 
     def initialize(self, sess):
         """Initializes all managed data categories within the given session."""
-        logger.info(f"Initializing {self.name}...")
+        logger.debug(f"Initializing {self.name}...")
         self._category_handles = sess.run([c.string_handle for c in self.categories])
         return self
 
@@ -240,14 +240,14 @@ class MetaDataset(object):
         data_pool: DataPool,
         num_classes: int,
         batch_size: int,
-        name: str = "MetaDataset",
+        name: Optional[str] = None,
         **kwargs,
     ):
         """Instantiates a MetaDataset."""
         self.data_pool = data_pool
         self.num_classes = num_classes
         self.batch_size = batch_size
-        self.name = name
+        self.name = name or self.__class__.__name__
 
         # Internals.
         self._dataset_batch = tuple(
@@ -273,7 +273,7 @@ class MetaDataset(object):
 
     def build(self):
         if not self.built:
-            logger.info(f"Building {self.name}...")
+            logger.debug(f"Building {self.name}...")
             with tf.name_scope(self.name):
                 for ds in self._dataset_batch:
                     ds.build()
