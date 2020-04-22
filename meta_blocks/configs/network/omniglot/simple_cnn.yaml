@@ -1,8 +1,9 @@
-# Simple ConvNet architecture.
 network:
   name: simple_cnn
   filters: [64, 64, 64, 64]
   kernel_size: 3
   strides: 2
   padding: same
-  batch_norm: true
+  batch_norm:
+    center: true
+    scale: true

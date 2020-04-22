@@ -1,6 +1,6 @@
 """Simple models."""
 
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import tensorflow.compat.v1 as tf
 
@@ -17,8 +17,8 @@ def build_mlp(
     input_type: str,
     *,
     hidden_sizes: Tuple[int],
-    batch_norm: bool = False,
     activation: Optional[str] = "relu",
+    batch_norm: Optional[Dict[str, Any]] = None,
     output_activation: Optional[str] = None,
     name: str = "SimpleMLP",
     **_unused_kwargs,
@@ -36,8 +36,8 @@ def build_mlp(
     for i, hidden_size in enumerate(hidden_sizes):
         x = tf.keras.layers.Dense(units=hidden_size, name=f"fc{i}")(x)
         # Batch norm (optional).
-        if batch_norm:
-            x = tf.keras.layers.BatchNormalization(name=f"bn{i}")(x)
+        if batch_norm is not None:
+            x = tf.keras.layers.BatchNormalization(**batch_norm, name=f"bn{i}")(x)
         # Activation.
         x = tf.keras.layers.Activation(activation, name=f"activation{i}")(x)
     # Add a fully connected output layer.
@@ -56,10 +56,10 @@ def build_convnet(
     kernel_size: Union[int, Tuple[int]],
     strides: Union[int, Tuple[int]] = (1, 1),
     padding: str = "same",
-    batch_norm: bool = False,
     pooling: Optional[str] = None,
-    pooling_kwargs: Optional[dict] = None,
+    pooling_kwargs: Optional[Dict[str, Any]] = None,
     activation: Optional[str] = "relu",
+    batch_norm: Optional[Dict[str, Any]] = None,
     output_activation: Optional[str] = None,
     name: str = "SimpleConvNet",
     **_unused_kwargs,
@@ -83,8 +83,8 @@ def build_convnet(
             name=f"conv{i}",
         )(x)
         # Batch norm (optional).
-        if batch_norm:
-            x = tf.keras.layers.BatchNormalization(name=f"bn{i}")(x)
+        if batch_norm is not None:
+            x = tf.keras.layers.BatchNormalization(**batch_norm, name=f"bn{i}")(x)
         # Activation.
         x = tf.keras.layers.Activation(activation, name=f"activation{i}")(x)
         # Pooling (optional).

@@ -72,11 +72,14 @@ def custom_make_variable(
                 or kwargs["dtype"] != custom_variable.dtype
             ):
                 # TODO: raise a more specific exception.
-                raise Exception(
-                    f"{custom_variable} cannot replace for <{variable_name}>."
-                )
+                raise Exception(f"{custom_variable} cannot replace {variable_name}.")
             return custom_variable
         else:
+            if "trainable" in kwargs and kwargs["trainable"]:
+                logger.warning(
+                    f"Cannot a custom variable for trainable {canonical_name}. "
+                    f"Creating a new variable {variable_name}."
+                )
             variable = original_make_variable(name=name, **kwargs)
         return variable
 
