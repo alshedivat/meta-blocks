@@ -113,11 +113,7 @@ def train(cfg, lock=None, work_dir=None):
                 for loss, td in zip(losses, exp.task_dists):
                     if td.requested_labels:
                         log += f"\nrequested labels: {td.requested_labels}"
-                    try:
-                        log += f"\n{td.name} loss: {loss:.6f}"
-                    except TypeError:
-                        # Methods like Reptile return loss "undefined".
-                        log += f"\n{td.name} loss: {loss}"
+                    log += f"\n{td.name} loss: {loss:.6f}"
                 logger.info(log)
                 for loss, td, writer in zip(losses, exp.task_dists, writers):
                     feed_dict = {loss_ph: loss, label_budget_ph: td.requested_labels}

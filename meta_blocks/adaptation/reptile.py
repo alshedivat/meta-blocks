@@ -77,7 +77,7 @@ class Reptile(maml.Maml):
     def _build_meta_learn(self):
         """Builds meta-update op."""
         # Reptile does not have a proper meta-loss.
-        meta_loss = tf.constant("undefined")
+        meta_loss = tf.constant(-1.0)
         # Compute meta-gradients and predictions.
         preds_and_labels = []
         meta_grads = collections.defaultdict(list)
