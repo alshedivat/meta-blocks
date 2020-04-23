@@ -30,8 +30,11 @@ class Maml(base.AdaptationStrategy):
     tasks : tuple of Tasks
         A tuple of tasks that provide access to data.
 
-    batch_size: int, optional (default: 16)
+    batch_size : int, optional
         Batch size used at adaptation time.
+
+    num_inner_steps : int, optional (default: 1)
+        Number of inner adaptation steps.
 
     inner_optimizer : Optimizer, optional (default: None)
         The optimizer to use for computing inner loop updates.
@@ -41,7 +44,6 @@ class Maml(base.AdaptationStrategy):
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
         Defines the mode of the computation graph (TRAIN or EVAL).
-        Note: this might be removed from the API down the line.
 
     name : str, optional (default: "Maml")
         Name of the adaptation method.
@@ -52,22 +54,27 @@ class Maml(base.AdaptationStrategy):
         model,
         optimizer,
         tasks,
-        batch_size=16,
+        batch_size=None,
+        num_inner_steps=1,
         inner_optimizer=None,
         first_order=False,
         mode=common.ModeKeys.TRAIN,
-        name="Maml",
+        name=None,
         **_unused_kwargs,
     ):
         super(Maml, self).__init__(
-            model=model, optimizer=optimizer, tasks=tasks, mode=mode, name=name
+            model=model,
+            optimizer=optimizer,
+            tasks=tasks,
+            mode=mode,
+            name=(name or self.__class__.__name__),
         )
-        self._batch_size = batch_size
-        self._first_order = first_order
+        self.batch_size = batch_size
+        self.num_inner_steps = num_inner_steps
+        self.first_order = first_order
 
         # Inner loop.
         self.inner_optimizer = optimizers.get(**(inner_optimizer or {}))
-        self.adaptation_steps_ph = None
         self.adapted_parameters = None
 
     def _build_adapted_model(self, *, parameters=None, task_id=None):
@@ -118,16 +125,17 @@ class Maml(base.AdaptationStrategy):
         adapted_parameters : dict of Tensors
             A dictionary with adapted parameters of the model.
         """
-
+        # If batch size not specified, use all inputs.
+        batch_size = self.batch_size or tf.shape(inputs)[0]
         # Build batched indices.
         # <int32> [batch_size * num_steps].
         indices = tf.math.mod(
-            tf.range(self._batch_size * num_steps, dtype=tf.int32), tf.shape(inputs)[0]
+            tf.range(batch_size * num_steps, dtype=tf.int32), tf.shape(inputs)[0]
         )
         if shuffle:
             indices = tf.random.shuffle(indices)
         # <int32> [num_steps, batch_size].
-        batched_indices = tf.reshape(indices, shape=(num_steps, self._batch_size))
+        batched_indices = tf.reshape(indices, shape=(num_steps, batch_size))
 
         def cond_fn(step, _unused_params):
             return tf.less(step, num_steps)
@@ -143,7 +151,7 @@ class Maml(base.AdaptationStrategy):
                 loss,
                 parameters,
                 optimizer=self.inner_optimizer,
-                first_order=self._first_order,
+                first_order=self.first_order,
             )
             return [tf.add(step, 1), new_parameters]
 
@@ -160,10 +168,6 @@ class Maml(base.AdaptationStrategy):
 
     def _build_adaptation(self):
         """Builds the adaptation loop."""
-        # Placeholder for the number of adaptation steps.
-        self.adaptation_steps_ph = tf.placeholder(
-            dtype=tf.int32, shape=[], name="num_inner_steps"
-        )
         # Initial parameters.
         self.initial_parameters = {}
         for param in self.model.initial_parameters:
@@ -183,14 +187,10 @@ class Maml(base.AdaptationStrategy):
                             inputs=inputs,
                             labels=labels,
                             initial_parameters=self.initial_parameters,
-                            num_steps=self.adaptation_steps_ph,
+                            num_steps=self.num_inner_steps,
                             back_prop=(self.mode == common.ModeKeys.TRAIN),
                         ),
                         # If support data is empty, use initial parameters.
                         false_fn=lambda: self.initial_parameters,
                     )
                 )
-
-    def get_feed_list(self, num_inner_steps=1, **kwargs):
-        """Constructs a feed list from the arguments."""
-        return [(self.adaptation_steps_ph, num_inner_steps)]

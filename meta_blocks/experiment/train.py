@@ -39,8 +39,7 @@ def train_step(cfg, exp, sess, **kwargs):
     """
     # Sample from the task distribution.
     feed_lists = [
-        td.sample_task_feed() + ml.get_feed_list(**cfg.train.adapt)
-        for ml, td in zip(exp.meta_learners, exp.task_dists)
+        td.sample_task_feed() for ml, td in zip(exp.meta_learners, exp.task_dists)
     ]
 
     # Train and compute losses.
@@ -112,8 +111,13 @@ def train(cfg, lock=None, work_dir=None):
             if i % cfg.train.log_interval == 0 or i + 1 == cfg.train.max_steps:
                 log = f"step: {i}"
                 for loss, td in zip(losses, exp.task_dists):
-                    log += f"\n\trequested labels: {td.requested_labels}"
-                    log += f"\n\t{td.name} loss: {loss:.6f}"
+                    if td.requested_labels:
+                        log += f"\nrequested labels: {td.requested_labels}"
+                    try:
+                        log += f"\n{td.name} loss: {loss:.6f}"
+                    except TypeError:
+                        # Methods like Reptile return loss "undefined".
+                        log += f"\n{td.name} loss: {loss}"
                 logger.info(log)
                 for loss, td, writer in zip(losses, exp.task_dists, writers):
                     feed_dict = {loss_ph: loss, label_budget_ph: td.requested_labels}

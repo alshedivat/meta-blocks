@@ -4,6 +4,7 @@ network:
   kernel_size: 3
   strides: 2
   padding: same
+  activation: relu
   batch_norm:
     center: true
     scale: true

@@ -46,8 +46,7 @@ def eval_step(cfg, exp, sess, **kwargs):
 
     # Sample from the task distribution.
     feed_lists = [
-        td.sample_task_feed() + ml.get_feed_list(**cfg.train.adapt)
-        for ml, td in zip(exp.meta_learners, exp.task_dists)
+        td.sample_task_feed() for ml, td in zip(exp.meta_learners, exp.task_dists)
     ]
 
     # Do evaluation.
@@ -124,7 +123,7 @@ def evaluate(cfg, lock=None, work_dir=None):
 
             # If no change, wait and continue.
             if latest_checkpoint == old_checkpoint:
-                time.sleep(cfg.eval.wait_time)
+                time.sleep(cfg.eval.wait_time or 1)
                 continue
 
             # Restore graph from the checkpoint.

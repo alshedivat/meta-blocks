@@ -1,8 +1,0 @@
-adapt:
-  name: proto
-
-train:
-  adapt: {}
-
-eval:
-  adapt: {}

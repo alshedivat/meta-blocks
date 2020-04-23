@@ -1,8 +1,34 @@
+# Configuration for the classic 5-way Omniglot benchmark.
+train:
+  dataset:
+    num_classes: 5
+    rotations: [0, 1, 2, 3]  # in multiples of 90 degrees
+  meta:
+    batch_size: 50
+  optimizer:
+    name: adam
+    beta1: 0.
+    learning_rate: 0.005
+  tasks:
+    - set_name: train
+      log_dir: train/oracle
+      config:
+        name: supervised
+        num_query_shots: 1
+        num_support_shots: 1
+        max_labeled_points: 600000
+      sampler:
+        name: uniform
+        stratified: true
+  max_steps: 20000
+  log_interval: 10
+  save_interval: 100
+
 eval:
   dataset:
-    num_classes: 20
+    num_classes: 5
   meta:
-    batch_size: 20
+    batch_size: 50
   tasks:
     # Train.
     - set_name: train
@@ -11,7 +37,7 @@ eval:
         name: supervised
         num_query_shots: 1
         num_support_shots: 1
-        max_labeled_points: 4000
+        max_labeled_points: 1000
       sampler:
         name: uniform
         stratified: true
@@ -21,7 +47,7 @@ eval:
         name: supervised
         num_query_shots: 1
         num_support_shots: 5
-        max_labeled_points: 20000
+        max_labeled_points: 5000
       sampler:
         name: uniform
         stratified: true
@@ -32,7 +58,7 @@ eval:
         name: supervised
         num_query_shots: 1
         num_support_shots: 1
-        max_labeled_points: 4000
+        max_labeled_points: 1000
       sampler:
         name: uniform
         stratified: true
@@ -42,7 +68,7 @@ eval:
         name: supervised
         num_query_shots: 1
         num_support_shots: 5
-        max_labeled_points: 20000
+        max_labeled_points: 5000
       sampler:
         name: uniform
         stratified: true
@@ -53,7 +79,7 @@ eval:
         name: supervised
         num_query_shots: 1
         num_support_shots: 1
-        max_labeled_points: 4000
+        max_labeled_points: 1000
       sampler:
         name: uniform
         stratified: true
@@ -63,9 +89,8 @@ eval:
         name: supervised
         num_query_shots: 1
         num_support_shots: 5
-        max_labeled_points: 20000
+        max_labeled_points: 5000
       sampler:
         name: uniform
         stratified: true
   repetitions: 1
-  wait_time: 5

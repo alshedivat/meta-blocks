@@ -5,8 +5,6 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from meta_blocks import common
-
 __all__ = ["AdaptationStrategy"]
 
 logger = logging.getLogger(__name__)
@@ -32,13 +30,12 @@ class AdaptationStrategy(abc.ABC):
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
         Defines the mode of the computation graph (TRAIN or EVAL).
-        Note: this might be removed from the API down the line.
 
     name : str, optional
         Name of the adaptation method.
     """
 
-    def __init__(self, model, optimizer, tasks, mode=common.ModeKeys.TRAIN, name=None):
+    def __init__(self, model, optimizer, tasks, mode=None, name=None):
         self.model = model
         self.optimizer = optimizer
         self.tasks = tasks
@@ -107,7 +104,4 @@ class AdaptationStrategy(abc.ABC):
                     self._build_meta_learn()
                 )
             logger.debug("Done.")
-
-    def get_feed_list(self, **kwargs):
-        """No feed dict by default."""
-        return []
+        return self

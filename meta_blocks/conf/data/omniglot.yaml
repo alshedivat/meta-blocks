@@ -8,7 +8,3 @@ data:
     shuffle: true
   build_config:
     shuffle: true
-
-train:
-  dataset:
-    rotations: [0]

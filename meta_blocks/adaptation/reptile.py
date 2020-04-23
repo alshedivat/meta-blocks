@@ -34,15 +34,17 @@ class Reptile(maml.Maml):
     tasks : tuple of Tasks
         A tuple of tasks that provide access to data.
 
-    batch_size: int, optional (default: 16)
+    batch_size: int, optional
         Batch size used at adaptation time.
+
+    num_inner_steps : int, optional (default: 10)
+        Number of inner adaptation steps.
 
     inner_optimizer : Optimizer, optional (default: None)
         The optimizer to use for computing inner loop updates.
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
         Defines the mode of the computation graph (TRAIN or EVAL).
-        Note: this might be removed from the API down the line.
 
     name : str, optional (default: "Reptile")
         Name of the adaptation method.
@@ -53,10 +55,11 @@ class Reptile(maml.Maml):
         model,
         optimizer,
         tasks,
-        batch_size=16,
+        batch_size=None,
+        num_inner_steps=10,
         inner_optimizer=None,
         mode=common.ModeKeys.TRAIN,
-        name="Reptile",
+        name=None,
         **_unused_kwargs,
     ):
         super(Reptile, self).__init__(
@@ -64,16 +67,17 @@ class Reptile(maml.Maml):
             optimizer=optimizer,
             tasks=tasks,
             batch_size=batch_size,
+            num_inner_steps=num_inner_steps,
             inner_optimizer=inner_optimizer,
             first_order=True,
             mode=mode,
-            name=name,
+            name=(name or self.__class__.__name__),
         )
 
     def _build_meta_learn(self):
         """Builds meta-update op."""
         # Reptile does not have a proper meta-loss.
-        meta_loss = tf.constant(0.0)
+        meta_loss = tf.constant("undefined")
         # Compute meta-gradients and predictions.
         preds_and_labels = []
         meta_grads = collections.defaultdict(list)
@@ -94,10 +98,6 @@ class Reptile(maml.Maml):
 
     def _build_adaptation(self):
         """Builds the adaptation loop."""
-        # Placeholder for the number of adaptation steps.
-        self.adaptation_steps_ph = tf.placeholder(
-            dtype=tf.int32, shape=[], name="num_inner_steps"
-        )
         # Initial parameters.
         self.initial_parameters = {}
         for param in self.model.initial_parameters:
@@ -122,7 +122,7 @@ class Reptile(maml.Maml):
                             inputs=inputs,
                             labels=labels,
                             initial_parameters=self.initial_parameters,
-                            num_steps=self.adaptation_steps_ph,
+                            num_steps=self.num_inner_steps,
                             back_prop=False,
                         ),
                         # If support data is empty, use initial parameters.

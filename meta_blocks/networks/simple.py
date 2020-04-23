@@ -32,7 +32,7 @@ def build_mlp(
     # Input node.
     inputs = tf.keras.layers.Input(shape=input_shape, dtype=input_type)
     # Build stack of layers.
-    x = inputs
+    x = tf.keras.layers.Flatten()(inputs)
     for i, hidden_size in enumerate(hidden_sizes):
         x = tf.keras.layers.Dense(units=hidden_size, name=f"fc{i}")(x)
         # Batch norm (optional).

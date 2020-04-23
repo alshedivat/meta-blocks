@@ -4,7 +4,7 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-from meta_blocks import common, models
+from meta_blocks import common
 from meta_blocks.adaptation import base, utils
 
 __all__ = ["Proto"]
@@ -32,9 +32,8 @@ class Proto(base.AdaptationStrategy):
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
         Defines the mode of the computation graph (TRAIN or EVAL).
-        Note: this might be removed from the API down the line.
 
-    name : str, optional (default: "Proto")
+    name : str, optional
         Name of the adaptation method.
     """
 
@@ -44,11 +43,15 @@ class Proto(base.AdaptationStrategy):
         optimizer,
         tasks,
         mode=common.ModeKeys.TRAIN,
-        name="Proto",
+        name=None,
         **_unused_kwargs,
     ):
         super(Proto, self).__init__(
-            model=model, optimizer=optimizer, tasks=tasks, mode=mode, name=name
+            model=model,
+            optimizer=optimizer,
+            tasks=tasks,
+            mode=mode,
+            name=(name or self.__class__.__name__),
         )
 
         # Inner loop.
