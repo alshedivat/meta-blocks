@@ -79,11 +79,14 @@ Ideally, the running time should be within a few mins.
 
 ### Development
 
-For development and contributions, please make sure to install pre-commit hooks to ensure proper code style and formatting:
+For development and contributions, please install pre-commit hooks to ensure proper code style and formatting:
 
 ```shell
 $ pip install pre-commit      # install pre-commit
-$ pre-commit install          # install git hooks $ pre-commit run --all-files  # run pre-commit on all the files ``` 
+$ pre-commit install          # install git hooks
+$ pre-commit run --all-files  # run pre-commit on all the files
+```
+
 #### Status
 
 **Meta-Blocks** is currently **under development** as of Apr, 2020.
