@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 @hydra.main(config_path="conf/config.yaml", strict=False)
 def main(cfg: DictConfig):
+    cfg = cfg.meta_blocks
     processes = []
     lock = Lock()
 

@@ -7,6 +7,3 @@ defaults:
   - model: ???
   - network: ???
   - adaptation: ???
-
-run:
-  seed: 1

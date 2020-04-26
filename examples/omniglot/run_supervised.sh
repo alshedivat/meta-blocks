@@ -16,4 +16,4 @@ python -u -m meta_blocks.run \
   data=${DATASET} \
   model=${MODEL} \
   network=${BENCHMARK_TYPE}/${DATASET}/${BACKBONE} \
-  data.read_config.data_dir=${DATA_DIR} \
+  meta_blocks.data.read_config.data_dir=${DATA_DIR} \
