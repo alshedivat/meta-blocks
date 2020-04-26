@@ -1,4 +1,4 @@
-"""Adaptation utility functions."""
+"""Utility functions for gradient-based adaptation."""
 
 import contextlib
 import logging
@@ -92,7 +92,12 @@ def custom_make_variable(
         base_layer_utils.make_variable = original_make_variable
 
 
-def build_new_parameters(loss, parameters, optimizer, first_order=False):
+def build_new_parameters(
+    loss: tf.Tensor,
+    parameters: Dict[str, tf.Tensor],
+    optimizer: tf.train.Optimizer,
+    first_order: bool = False,
+):
     """Builds new parameters via an optimization step on the provided loss.
 
     Parameters
@@ -123,35 +128,3 @@ def build_new_parameters(loss, parameters, optimizer, first_order=False):
         grads_and_vars = [(tf.stop_gradient(g), v) for g, v in grads_and_vars]
     new_parameters = dict(zip(param_names, optimizer.compute_updates(grads_and_vars)))
     return new_parameters
-
-
-def build_prototypes(embeddings, labels, num_classes):
-    """Builds new prototypes by aggregating embeddings.
-
-    Parameters
-    ----------
-    embeddings : Tensor <float32> [num_inputs, emb_size]
-        A collection of embeddings for each input point.
-
-    labels : Tensor <int32> [num_inputs]
-        Labels for each input point.
-
-    num_classes : int
-        The total number of classes.
-
-    Returns
-    -------
-    prototypes : Tensor <float32> [num_classes, emb_size]
-        A collection of prototypical embeddings for each class.
-        Computed as a sum over embeddings of points corresponding to each class.
-
-    class_counts : Tensor <float32> [num_classes].
-        A vector representing the number of points of each class.
-    """
-    # <float32> [num_inputs, num_classes].
-    labels_onehot = tf.one_hot(labels, num_classes)
-    # <float32> [num_classes, emb_dim].
-    prototypes = tf.einsum("ij,ik->kj", embeddings, labels_onehot)
-    # <float32> [num_classes].
-    class_counts = tf.reduce_sum(labels_onehot, axis=0)
-    return prototypes, class_counts

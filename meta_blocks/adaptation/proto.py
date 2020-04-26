@@ -5,7 +5,8 @@ import logging
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import common
-from meta_blocks.adaptation import base, utils
+from meta_blocks.adaptation import base
+from meta_blocks.adaptation import proto_utils as utils
 
 __all__ = ["Proto"]
 

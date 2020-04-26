@@ -1,7 +1,7 @@
 language: python
 python:
-  - 3.6
   - 3.7
+  - 3.8
 install:
   - pip install pytest-cov coveralls
   - pip install -r requirements/base.txt

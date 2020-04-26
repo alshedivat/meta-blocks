@@ -79,16 +79,13 @@ def session(gpu_allow_growth=True, log_device_placement=False):
         sess.close()
 
 
-def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
+def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
     """Builds and initializes all parts of the graph.
 
     Parameters
     ----------
     cfg : OmegaConf
         The experiment configuration.
-
-    sess : tf.Session
-        The TF session used for executing the computation graph.
 
     categories : dict of lists of Categories
         Each list of Categories is used to construct meta-datasets.
@@ -103,6 +100,8 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
         An object that represents the experiment.
         Contains `meta_learners`, `samplers`, and `task_dists`.
     """
+    sess = tf.get_default_session()
+
     # Build and initialize data pools.
     data_pools = {
         task.set_name: datasets.get_datapool(
@@ -151,7 +150,7 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
             meta_dataset=meta_datasets[task.set_name],
             name_suffix=task.log_dir.replace("/", "_"),
             **task.config,
-        )
+        ).build()
         for task in cfg[mode].tasks
     ]
 
@@ -169,8 +168,8 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
 
     # Build samplers.
     samplers_list = [
-        samplers.get(
-            learner=meta_learners[i], tasks=task_dists[i].task_batch, **task.sampler
+        samplers.get(**task.sampler).build(
+            learner=meta_learners[i], tasks=task_dists[i].task_batch
         )
         for i, task in enumerate(cfg[mode].tasks)
     ]
@@ -180,7 +179,7 @@ def build_and_initialize(cfg, sess, categories, mode=common.ModeKeys.TRAIN):
 
     # Initialize task distribution.
     for task_dist, sampler in zip(task_dists, samplers_list):
-        task_dist.initialize(sampler=sampler, sess=sess)
+        task_dist.initialize(sampler=sampler)
 
     return Experiment(
         checkpoint=checkpoint,

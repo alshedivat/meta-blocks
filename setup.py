@@ -39,10 +39,12 @@ setup(
     author_email="alshedivat@cs.cmu.edu, zhaoy@cmu.edu",
     license="BSD-3",
     keywords=[
-        "deep learning",
+        "learning-to-learn",
         "machine learning",
-        "explainability",
-        "interpretability",
+        "deep learning",
+        "meta-learning",
+        "benchmark",
+        "toolbox",
         "tensorflow",
         "keras",
         "python",
@@ -50,11 +52,11 @@ setup(
     packages=find_packages(exclude=["tests"]),
     package_data={
         "meta_blocks": [
-            "configs/*.yaml",
-            "configs/**/*.yaml",
-            "configs/**/**/*.yaml",
-            "configs/**/**/**/*.yaml",
-            "configs/**/**/**/**/*.yaml",
+            "conf/*.yaml",
+            "conf/**/*.yaml",
+            "conf/**/**/*.yaml",
+            "conf/**/**/**/*.yaml",
+            "conf/**/**/**/**/*.yaml",
         ]
     },
     install_requires=requirements(),
@@ -67,8 +69,7 @@ setup(
         "Intended Audience :: Information Technology",
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
 )

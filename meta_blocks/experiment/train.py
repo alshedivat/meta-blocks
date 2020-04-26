@@ -83,7 +83,7 @@ def train(cfg, lock=None, work_dir=None):
     with utils.session(gpu_allow_growth=True) as sess:
         # Build and initialize.
         exp = utils.build_and_initialize(
-            cfg=cfg, sess=sess, categories=categories, mode=common.ModeKeys.TRAIN
+            cfg=cfg, categories=categories, mode=common.ModeKeys.TRAIN
         )
 
         # Setup logging and saving.
@@ -111,12 +111,15 @@ def train(cfg, lock=None, work_dir=None):
             if i % cfg.train.log_interval == 0 or i + 1 == cfg.train.max_steps:
                 log = f"step: {i}"
                 for loss, td in zip(losses, exp.task_dists):
-                    if td.requested_labels:
-                        log += f"\nrequested labels: {td.requested_labels}"
+                    if td.num_requested_labels:
+                        log += f"\nrequested labels: {td.num_requested_labels}"
                     log += f"\n{td.name} loss: {loss:.6f}"
                 logger.info(log)
                 for loss, td, writer in zip(losses, exp.task_dists, writers):
-                    feed_dict = {loss_ph: loss, label_budget_ph: td.requested_labels}
+                    feed_dict = {
+                        loss_ph: loss,
+                        label_budget_ph: td.num_requested_labels,
+                    }
                     summary = sess.run(merged, feed_dict=feed_dict)
                     writer.add_summary(summary, i)
                     writer.flush()

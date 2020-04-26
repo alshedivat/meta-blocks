@@ -100,7 +100,7 @@ def evaluate(cfg, lock=None, work_dir=None):
         if lock is not None:
             lock.acquire()
         exp = utils.build_and_initialize(
-            cfg=cfg, sess=sess, categories=categories, mode=common.ModeKeys.EVAL
+            cfg=cfg, categories=categories, mode=common.ModeKeys.EVAL
         )
         if lock is not None:
             lock.release()
@@ -137,6 +137,7 @@ def evaluate(cfg, lock=None, work_dir=None):
             # Log results.
             checkpoint_name = os.path.basename(latest_checkpoint)
             log = f"{'-' * 40}\n" f"evaluated: {checkpoint_name}"
+            step = int(checkpoint_name.split("-")[1])
             for result, td in zip(results, exp.task_dists):
                 log += f"\n{td.name} acc: {100 * result['acc']:.2f}"
             log += f"\n{'-' * 40}"
