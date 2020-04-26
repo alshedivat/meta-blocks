@@ -11,10 +11,9 @@ train:
     - set_name: train
       log_dir: train/oracle
       config:
-        name: supervised
+        name: classic_supervised
         num_query_shots: 1
         num_support_shots: 1
-        max_labeled_points: 400
       sampler:
         name: uniform
         stratified: true
@@ -32,7 +31,7 @@ eval:
     - set_name: train
       log_dir: eval/train/oracle_1shot
       config:
-        name: supervised
+        name: limited_supervised
         num_query_shots: 1
         num_support_shots: 1
         max_labeled_points: 40
@@ -42,7 +41,7 @@ eval:
     - set_name: train
       log_dir: eval/train/oracle_5shot
       config:
-        name: supervised
+        name: limited_supervised
         num_query_shots: 1
         num_support_shots: 5
         max_labeled_points: 200
@@ -53,7 +52,7 @@ eval:
     - set_name: valid
       log_dir: eval/valid/oracle_1shot
       config:
-        name: supervised
+        name: limited_supervised
         num_query_shots: 1
         num_support_shots: 1
         max_labeled_points: 40
@@ -63,7 +62,7 @@ eval:
     - set_name: valid
       log_dir: eval/valid/oracle_5shot
       config:
-        name: supervised
+        name: limited_supervised
         num_query_shots: 1
         num_support_shots: 5
         max_labeled_points: 200
@@ -74,7 +73,7 @@ eval:
     - set_name: test
       log_dir: eval/test/oracle_1shot
       config:
-        name: supervised
+        name: limited_supervised
         num_query_shots: 1
         num_support_shots: 1
         max_labeled_points: 40
@@ -84,7 +83,7 @@ eval:
     - set_name: test
       log_dir: eval/test/oracle_5shot
       config:
-        name: supervised
+        name: limited_supervised
         num_query_shots: 1
         num_support_shots: 5
         max_labeled_points: 200
@@ -92,4 +91,3 @@ eval:
         name: uniform
         stratified: true
   repetitions: 1
-  wait_time: 5

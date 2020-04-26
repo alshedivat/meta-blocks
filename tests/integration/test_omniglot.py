@@ -51,6 +51,7 @@ def test_omniglot_integration(adaptation_method):
             overrides=[
                 f"adaptation={adaptation_method}",
                 f"dataset=omniglot",
+                f"network=omniglot",
                 f"test=omniglot",
                 f"data.read_config.data_dir={data_path}",
             ],

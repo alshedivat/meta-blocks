@@ -1,20 +1,14 @@
-adapt:
-  name: proto
+train:
+  adapt:
+    name: proto
+  optimizer:
+    name: adam
+    learning_rate: 0.005
+
+eval:
+  adapt:
+    name: proto
 
 model:
   name: proto
   embedding_dim: 32
-
-network:
-  name: simple_cnn
-  filters: [64, 64]
-  kernel_size: 3
-  strides: 2
-  padding: same
-  batch_norm: true
-
-train:
-  adapt: {}
-
-eval:
-  adapt: {}

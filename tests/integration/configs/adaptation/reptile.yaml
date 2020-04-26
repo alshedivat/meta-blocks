@@ -1,28 +1,21 @@
-adapt:
-  name: reptile
-  batch_size: 4
-  inner_optimizer:
-    name: sgd
-    learning_rate: 0.0005
-
-model:
-  name: feed_forward
-
-network:
-  name: simple_cnn
-  filters: [64, 64]
-  kernel_size: 3
-  strides: 2
-  padding: same
-  batch_norm: true
-
 train:
   adapt:
+    name: reptile
     num_inner_steps: 4
+    inner_optimizer:
+      name: sgd
+      learning_rate: 0.0005
   optimizer:
     name: sgd
     learning_rate: 1.0
 
 eval:
   adapt:
+    name: reptile
     num_inner_steps: 8
+    inner_optimizer:
+      name: sgd
+      learning_rate: 1.0
+
+model:
+  name: feed_forward
