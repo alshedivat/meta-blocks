@@ -35,7 +35,10 @@ class Task(abc.ABC):
     """
 
     def __init__(
-        self, dataset: Dataset, num_query_shots: int = 1, name: Optional[str] = None
+        self,
+        dataset: Dataset,
+        num_query_shots: Optional[int] = 1,
+        name: Optional[str] = None,
     ) -> None:
         self.dataset = dataset
         self.num_query_shots = num_query_shots
@@ -139,7 +142,7 @@ class TaskDistribution(abc.ABC):
     def __init__(
         self,
         meta_dataset: MetaDataset,
-        num_query_shots: int = 1,
+        num_query_shots: Optional[int] = 1,
         name: Optional[str] = None,
     ):
         self.meta_dataset = meta_dataset
