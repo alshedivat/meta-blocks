@@ -2,8 +2,10 @@
 
 import collections
 import contextlib
+import datetime
 import logging
 import re
+import time
 
 import colorlog
 import tensorflow.compat.v1 as tf
@@ -190,7 +192,9 @@ def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
 
 
 class ExperimentFormatter(colorlog.ColoredFormatter):
-    """Custom log formatter that nicely indents multiline experiment logs."""
+    """Custom log formatter that nicely indents multiline experiment logs and
+    format times relative to the start of the star time of the experiment.
+    """
 
     _COLOR_REGEX = re.compile(r"\033\[[\d;]*m")
 
@@ -213,3 +217,12 @@ class ExperimentFormatter(colorlog.ColoredFormatter):
             )
             record.message = reformatted_message
         return self._style.format(record)
+
+    def formatTime(self, record, datefmt=None):
+        """
+        Return the creation time of the specified LogRecord relative to the
+        start time of the experiment as formatted text.
+        """
+        duration = datetime.datetime.utcfromtimestamp(record.relativeCreated / 1000)
+        record.delta = duration.strftime("%H:%M:%S")
+        return super(ExperimentFormatter, self).formatTime(record, datefmt)
