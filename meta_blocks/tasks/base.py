@@ -1,6 +1,4 @@
 """Task interfaces for meta-learning."""
-from __future__ import annotations
-
 import abc
 import logging
 from typing import Any, Dict, List, Optional, Tuple
@@ -39,7 +37,7 @@ class Task(abc.ABC):
         dataset: Dataset,
         num_query_shots: Optional[int] = 1,
         name: Optional[str] = None,
-    ) -> None:
+    ):
         self.dataset = dataset
         self.num_query_shots = num_query_shots
         self.name = name or self.__class__.__name__
@@ -86,7 +84,7 @@ class Task(abc.ABC):
 
     # --- Methods. ---
 
-    def build(self) -> Task:
+    def build(self):
         """Builds the task internals in the correct name scope."""
         if not self.built:
             with tf.name_scope(self.name):

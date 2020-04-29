@@ -5,6 +5,7 @@ import logging
 import os
 import random
 import time
+from multiprocessing import Lock
 from typing import Optional
 
 import numpy as np
@@ -22,10 +23,7 @@ tf.enable_resource_variables()
 
 
 def eval_step(
-    exp: Experiment,
-    repetitions: Optional[int] = 1,
-    sess: Optional[tf.Session] = None,
-    **kwargs,
+    exp: Experiment, repetitions: int = 1, sess: Optional[tf.Session] = None, **kwargs
 ):
     """Performs one evaluation step.
 
@@ -78,7 +76,7 @@ def eval_step(
     return results
 
 
-def evaluate(cfg, lock=None, work_dir=None):
+def evaluate(cfg, lock: Optional[Lock] = None, work_dir: Optional[str] = None):
     """Runs the evaluation process for the provided config.
 
     Parameters

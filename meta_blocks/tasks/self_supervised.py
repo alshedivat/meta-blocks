@@ -5,7 +5,6 @@ semantically, these tasks are still supervised, but with labels automatically
 generated using various heuristics. Hence, self-supervised is a more accurate
 term to use for such tasks.
 """
-
 import logging
 from typing import Any, List, Optional, Tuple
 

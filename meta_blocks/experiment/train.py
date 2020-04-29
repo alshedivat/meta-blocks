@@ -3,6 +3,7 @@
 import logging
 import os
 import random
+from multiprocessing import Lock
 from typing import Optional
 
 import numpy as np
@@ -53,7 +54,7 @@ def train_step(exp: Experiment, sess: Optional[tf.Session] = None, **kwargs):
     return losses
 
 
-def train(cfg, lock=None, work_dir=None):
+def train(cfg, lock: Optional[Lock] = None, work_dir: Optional[str] = None):
     """Runs the training process for the provided config.
 
     Parameters

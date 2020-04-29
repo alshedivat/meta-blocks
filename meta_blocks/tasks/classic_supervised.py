@@ -1,6 +1,4 @@
-"""Supervised tasks and task distributions for meta-learning."""
-from __future__ import annotations
-
+"""Classical supervised tasks and task distributions."""
 import logging
 from typing import Any, List, Optional, Tuple
 
