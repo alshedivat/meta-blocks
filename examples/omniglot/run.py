@@ -6,13 +6,14 @@ from multiprocessing import Lock, Process
 import hydra
 from omegaconf import DictConfig
 
+from meta_blocks import config_path
 from meta_blocks.experiment.eval import evaluate
 from meta_blocks.experiment.train import train
 
 logger = logging.getLogger(__name__)
 
 
-@hydra.main(config_path="conf/config.yaml", strict=False)
+@hydra.main(config_path=config_path, strict=False)
 def main(cfg: DictConfig):
     cfg = cfg.meta_blocks
     processes = []
