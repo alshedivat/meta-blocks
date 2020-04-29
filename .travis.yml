@@ -1,12 +1,15 @@
 language: python
 python:
+  - 3.6
   - 3.7
   - 3.8
-install:
+before_install:
+  - python --version
+  - pip install -U pip pytest
   - pip install pytest-cov coveralls
-  - pip install -r requirements/base.txt
+install:
   - pip install -e .
 script:
-  - py.test --cov-config .coveragerc --cov-report term-missing --cov=meta_blocks tests/
+  - pytest --cov-config .coveragerc --cov-report term-missing --cov=meta_blocks tests/
 after_success:
   - coveralls
