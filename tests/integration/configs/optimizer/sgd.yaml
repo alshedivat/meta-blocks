@@ -1,5 +1,0 @@
-# SGD optimizer for meta-learning.
-train:
-  opt_name: sgd
-  opt_kwargs:
-    learning_rate: 0.002

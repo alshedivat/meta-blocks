@@ -18,14 +18,16 @@ from meta_blocks.experiment.train import train
 logger = logging.getLogger(__name__)
 
 AVAILABLE_METHODS = ("maml", "fomaml", "reptile", "proto")
+AVAILABLE_SETTINGS = ("classic_supervised",)
 OMNIGLOT_URL = "https://raw.githubusercontent.com/brendenlake/omniglot/master/python/"
 
 # Initialize hydra.
-hydra_init(config_dir="configs", strict=False)
+hydra_init(config_dir="conf", strict=False)
 
 
 @pytest.mark.parametrize("adaptation_method", AVAILABLE_METHODS)
-def test_omniglot_integration(adaptation_method):
+@pytest.mark.parametrize("experiment_setting", AVAILABLE_SETTINGS)
+def test_omniglot_integration(adaptation_method, experiment_setting):
     def fetch_omniglot(dir_path):
         omniglot_dir = os.path.join(dir_path, "omniglot")
         os.makedirs(omniglot_dir, exist_ok=False)
@@ -50,9 +52,9 @@ def test_omniglot_integration(adaptation_method):
             config_file="config.yaml",
             overrides=[
                 f"adaptation={adaptation_method}",
-                f"dataset=omniglot",
+                f"test=omniglot/{experiment_setting}",
+                f"data=omniglot",
                 f"network=omniglot",
-                f"test=omniglot",
                 f"data.read_config.data_dir={data_path}",
             ],
             strict=False,
