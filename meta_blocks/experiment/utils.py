@@ -5,7 +5,6 @@ import contextlib
 import datetime
 import logging
 import re
-import time
 
 import colorlog
 import tensorflow.compat.v1 as tf
@@ -173,6 +172,8 @@ def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
         samplers.get(**task.sampler).build(
             learner=meta_learners[i], tasks=task_dists[i].task_batch
         )
+        if task.sampler is not None
+        else None
         for i, task in enumerate(cfg[mode].tasks)
     ]
 

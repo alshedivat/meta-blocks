@@ -18,7 +18,7 @@ from meta_blocks.experiment.train import train
 logger = logging.getLogger(__name__)
 
 AVAILABLE_METHODS = ("maml", "fomaml", "reptile", "proto")
-AVAILABLE_SETTINGS = ("classic_supervised",)
+AVAILABLE_SETTINGS = ("classic_supervised", "self_supervised")
 OMNIGLOT_URL = "https://raw.githubusercontent.com/brendenlake/omniglot/master/python/"
 
 # Initialize hydra.

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -94,15 +94,15 @@ class SupervisedTask(base.Task):
 
     @property
     def support_tensors(self) -> Tuple[tf.Tensor, tf.Tensor]:
-        """Returns a tuple of `num_classes` (labeled) support input tensors.
+        """Returns a tuple of support (inputs, labels) tensors.
         The input tensors are mapped through dataset's preprocessor.
         """
         return self._support_tensors
 
     @property
     def query_tensors(self) -> Tuple[tf.Tensor, tf.Tensor]:
-        """Returns a tuple of `num_classes` query input tensors.
-        The input tensors are mapped through dataset's preprocessor.
+        """Returns a tuple of query (inputs, labels) tensors.
+        The inputs are mapped through dataset's preprocessor.
         """
         return self._query_tensors
 
@@ -248,11 +248,11 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         return self._sampler
 
     @property
-    def query_labels_per_task(self):
+    def query_labels_per_task(self) -> int:
         return self.num_classes * self.num_query_shots
 
     @property
-    def support_labels_per_task(self):
+    def support_labels_per_task(self) -> int:
         return self.num_classes * self.num_support_shots
 
     # --- Methods. ---
