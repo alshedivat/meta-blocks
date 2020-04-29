@@ -230,6 +230,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
         num_task_batches_to_cache: int = 100,
         name: Optional[str] = None,
         seed: Optional[int] = 42,
+        **_unused_kwargs,
     ):
         super(UmtraTaskDistribution, self).__init__(
             meta_dataset=meta_dataset, num_query_shots=None, name=name

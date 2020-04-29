@@ -16,7 +16,6 @@ from meta_blocks import (
     models,
     networks,
     optimizers,
-    samplers,
     tasks,
 )
 
@@ -28,9 +27,7 @@ tf.enable_resource_variables()
 
 
 class Experiment(
-    collections.namedtuple(
-        "Experiment", ("checkpoint", "meta_learners", "samplers", "task_dists")
-    )
+    collections.namedtuple("Experiment", ("checkpoint", "meta_learners", "task_dists"))
 ):
     """Represents built entities for the Experiment.
 
@@ -38,11 +35,9 @@ class Experiment(
     ----------
     checkpoint : tf.train.Checkpoint
 
-    meta_learners : list of `AdaptationStrategy`s
+    meta_learners : list of meta-learners
 
-    samplers : list of `Sampler`s
-
-    task_dists : list of `TaskDistribution`s
+    task_dists : list of task distributions
     """
 
     pass
@@ -150,6 +145,7 @@ def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
         tasks.get_distribution(
             meta_dataset=meta_datasets[task.set_name],
             name_suffix=task.log_dir.replace("/", "_"),
+            sampler_config=task.sampler,
             **task.config,
         ).build()
         for task in cfg[mode].tasks
@@ -167,28 +163,15 @@ def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
         for i, task in enumerate(cfg[mode].tasks)
     ]
 
-    # Build samplers.
-    samplers_list = [
-        samplers.get(**task.sampler).build(
-            learner=meta_learners[i], tasks=task_dists[i].task_batch
-        )
-        if task.sampler is not None
-        else None
-        for i, task in enumerate(cfg[mode].tasks)
-    ]
-
     # Run global init.
     sess.run(tf.global_variables_initializer())
 
     # Initialize task distribution.
-    for task_dist, sampler in zip(task_dists, samplers_list):
-        task_dist.initialize(sampler=sampler)
+    for task_dist in task_dists:
+        task_dist.initialize()
 
     return Experiment(
-        checkpoint=checkpoint,
-        meta_learners=meta_learners,
-        samplers=samplers_list,
-        task_dists=task_dists,
+        checkpoint=checkpoint, meta_learners=meta_learners, task_dists=task_dists
     )
 
 

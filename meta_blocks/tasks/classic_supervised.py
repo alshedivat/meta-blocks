@@ -6,6 +6,7 @@ from typing import Any, List, Optional, Tuple
 
 import tensorflow.compat.v1 as tf
 
+from meta_blocks import samplers
 from meta_blocks.datasets import MetaDataset
 from meta_blocks.tasks.supervised import SupervisedTaskDistribution
 
@@ -55,12 +56,14 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         num_support_shots: int = 1,
         num_task_batches_to_cache: int = 100,
         name: Optional[str] = None,
-        seed: int = 42,
+        seed: Optional[int] = 42,
+        **_unused_kwargs,
     ):
         super(ClassicSupervisedTaskDistribution, self).__init__(
             meta_dataset=meta_dataset,
             num_query_shots=num_query_shots,
             num_support_shots=num_support_shots,
+            sampler=samplers.get(name="uniform", stratified=True),
             name=(name or self.__class__.__name__),
             seed=seed,
         )
@@ -68,7 +71,7 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
 
     # --- Methods. ---
 
-    def _refresh_requests(self, **sampling_kwargs):
+    def _refresh_requests(self):
         """Re-samples new task requests."""
         for i in range(self.num_task_batches_to_cache):
             # Construct a batch of requests.
@@ -95,11 +98,10 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
             for k, v in dict(sum(feed_list_batch, [])).items():
                 if k is None or v is None:
                     logger.info(k, v)
-            support_labeled_ids_batch = self._sampler.select_labeled(
+            support_labeled_ids_batch = self.sampler.select_labeled(
                 size=self.support_labels_per_task,
                 labels_per_step=self.num_classes,
                 feed_dict=dict(sum(feed_list_batch, [])),
-                **sampling_kwargs,
             )
             # Save the sampled information.
             self._requests.append(requests_batch)

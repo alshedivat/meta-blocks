@@ -219,6 +219,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
     def __init__(
         self,
         meta_dataset: MetaDataset,
+        sampler: Sampler,
         num_query_shots: int = 1,
         num_support_shots: int = 1,
         name: Optional[str] = None,
@@ -230,6 +231,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
             name=(name or self.__class__.__name__),
         )
         self.num_support_shots = num_support_shots
+        self.sampler = sampler
 
         # Setup random number generator.
         self._rng = np.random.RandomState(seed=seed)
@@ -239,13 +241,8 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         self._requests = None
         self._requested_ids = None
         self._requested_kwargs = None
-        self._sampler = None
 
     # --- Properties. ---
-
-    @property
-    def sampler(self):
-        return self._sampler
 
     @property
     def query_labels_per_task(self) -> int:
@@ -268,12 +265,12 @@ class SupervisedTaskDistribution(base.TaskDistribution):
             for i, dataset in enumerate(self.meta_dataset.dataset_batch)
         )
 
-    def initialize(self, *, sampler: Sampler):
+    def initialize(self, **kwargs):
         """Initializes task distribution."""
-        self._sampler = sampler
-
-        # Reset.
         self._requests = []
         self._requested_ids = []
         self._requested_kwargs = []
         self.num_requested_labels = 0
+
+        # Build the sampler.
+        self.sampler.build(tasks=self._task_batch, **kwargs)

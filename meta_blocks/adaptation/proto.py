@@ -123,10 +123,6 @@ class Proto(base.AdaptationStrategy):
         """Builds the adaptation loop."""
         self.prototypes = []
         for i, task in enumerate(self.tasks):
-            unlabeled_inputs = task.unlabeled_support_inputs
-            emb_stddev = tf.math.reduce_std(
-                tf.norm(self.model.network(unlabeled_inputs), axis=-1)
-            )
             # Build prototypes.
             inputs, labels = task.support_tensors
             self.prototypes.append(
@@ -141,8 +137,7 @@ class Proto(base.AdaptationStrategy):
                     ),
                     # If no support data, use random prototypes.
                     false_fn=lambda: tf.random.normal(
-                        shape=(task.num_classes, self.model.embedding_dim),
-                        stddev=emb_stddev,
+                        shape=(task.num_classes, self.model.embedding_dim), stddev=1.0
                     ),
                 )
             )

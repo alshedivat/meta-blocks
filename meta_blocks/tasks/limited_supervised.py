@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import tensorflow.compat.v1 as tf
 
+from meta_blocks import samplers
 from meta_blocks.datasets import MetaDataset
-from meta_blocks.samplers.base import Sampler
 from meta_blocks.tasks.supervised import SupervisedTaskDistribution
 
 logger = logging.getLogger(__name__)
@@ -46,16 +46,19 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
     def __init__(
         self,
         meta_dataset: MetaDataset,
+        sampler_config: Dict[str, Any],
         num_query_shots: int = 1,
         num_support_shots: int = 1,
         max_labeled_points: int = None,
         init_labeled_points: int = None,
         name: Optional[str] = None,
-        seed: int = 42,
+        seed: Optional[int] = 42,
+        **_unused_kwargs,
     ):
         super(LimitedSupervisedTaskDistribution, self).__init__(
             meta_dataset=meta_dataset,
             num_query_shots=num_query_shots,
+            sampler=samplers.get(**sampler_config),
             name=(name or self.__class__.__name__),
             seed=seed,
         )
@@ -68,9 +71,9 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
 
     # --- Methods. ---
 
-    def initialize(self, sampler: Sampler, **sampling_kwargs):
+    def initialize(self, **kwargs):
         """Initializes by pre-sampling supervised tasks."""
-        super(LimitedSupervisedTaskDistribution, self).initialize(sampler=sampler)
+        super(LimitedSupervisedTaskDistribution, self).initialize(**kwargs)
 
         # Determine the initial labeling budget.
         if self.init_labeled_points is None:
@@ -78,9 +81,9 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
 
         # Sample supervised tasks.
         logger.debug(f"Initializing {self.name}...")
-        self.expand(self.init_labeled_points, **sampling_kwargs)
+        self.expand(self.init_labeled_points)
 
-    def expand(self, num_labeled_points: int, **sampling_kwargs):
+    def expand(self, num_labeled_points: int):
         """Expands the number of labeled points by sampling more tasks."""
         # Never exceed the hard budget.
         num_labeled_points = min(num_labeled_points, self.max_labeled_points)
@@ -110,11 +113,10 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
                 for feed_list in feed_list_batch
             ]
             # Sample support labeled ids for the requested tasks.
-            support_labeled_ids_batch = self._sampler.select_labeled(
+            support_labeled_ids_batch = self.sampler.select_labeled(
                 size=self.support_labels_per_task,
                 labels_per_step=self.num_classes,
                 feed_dict=dict(sum(feed_list_batch, [])),
-                **sampling_kwargs,
             )
             # Save sampled information.
             for i, ids in enumerate(support_labeled_ids_batch):

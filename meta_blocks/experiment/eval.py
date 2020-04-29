@@ -5,12 +5,14 @@ import logging
 import os
 import random
 import time
+from typing import Optional
 
 import numpy as np
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import common, datasets
 from meta_blocks.experiment import utils
+from meta_blocks.experiment.utils import Experiment
 
 logger = logging.getLogger(__name__)
 
@@ -19,19 +21,24 @@ tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
 
-def eval_step(cfg, exp, sess, **kwargs):
+def eval_step(
+    exp: Experiment,
+    repetitions: Optional[int] = 1,
+    sess: Optional[tf.Session] = None,
+    **kwargs,
+):
     """Performs one evaluation step.
 
     Parameters
     ----------
-    cfg : OmegaConf
-        The experiment configuration.
-
     exp : Experiment
         The object that represents the experiment.
         Contains `meta_learners`, `samplers`, and `task_dists`.
 
-    sess : tf.Session
+    repetitions : int, optional (default: 1)
+        Number of evaluation repetitions. Typically, set to 1.
+
+    sess : tf.Session, optional
         The TF session used for executing the computation graph.
 
     Returns
@@ -39,10 +46,13 @@ def eval_step(cfg, exp, sess, **kwargs):
     results : list of dicts
         List of dictionaries with eval metrics computed for each meta-learner.
     """
+    if sess is None:
+        sess = tf.get_default_session()
+
     # Re-initialize task distributions if samplers are stateful.
     for td in exp.task_dists:
-        if td.sampler.stateful:
-            td.initialize(sess)
+        if td.sampler and td.sampler.stateful:
+            td.initialize()
 
     # Sample from the task distribution.
     feed_lists = [
@@ -53,7 +63,7 @@ def eval_step(cfg, exp, sess, **kwargs):
     results = []
     for ml, feed_list in zip(exp.meta_learners, feed_lists):
         results.append(collections.defaultdict(float))
-        for _ in range(cfg.eval.repetitions):
+        for _ in range(repetitions):
             # Perform predictions with adapted models on the query sets.
             preds_and_labels = sess.run(
                 ml.preds_and_labels, feed_dict=dict(feed_list), **kwargs
@@ -63,7 +73,7 @@ def eval_step(cfg, exp, sess, **kwargs):
             for preds, labels in preds_and_labels:
                 avg_num_correct += np.mean(preds == labels)
             results[-1]["acc"] += avg_num_correct / len(preds_and_labels)
-        results[-1]["acc"] /= cfg.eval.repetitions
+        results[-1]["acc"] /= repetitions
 
     return results
 
@@ -132,7 +142,7 @@ def evaluate(cfg, lock=None, work_dir=None):
             old_checkpoint = latest_checkpoint
 
             # Run evaluation.
-            results = eval_step(cfg, exp, sess)
+            results = eval_step(exp, repetitions=cfg.eval.repetitions, sess=sess)
 
             # Log results.
             checkpoint_name = os.path.basename(latest_checkpoint)

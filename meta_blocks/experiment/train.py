@@ -3,12 +3,14 @@
 import logging
 import os
 import random
+from typing import Optional
 
 import numpy as np
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import common, datasets
 from meta_blocks.experiment import utils
+from meta_blocks.experiment.utils import Experiment
 
 logger = logging.getLogger(__name__)
 
@@ -17,14 +19,11 @@ tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
 
-def train_step(cfg, exp, sess, **kwargs):
+def train_step(exp: Experiment, sess: Optional[tf.Session] = None, **kwargs):
     """Performs one meta-training step.
 
     Parameters
     ----------
-    cfg : OmegaConf
-        The experiment configuration.
-
     exp : Experiment
         The object that represents the experiment.
         Contains `meta_learners`, `samplers`, and `task_dists`.
@@ -37,6 +36,9 @@ def train_step(cfg, exp, sess, **kwargs):
     losses : list of floats
         Loss functions computed for each meta-learner.
     """
+    if sess is None:
+        sess = tf.get_default_session()
+
     # Sample from the task distribution.
     feed_lists = [
         td.sample_task_feed() for ml, td in zip(exp.meta_learners, exp.task_dists)
@@ -106,7 +108,7 @@ def train(cfg, lock=None, work_dir=None):
         logger.info("Training...")
         for i in range(cfg.train.max_steps):
             # Training step.
-            losses = train_step(cfg, exp, sess)
+            losses = train_step(exp, sess=sess)
             # Log metrics.
             if i % cfg.train.log_interval == 0 or i + 1 == cfg.train.max_steps:
                 log = f"step: {i}"
