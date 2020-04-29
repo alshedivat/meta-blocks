@@ -1,4 +1,7 @@
 [run]
 omit =
+    meta_blocks/version.py
+    # omit optimizers
+    meta_blocks/optimizers.py
     # omit dataset loaders
     meta_blocks/datasets/*

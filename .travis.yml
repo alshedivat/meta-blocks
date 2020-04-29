@@ -5,8 +5,8 @@ python:
   - 3.8
 before_install:
   - python --version
-  - pip install -U pip pytest
-  - pip install pytest-cov coveralls
+  - pip install -U pip pytest pytest-cov
+  - pip install -U coverage coveralls
 install:
   - pip install -e .
 script:
