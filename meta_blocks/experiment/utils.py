@@ -75,16 +75,13 @@ def session(gpu_allow_growth=True, log_device_placement=False):
         sess.close()
 
 
-def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
+def build_and_initialize(cfg, mode=common.ModeKeys.TRAIN):
     """Builds and initializes all parts of the graph.
 
     Parameters
     ----------
     cfg : OmegaConf
         The experiment configuration.
-
-    categories : dict of lists of Categories
-        Each list of Categories is used to construct meta-datasets.
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
         Defines the mode of the computation graph (TRAIN or EVAL).
@@ -98,26 +95,18 @@ def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
     """
     sess = tf.get_default_session()
 
-    # Build and initialize data pools.
-    data_pools = {
-        task.set_name: datasets.get_datapool(
-            dataset_name=cfg.data.name,
-            categories=categories[task.set_name],
-            name=f"DP_{task.log_dir.replace('/', '_')}",
-        )
-        .build(**cfg.data.build_config)
-        .initialize(sess)
-        for task in cfg[mode].tasks
-    }
+    # Build the data source.
+    data_source = datasets.get_data_source(
+        name=cfg.data.name, **cfg.data.source
+    ).build()
 
-    # Build meta-dataset.
+    # Build meta-datasets.
     meta_datasets = {
-        task.set_name: datasets.get_metadataset(
-            dataset_name=cfg.data.name,
-            data_pool=data_pools[task.set_name],
-            batch_size=cfg[mode].meta.batch_size,
-            name=f"MD_{task.log_dir.replace('/', '_')}",
-            **cfg[mode].dataset,
+        task.set_name: datasets.get_meta_dataset(
+            name=cfg.data.name,
+            data_source=data_source,
+            set_name=task.set_name,
+            **cfg[mode].meta_dataset,
         ).build()
         for task in cfg[mode].tasks
     }
@@ -125,9 +114,9 @@ def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
     # Build model.
     network_builder = networks.get(**cfg.network)
     model = models.get(
-        input_shapes=data_pools["train"].output_shapes,
-        input_types=data_pools["train"].output_types,
-        num_classes=cfg[mode].dataset.num_classes,
+        input_shapes=data_source.data_shapes,
+        input_types=data_source.data_types,
+        num_classes=cfg[mode].meta_dataset.num_classes,
         network_builder=network_builder,
         **cfg.model,
     ).build()
@@ -166,7 +155,8 @@ def build_and_initialize(cfg, categories, mode=common.ModeKeys.TRAIN):
     # Run global init.
     sess.run(tf.global_variables_initializer())
 
-    # Initialize task distribution.
+    # Initialize.
+    data_source.initialize()
     for task_dist in task_dists:
         task_dist.initialize()
 

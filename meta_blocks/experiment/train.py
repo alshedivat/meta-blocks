@@ -3,13 +3,13 @@
 import logging
 import os
 import random
-from multiprocessing import Lock
 from typing import Optional
 
 import numpy as np
 import tensorflow.compat.v1 as tf
+from omegaconf import DictConfig
 
-from meta_blocks import common, datasets
+from meta_blocks import common
 from meta_blocks.experiment import utils
 from meta_blocks.experiment.utils import Experiment
 
@@ -54,16 +54,13 @@ def train_step(exp: Experiment, sess: Optional[tf.Session] = None, **kwargs):
     return losses
 
 
-def train(cfg, lock: Optional[Lock] = None, work_dir: Optional[str] = None):
+def train(cfg: DictConfig, work_dir: Optional[str] = None):
     """Runs the training process for the provided config.
 
     Parameters
     ----------
-    cfg : OmegaConf
+    cfg : DictConfig
         The experiment configuration.
-
-    lock : Lock
-        An object used for synchronizing training and evaluation processes.
 
     work_dir : str, optional
         Working directory used for saving checkpoints, logs, etc.
@@ -78,16 +75,10 @@ def train(cfg, lock: Optional[Lock] = None, work_dir: Optional[str] = None):
     np.random.seed(cfg.run.seed)
     tf.set_random_seed(cfg.run.seed)
 
-    # Get categories.
-    logger.debug(f"Reading {cfg.data.name} categories...")
-    categories = datasets.get_categories(cfg.data.name, **cfg.data.read_config)
-
     # Setup the session.
     with utils.session(gpu_allow_growth=True) as sess:
         # Build and initialize.
-        exp = utils.build_and_initialize(
-            cfg=cfg, categories=categories, mode=common.ModeKeys.TRAIN
-        )
+        exp = utils.build_and_initialize(cfg=cfg, mode=common.ModeKeys.TRAIN)
 
         # Setup logging and saving.
         writers = [
@@ -104,8 +95,6 @@ def train(cfg, lock: Optional[Lock] = None, work_dir: Optional[str] = None):
         )
 
         # Do meta-learning iterations.
-        if lock is not None:
-            lock.acquire()
         logger.info("Training...")
         for i in range(cfg.train.max_steps):
             # Training step.
@@ -139,5 +128,3 @@ def train(cfg, lock: Optional[Lock] = None, work_dir: Optional[str] = None):
                     td.expand(num_labeled_points=(task.labels_per_step * i), sess=sess)
                 if cfg.train.do_reinit:
                     sess.run(tf.global_variables_initializer())
-        if lock is not None:
-            lock.release()

@@ -1,4 +1,4 @@
-# Omniglot data with rotation-based augmentation.
+# Omniglot data configuration.
 meta_blocks:
   data:
     name: omniglot
@@ -7,5 +7,7 @@ meta_blocks:
       num_train_categories: 1000
       num_valid_categories: 200
       num_test_categories: 463
-      shuffle_categories: true
-      shuffle_data: true
+      rotations: [90, 180, 270]
+      shuffle: true
+    build_config:
+      shuffle: true

@@ -95,17 +95,7 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
                 f"{requested_labels_so_far}/{num_labeled_points}"
             )
             # Construct a batch of requests.
-            requests_batch = tuple(
-                tuple(
-                    self._rng.choice(
-                        self.meta_dataset.num_categories,
-                        size=self.num_classes,
-                        replace=False,
-                    )
-                )
-                for _ in range(self.meta_batch_size)
-            )
-            feed_list_batch = self.meta_dataset.get_feed_list_batch(requests_batch)
+            requests_batch, feed_list_batch = self.meta_dataset.get_feed_batch()
             # Get request kwargs.
             request_kwargs_batch = [
                 [v for _, v in feed_list[self.num_classes :]]
@@ -137,7 +127,7 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
         requests_batch = [self._requests[i] for i in indices_batch]
         ids_batch = [self._requested_ids[i] for i in indices_batch]
         kwargs_batch = [self._requested_kwargs[i] for i in indices_batch]
-        feed_list_batch = self.meta_dataset.get_feed_list_batch(requests_batch)
+        _, feed_list_batch = self.meta_dataset.get_feed_batch(requests=requests_batch)
         task_feed = []
         for i, feed_list in enumerate(feed_list_batch):
             # Truncate feed list.

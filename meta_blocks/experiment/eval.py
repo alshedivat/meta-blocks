@@ -5,13 +5,13 @@ import logging
 import os
 import random
 import time
-from multiprocessing import Lock
 from typing import Optional
 
 import numpy as np
 import tensorflow.compat.v1 as tf
+from omegaconf import DictConfig
 
-from meta_blocks import common, datasets
+from meta_blocks import common
 from meta_blocks.experiment import utils
 from meta_blocks.experiment.utils import Experiment
 
@@ -76,16 +76,13 @@ def eval_step(
     return results
 
 
-def evaluate(cfg, lock: Optional[Lock] = None, work_dir: Optional[str] = None):
+def evaluate(cfg: DictConfig, work_dir: Optional[str] = None):
     """Runs the evaluation process for the provided config.
 
     Parameters
     ----------
-    cfg : OmegaConf
+    cfg : DictConfig
         The experiment configuration.
-
-    lock : Lock
-        An object used for synchronizing training and evaluation processes.
 
     work_dir : str, optional
         Working directory used for saving checkpoints, logs, etc.
@@ -100,18 +97,9 @@ def evaluate(cfg, lock: Optional[Lock] = None, work_dir: Optional[str] = None):
     np.random.seed(cfg.run.seed)
     tf.set_random_seed(cfg.run.seed)
 
-    # Get categories.
-    categories = datasets.get_categories(cfg.data.name, **cfg.data.read_config)
-
     with utils.session(gpu_allow_growth=True) as sess:
         # Build and initialize.
-        if lock is not None:
-            lock.acquire()
-        exp = utils.build_and_initialize(
-            cfg=cfg, categories=categories, mode=common.ModeKeys.EVAL
-        )
-        if lock is not None:
-            lock.release()
+        exp = utils.build_and_initialize(cfg=cfg, mode=common.ModeKeys.EVAL)
 
         # Setup logging and saving.
         writers = [

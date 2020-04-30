@@ -2,25 +2,17 @@ from meta_blocks.datasets import omniglot
 from meta_blocks.datasets.base import *
 
 
-def get_categories(name, data_dir, **kwargs):
+def get_data_source(name, **kwargs):
     if name == "omniglot":
-        categories = omniglot.get_categories(data_dir, **kwargs)
+        data_source = omniglot.OmniglotDataSource(**kwargs)
     else:
         raise ValueError(f"Unknown dataset: {name}.")
-    return categories
+    return data_source
 
 
-def get_datapool(dataset_name, **kwargs):
-    if dataset_name == "omniglot":
-        data_pool = omniglot.OmniglotDataPool(**kwargs)
-    else:
-        raise ValueError(f"Unknown dataset: {dataset_name}.")
-    return data_pool
-
-
-def get_metadataset(dataset_name, **kwargs):
-    if dataset_name == "omniglot":
+def get_meta_dataset(name, **kwargs):
+    if name == "omniglot":
         meta_dataset = omniglot.OmniglotMetaDataset(**kwargs)
     else:
-        raise ValueError(f"Unknown dataset: {dataset_name}.")
+        raise ValueError(f"Unknown dataset: {name}.")
     return meta_dataset

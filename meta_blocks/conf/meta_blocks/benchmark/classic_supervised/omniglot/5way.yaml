@@ -1,11 +1,9 @@
 # Configuration for the classic 5-way Omniglot benchmark.
 meta_blocks:
   train:
-    dataset:
-      num_classes: 5
-      rotations: [0, 1, 2, 3]  # in multiples of 90 degrees
-    meta:
+    meta_dataset:
       batch_size: 50
+      num_classes: 5
     optimizer:
       name: adam
       beta1: 0.
@@ -24,10 +22,9 @@ meta_blocks:
     log_interval: 10
     save_interval: 100
   eval:
-    dataset:
-      num_classes: 5
-    meta:
+    meta_dataset:
       batch_size: 50
+      num_classes: 5
     tasks:
       # Train.
       - set_name: train

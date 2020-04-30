@@ -1,8 +1,7 @@
-"""Dataset management."""
-
+"""Data management for meta-learning."""
 import abc
 import logging
-from typing import Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import tensorflow.compat.v1 as tf
 
@@ -12,156 +11,142 @@ logger = logging.getLogger(__name__)
 tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
-__all__ = ["Category", "DataPool", "Dataset", "MetaDataset"]
+__all__ = ["DataSource", "Dataset", "MetaDataset"]
 
 
-class Category(abc.ABC):
-    """An abstract class for representing different categories of instances.
-    Provides access to the underlying data.
+class DataSource(abc.ABC):
+    """The base abstract class for data sources.
+
+    Data sources are the underlying data structures that provide access to the
+    actual data from which meta-datasets can further sample small datasets.
+    Each dataset must implement a data source.
 
     Parameters
     ----------
     data_dir : str
-        The data directory.
+        Path to the directory that contains the data.
 
-    name : str
-        Name of the category.
+    name : str, optional
+        The name of the dataset.
     """
 
-    def __init__(self, data_dir: str, name: str) -> None:
-        """Instantiates a Category."""
+    def __init__(self, data_dir: str, name: Optional[str] = None):
         self.data_dir = data_dir
-        self.name = name
+        self.name = name or self.__class__.__name__
 
         # Internals.
-        self._size = None
-        self._dataset = None
-        self._iterator = None
-        self._string_handle = None
-
+        self.data = None
         self.built = False
 
-    @property
-    def size(self) -> int:
-        return self._size
+    # --- Abstract properties. ---
 
     @property
-    def dataset(self) -> tf.data.Dataset:
-        return self._dataset
-
-    @property
-    def iterator(self) -> tf.data.Iterator:
-        return self._iterator
-
-    @property
-    def string_handle(self) -> tf.Tensor:
-        return self._string_handle
-
-    def build(self, *args, **kwargs):
-        if not self.built:
-            self._build(*args, **kwargs)
-        return self
-
     @abc.abstractmethod
-    def _build(self, *args, **kwargs):
-        """Internal fucntion for building tf.datasets.Dataset for the
-        underlying datasets resources. Must be implemented by a subclass.
-        """
-        raise NotImplementedError("Abstract Method")
-
-
-class DataPool(object):
-    """Represents a pool of data.
-
-    Note: auxiliary class; likely to be removed from the API.
-
-    Parameters
-    ----------
-    categories : list of Categories
-        A list of categories representing the underlying data.
-
-    name : str, optional (default="DataPool")
-        The name of the data-pool.
-
-    Attributes
-    ----------
-    num_categories : int
-        The total number of the categories in the data pool.
-
-    category_handles : list of str
-        A list of string handles that identify iterators over the data in each
-        category. Allows to construct symbolic datasets that can pool data
-        from different subsets of categories.
-
-    output_shapes : TensorShapes
-        Shapes of the examples contained in the data pool.
-    """
-
-    def __init__(self, categories: List[Category], name: str = "DataPool"):
-        """Instantiates a DataPool."""
-        self.categories = categories
-        self.name = name
-
-        # Internals.
-        self._category_handles = None
-        self.built = False
+    def data_shapes(self):
+        raise NotImplementedError("Abstract Property")
 
     @property
-    def num_categories(self) -> int:
-        return len(self.categories)
+    @abc.abstractmethod
+    def data_types(self):
+        raise NotImplementedError("Abstract Property")
 
-    @property
-    def category_handles(self) -> List[str]:
-        return self._category_handles
+    # --- Methods. ---
 
-    @property
-    def output_types(self):
-        return tf.data.get_output_types(self.categories[0].dataset)
-
-    @property
-    def output_shapes(self):
-        return tf.data.get_output_shapes(self.categories[0].dataset)
+    def __getitem__(self, set_name):
+        """Returns the corresponding set of the data."""
+        return self.data[set_name]
 
     def build(self, **kwargs):
-        """Builds all managed data categories."""
+        """Builds the data source in the correct namespace."""
         if not self.built:
-            logger.debug(f"Building {self.name}...")
-            for c in self.categories:
-                c.build(**kwargs)
+            with tf.name_scope(self.name):
+                self._build(**kwargs)
             self.built = True
         return self
 
-    def initialize(self, sess):
-        """Initializes all managed data categories within the given session."""
-        logger.debug(f"Initializing {self.name}...")
-        self._category_handles = sess.run([c.string_handle for c in self.categories])
+    def _build(self, **kwargs):
+        """Builds the data source. Does nothing by default."""
+        pass
+
+    def initialize(self, **kwargs):
+        """Initializes the data source. Does nothing by default."""
+        pass
+
+
+class Dataset(abc.ABC):
+    """The base abstract class for datasets.
+
+    Internally, `Dataset`s must build data tensors that will contain data at
+    execution time. Data tensors can be either `tf.placeholder`s or built around
+    `tf.data.Iterator`s. Implementation is typically dataset-specific.
+
+    Parameters
+    ----------
+    data_shapes : tf.TensorShape
+
+    data_types : tf.DType
+
+    name : str, optional
+        The name of the dataset.
+    """
+
+    def __init__(
+        self,
+        data_shapes: tf.TensorShape,
+        data_types: tf.DType,
+        name: Optional[str] = None,
+        **_unused_kwargs,
+    ):
+        self.data_shapes = data_shapes
+        self.data_types = data_types
+        self.name = name or self.__class__.__name__
+
+        # Internals.
+        self.data_tensors = None
+        self.built = False
+
+    # --- Abstract properties. ---
+
+    @property
+    @abc.abstractmethod
+    def size(self) -> tf.Tensor:
+        raise NotImplementedError("Abstract Property")
+
+    # --- Methods. ---
+
+    def build(self):
+        """Builds the dataset in the correct namespace."""
+        if not self.built:
+            with tf.name_scope(self.name):
+                self._build()
+            self.built = True
         return self
 
+    def get_preprocessor(self) -> Optional[Callable]:
+        """Returns a function for data preprocessing or None."""
+        pass
 
-class Dataset(object):
-    """Generates dataset tensors by pulling data from specified categories.
+    def get_feed_list(self, **kwargs) -> List[Tuple[tf.Tensor, Any]]:
+        """Returns a list of (placeholder, value) pairs."""
+        return []
+
+    # --- Abstract methods. ---
+
+    @abc.abstractmethod
+    def _build(self):
+        raise NotImplementedError("Abstract Method")
+
+
+class ClfDataset(Dataset):
+    """The base class for classification datasets.
 
     Parameters
     ----------
     num_classes : int
         The number of classes.
 
-    output_types : TensorTypes
-        The expected types of the examples contained in the dataset.
-
-    output_shapes : TensorShapes
-        The expected shapes of the examples contained in the dataset.
-
-    name : str, optional (default="Dataset")
+    name : str, optional
         The name of the dataset.
-
-    Attributes
-    ----------
-    data_tensors : tuple of Tensors
-        A tuple of tensors/placeholders that contain data for each class.
-
-    size : Tensor <int32> []
-        The total number of samples in the dataset.
     """
 
     def __init__(
@@ -170,92 +155,46 @@ class Dataset(object):
         data_shapes: tf.TensorShape,
         data_types: tf.DType,
         name: Optional[str] = None,
-        **kwargs,
+        **_unused_kwargs,
     ):
+        super(ClfDataset, self).__init__(
+            data_shapes=data_shapes,
+            data_types=data_types,
+            name=name or self.__class__.__name__,
+        )
         self.num_classes = num_classes
-        self.data_shapes = data_shapes
-        self.data_types = data_types
-        self.name = name or self.__class__.__name__
 
-        # Internals.
-        self._data_tensors = None
-        self._string_handle_phs = None
+    # --- Properties. ---
 
-        self.built = False
-
-    @property
-    def data_tensors(self) -> Tuple[tf.Tensor]:
-        return self._data_tensors
-
-    @property
     def size(self) -> tf.Tensor:
         return tf.reduce_sum([tf.shape(dt)[0] for dt in self.data_tensors])
 
-    def build(self):
-        """Builds the dataset subgraph.
 
-        Returns
-        -------
-        self : object
-        """
-        if not self.built:
-            data_tensors = []
-            string_handle_phs = []
-            with tf.name_scope(self.name):
-                for k in range(self.num_classes):
-                    string_handle_ph = tf.placeholder(
-                        tf.string, shape=[], name=f"iterator_handle_class_{k}"
-                    )
-                    iterator = tf.data.Iterator.from_string_handle(
-                        string_handle_ph,
-                        output_types=self.data_types,
-                        output_shapes=self.data_shapes,
-                    )
-                    data_tensor = iterator.get_next()
-                    data_tensors.append(data_tensor)
-                    string_handle_phs.append(string_handle_ph)
-            self._data_tensors = tuple(data_tensors)
-            self._string_handle_phs = tuple(string_handle_phs)
-            self.built = True
-        return self
-
-    def get_preprocessor(self) -> Optional[Callable]:
-        """Returns a function for input preprocessing or None."""
-        pass
-
-    def get_feed_list(self, string_handles: Tuple[str]) -> List[Tuple[tf.Tensor, str]]:
-        """Returns tensors with data and a feed dict with dependencies."""
-        if len(string_handles) != self.num_classes:
-            raise ValueError("Incorrect number of string handles provided.")
-        return list(zip(self._string_handle_phs, string_handles))
-
-
-class MetaDataset(object):
-    """Generates datasets from the provided pool of data."""
+class MetaDataset(abc.ABC):
+    """The base class for meta-datasets."""
 
     Dataset = Dataset
 
     def __init__(
         self,
-        data_pool: DataPool,
-        num_classes: int,
+        data_source: DataSource,
         batch_size: int,
         name: Optional[str] = None,
+        seed: Optional[int] = None,
         **kwargs,
     ):
         """Instantiates a MetaDataset."""
-        self.data_pool = data_pool
-        self.num_classes = num_classes
+        self.data_source = data_source
         self.batch_size = batch_size
         self.name = name or self.__class__.__name__
+        self.seed = seed
 
         # Internals.
-        self._dataset_batch = tuple(
+        self.dataset_batch = tuple(
             self.Dataset(
-                num_classes=self.num_classes,
-                data_shapes=self.data_pool.output_shapes,
-                data_types=self.data_pool.output_types,
-                name=f"DS_{i}",
+                data_shapes=self.data_source.data_shapes,
+                data_types=self.data_source.data_types,
+                name=f"DS{i}",
                 **kwargs,
             )
             for i in range(self.batch_size)
@@ -263,35 +202,48 @@ class MetaDataset(object):
 
         self.built = False
 
-    @property
-    def num_categories(self):
-        return self.data_pool.num_categories
-
-    @property
-    def dataset_batch(self):
-        return self._dataset_batch
+    # --- Methods. ---
 
     def build(self):
+        """Builds internals in the correct name scope."""
         if not self.built:
             logger.debug(f"Building {self.name}...")
             with tf.name_scope(self.name):
-                for ds in self._dataset_batch:
+                for ds in self.dataset_batch:
                     ds.build()
             self.built = True
         return self
 
-    def get_feed_list_batch(
-        self, requests: Tuple[Tuple[int]]
-    ) -> List[List[Tuple[tf.Tensor, str]]]:
-        """Returns a feed list for the requested meta-batch of datasets."""
-        if len(requests) > self.batch_size:
-            raise ValueError("The dataset request is incompatible.")
-        # Get feed dicts for each request.
-        feed_lists = []
-        for n, category_ids in enumerate(requests):
-            feed_lists.append(
-                self._dataset_batch[n].get_feed_list(
-                    [self.data_pool.category_handles[i] for i in category_ids]
-                )
-            )
-        return feed_lists
+    # --- Abstract methods. ---
+
+    @abc.abstractmethod
+    def get_feed_batch(
+        self, **kwargs
+    ) -> Tuple[Tuple[Any, ...], List[List[Tuple[tf.Tensor, Any]]]]:
+        """Returns a list of (placeholder, value) pairs."""
+        raise NotImplementedError("Abstract Method")
+
+
+class ClfMetaDataset(MetaDataset):
+    """The base class for meta classification datasets."""
+
+    Dataset = ClfDataset
+
+    def __init__(
+        self,
+        data_source: DataSource,
+        batch_size: int,
+        num_classes: int,
+        name: Optional[str] = None,
+        seed: Optional[int] = None,
+        **kwargs,
+    ):
+        kwargs["num_classes"] = num_classes
+        super(ClfMetaDataset, self).__init__(
+            data_source=data_source,
+            batch_size=batch_size,
+            name=(name or self.__class__.__name__),
+            seed=seed,
+            **kwargs,
+        )
+        self.num_classes = num_classes

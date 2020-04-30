@@ -285,18 +285,11 @@ class UmtraTaskDistribution(base.TaskDistribution):
     def _refresh_requests(self):
         """Expands the number of labeled points by sampling more tasks."""
         for i in range(self.num_task_batches_to_cache):
-            requests_batch = tuple(
-                tuple(
-                    self._rng.choice(
-                        self.meta_dataset.num_categories,
-                        size=self.num_classes,
-                        # If not stratified, samples classes with replacement,
-                        # which results in tasks that may have different classes
-                        # with the same underlying category.
-                        replace=(not self.stratified),
-                    )
-                )
-                for _ in range(self.meta_batch_size)
+            requests_batch, feed_list_batch = self.meta_dataset.get_feed_batch(
+                # If not stratified, samples classes with replacement,
+                # which results in tasks that may have different classes
+                # with the same underlying category.
+                replace=(not self.stratified)
             )
             self._requests.append(requests_batch)
 
@@ -307,5 +300,5 @@ class UmtraTaskDistribution(base.TaskDistribution):
         # Sample a meta-batch of tasks.
         requests_batch = self._requests.pop()
         # Build feed list for the meta-batch of tasks.
-        feed_list_batch = self.meta_dataset.get_feed_list_batch(requests_batch)
+        _, feed_list_batch = self.meta_dataset.get_feed_batch(requests=requests_batch)
         return sum(feed_list_batch, [])

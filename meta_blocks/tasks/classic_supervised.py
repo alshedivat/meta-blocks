@@ -73,17 +73,7 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         """Re-samples new task requests."""
         for i in range(self.num_task_batches_to_cache):
             # Construct a batch of requests.
-            requests_batch = tuple(
-                tuple(
-                    self._rng.choice(
-                        self.meta_dataset.num_categories,
-                        size=self.num_classes,
-                        replace=False,
-                    )
-                )
-                for _ in range(self.meta_batch_size)
-            )
-            feed_list_batch = self.meta_dataset.get_feed_list_batch(requests_batch)
+            requests_batch, feed_list_batch = self.meta_dataset.get_feed_batch()
             # Get request kwargs.
             # Note: the feed list returned by self.meta_dataset consists of
             #       `num_classes` category id placeholder feeds followed by
@@ -117,7 +107,7 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         requests_batch = self._requests.pop()
         ids_batch = self._requested_ids.pop()
         kwargs_batch = self._requested_kwargs.pop()
-        feed_list_batch = self.meta_dataset.get_feed_list_batch(requests_batch)
+        _, feed_list_batch = self.meta_dataset.get_feed_batch(requests=requests_batch)
         # Construct task feed.
         task_feed = []
         for i, feed_list in enumerate(feed_list_batch):
