@@ -1,0 +1,22 @@
+# MAML adaptation at training and test time.
+meta_blocks:
+  train:
+    adapt:
+      name: maml
+      first_order: false
+      num_inner_steps: 4
+      inner_optimizer:
+        name: sgd
+        learning_rate: 0.002
+    optimizer:
+      name: multistep_adam
+      learning_rate: 0.005
+      n: 20
+  eval:
+    adapt:
+      name: maml
+      first_order: false
+      num_inner_steps: 8
+      inner_optimizer:
+        name: sgd
+        learning_rate: 0.002
