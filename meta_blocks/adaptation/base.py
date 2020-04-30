@@ -100,8 +100,10 @@ class AdaptationStrategy(abc.ABC):
             # Build meta-losses, meta-update ops, meta-eval.
             logger.debug("Building meta-learning ops...")
             with tf.name_scope("meta-learn"):
-                self.loss, self.train_op, self.preds_and_labels = (
-                    self._build_meta_learn()
-                )
+                (
+                    self.loss,
+                    self.train_op,
+                    self.preds_and_labels,
+                ) = self._build_meta_learn()
             logger.debug("Done.")
         return self
