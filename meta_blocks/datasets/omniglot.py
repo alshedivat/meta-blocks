@@ -1,205 +1,271 @@
-"""
-Loading and augmenting the Omniglot dataset.
-
-To use these APIs, you should prepare a directory that
-contains all of the alphabets from both images_background
-and images_evaluation.
-"""
+"""The Omniglot dataset."""
 
 import glob
 import logging
 import os
 import random
+from typing import Any, List, Optional, Tuple
 
+import numpy as np
 import tensorflow.compat.v1 as tf
+from PIL import Image
 
-from meta_blocks.datasets import base, utils
+from meta_blocks.datasets import base
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["OmniglotCategory", "OmniglotDataset", "OmniglotMetaDataset"]
+# Transition to V2 will happen in stages.
+tf.disable_v2_behavior()
+tf.enable_resource_variables()
+
+__all__ = [
+    "OmniglotCharacter",
+    "OmniglotDataSource",
+    "OmniglotDataset",
+    "OmniglotMetaDataset",
+]
 
 
-def read_dataset(
-    data_dir,
-    num_train_categories=1000,
-    num_valid_categories=200,
-    num_test_categories=463,
-):
-    """Iterate over the characters in a data directory.
-    The dataset is unaugmented and not split up into training and test sets.
-
-    Parameters
-    ----------
-    data_dir : str
-        A directory of alphabet directories.
-
-    num_train_categories : int, optional (default=1000)
-
-    num_valid_categories : int, optional (default=200)
-
-    num_test_categories : int, optional (default=463)
-
-    Returns
-    -------
-    train_test_val_set : dict
-        An iterable over Characters.
-    """
-
-    categories = []
-    for alphabet_name in sorted(os.listdir(data_dir)):
-        alphabet_dir = os.path.join(data_dir, alphabet_name)
-        if not os.path.isdir(alphabet_dir):
-            continue
-        for name in sorted(os.listdir(alphabet_dir)):
-            if not os.path.isdir(os.path.join(alphabet_dir, name)):
-                continue
-            if not name.startswith("character"):
-                continue
-            c = OmniglotCategory(data_dir, os.path.join(alphabet_name, name))
-            categories.append(c)
-    random.shuffle(categories)
-    return {
-        "train": categories[:num_train_categories],
-        "valid": categories[num_train_categories:][:num_valid_categories],
-        "test": categories[num_train_categories:][-num_test_categories:],
-    }
-
-
-class OmniglotCategory(base.Category):
-    """A single character class.
+class OmniglotCharacter(base.DataSource):
+    """Represents data source for a single Omniglot character.
 
     Parameters
     ----------
     data_dir : str
-        The data directory.
+        Path to the directory that contains the character data.
 
-    name : str
-        Name of the category.
+    rotation : int (default: 0)
+        Rotation of the character in degrees.
 
-    maybe_gen_tfrecords : bool, optional (default=False)
-        Whether to generate TF records. Deprecated.
+    name : str, optional
+        The name of the dataset.
     """
-
-    def __init__(self, data_dir, name, maybe_gen_tfrecords=False):
-
-        super(OmniglotCategory, self).__init__(data_dir, name)
-        self._maybe_gen_tfrecords = maybe_gen_tfrecords
-
-    def maybe_generate_tfrecords(self, tfrecord_path):
-        """Generates TFRecords for the corresponding data."""
-        # Get file paths and determine dataset size.
-        filepaths = glob.glob(os.path.join(self.data_dir, self.name, "*.png"))
-        self._dataset_size = len(filepaths)
-
-        # Generate TFRecords, if necessary.
-        if os.path.exists(tfrecord_path):
-            logger.debug(
-                f"Category {self.name} in {self.data_dir} "
-                f"is already preprocessed. Skipping..."
-            )
-            return
-        logger.debug(
-            f"Generating TFRecords for category {self.name} " f"in {self.data_dir}..."
-        )
-
-        # Read images and construct features.
-        features = []
-        for fpath in sorted(filepaths):
-            with open(fpath, "rb") as fp:
-                feature = {"image_raw": utils.bytes_feature_list([fp.read()])}
-                features.append(feature)
-
-        # Write features to a TFRecords file.
-        with tf.python_io.TFRecordWriter(tfrecord_path) as writer:
-            for feature in features:
-                example = tf.train.Example(features=tf.train.Features(feature=feature))
-                writer.write(example.SerializeToString())
-
-        logger.info("Done.")
-
-    def build(
-        self,
-        size=None,
-        shuffle=False,
-        num_parallel_reads=16,
-        shuffle_buffer_size=100,
-        seed=None,
-        **kwargs,
-    ):
-        """Builds tf.data.Dataset for the underlying data resources."""
-        tfrecord_path = os.path.join(self.data_dir, f"{self.name}.tfrecords")
-
-        # Generate TFRecords.
-        if self._maybe_gen_tfrecords:
-            self.maybe_generate_tfrecords(tfrecord_path)
-        else:
-            self._dataset_size = 20
-
-        # Build the tf.data.Dataset.
-        self._dataset = tf.data.TFRecordDataset(
-            tfrecord_path, num_parallel_reads=num_parallel_reads
-        )
-        if shuffle:
-            self._dataset = self._dataset.shuffle(shuffle_buffer_size, seed=seed)
-        self._size = (
-            self._dataset_size if size is None else min(size, self._dataset_size)
-        )
-        self._dataset = self._dataset.repeat().batch(self._size)
-
-        # Build string handles.
-        iterator = tf.data.make_one_shot_iterator(self._dataset)
-        self._string_handle_tensor = iterator.string_handle()
-
-        return self
-
-
-class OmniglotDataset(base.Dataset):
-    """A dataset that implements Omniglot-speicfic data preprocessing."""
 
     RAW_IMG_SHAPE = (105, 105, 1)
-    PREPROC_IMG_SHAPE = (28, 28, 1)
+    IMG_SHAPE = (28, 28, 1)
+    IMG_DTYPE = tf.float32
 
-    def __init__(self, categories, rotations=(0,), **kwargs):
-        self.rotations = tuple(rotations)
-        super(OmniglotDataset, self).__init__(categories, **kwargs)
-
-    def _get_preprocess_kwargs(self):
-        return tuple(
-            {"rotation": random.sample(self.rotations, 1)[0]} for _ in self._categories
+    def __init__(self, data_dir: str, rotation: int = 0, name: Optional[str] = None):
+        super(OmniglotCharacter, self).__init__(
+            data_dir, name=(name or self.__class__.__name__)
         )
+        self.rotation = rotation
 
-    @classmethod
-    def build_preprocess_kwarg_phs(cls, num_classes):
-        """Builds kwarg placeholders used for preprocessing."""
-        return tuple(
-            {
-                "rotation": tf.placeholder(
-                    dtype=tf.int32, shape=[], name=f"class_{i}_rotation"
+        # Internals.
+        self.data = None
+
+    # --- Properties. ---
+
+    @property
+    def raw_data_shapes(self):
+        return self.IMG_SHAPE
+
+    @property
+    def raw_data_types(self):
+        return self.IMG_DTYPE
+
+    # --- Methods. ---
+
+    def initialize(self, max_size=None, shuffle=True):
+        # Infer dataset size.
+        filepaths = glob.glob(os.path.join(self.data_dir, "*.png"))
+        if shuffle:
+            random.shuffle(filepaths)
+        if max_size is not None:
+            filepaths = filepaths[:max_size]
+        self._size = len(filepaths)
+        # Load data.
+        data = []
+        for fpath in filepaths:
+            with open(fpath, "rb") as fp:
+                image = Image.open(fp).resize(self.IMG_SHAPE[:-1])
+                if self.rotation:
+                    image = image.rotate(self.rotation)
+                image = np.array(image).astype(np.float32)
+                data.append(np.expand_dims(image, axis=-1))
+        self.data = np.stack(data)
+
+
+class OmniglotDataSource(base.DataSource):
+    """Data source for Omniglot data."""
+
+    NUM_CATEGORIES = 1663
+
+    def __init__(
+        self,
+        data_dir: str,
+        num_train_categories: int = 1000,
+        num_valid_categories: int = 200,
+        num_test_categories: int = 463,
+        max_category_size: Optional[int] = None,
+        rotations: Optional[Tuple[int]] = None,
+        shuffle_categories: bool = True,
+        shuffle_data: bool = True,
+        name: Optional[str] = None,
+    ):
+        super(OmniglotDataSource, self).__init__(
+            data_dir=data_dir, name=(name or self.__class__.__name__)
+        )
+        self.num_train_categories = num_train_categories
+        self.num_valid_categories = num_valid_categories
+        self.num_test_categories = num_test_categories
+        self.max_category_size = max_category_size
+        self.rotations = rotations
+        self.shuffle_categories = shuffle_categories
+        self.shuffle_data = shuffle_data
+
+        # Internals.
+        self.data = None
+
+    @property
+    def raw_data_shapes(self):
+        return OmniglotCharacter.IMG_SHAPE
+
+    @property
+    def raw_data_types(self):
+        return OmniglotCharacter.IMG_DTYPE
+
+    # --- Methods. ---
+
+    def __getitem__(self, set_name):
+        """Returns the corresponding set of the data."""
+        return self.data[set_name]
+
+    def initialize(self):
+        """Loads train, valid, and test categories."""
+        logger.debug(f"Initializing {self.name}...")
+        characters = []
+        for alphabet_name in sorted(os.listdir(self.data_dir)):
+            alphabet_dir = os.path.join(self.data_dir, alphabet_name)
+            if not os.path.isdir(alphabet_dir):
+                continue
+            for name in sorted(os.listdir(alphabet_dir)):
+                if not os.path.isdir(os.path.join(alphabet_dir, name)):
+                    continue
+                if not name.startswith("character"):
+                    continue
+                char_name = f"{alphabet_name}_{name}"
+                char_dir = os.path.join(self.data_dir, alphabet_name, name)
+                char = OmniglotCharacter(char_dir, name=char_name)
+                char.initialize(
+                    max_size=self.max_category_size, shuffle=self.shuffle_data
                 )
-            }
-            for i in range(num_classes)
+                characters.append(char)
+        if self.shuffle_categories:
+            random.shuffle(characters)
+        self.data = {
+            "train": tuple(characters[: self.num_train_categories]),
+            "valid": tuple(
+                characters[self.num_train_categories :][: self.num_valid_categories]
+            ),
+            "test": tuple(
+                characters[self.num_test_categories :][-self.num_test_categories :]
+            ),
+        }
+        # Expand training characters with their rotated versions.
+        if self.rotations is not None:
+            rotated_train_characters = []
+            for rot in self.rotations:
+                for char in self.data["train"]:
+                    rot_char = OmniglotCharacter(
+                        data_dir=char.data_dir, rotation=rot, name=f"{char.name}_{rot}"
+                    )
+                    rot_char.initialize(
+                        max_size=self.max_category_size, shuffle=self.shuffle_data
+                    )
+                    rotated_train_characters.append(rot_char)
+            self.data["train"] = self.data["train"] + tuple(rotated_train_characters)
+
+
+class OmniglotDataset(base.ClfDataset):
+    """Implements Omniglot-specific preprocessing functionality."""
+
+    def __init__(
+        self,
+        num_classes: int,
+        data_shapes: tf.TensorShape,
+        data_types: tf.DType,
+        name: Optional[str] = None,
+        **_unused_kwargs,
+    ):
+        super(OmniglotDataset, self).__init__(
+            num_classes=num_classes,
+            data_shapes=data_shapes,
+            data_types=data_types,
+            name=(name or self.__class__.__name__),
         )
 
-    @classmethod
-    def preprocess(cls, example, rotation=0, **kwargs):
-        image = utils.deserialize_image(example, channels=1, shape=cls.RAW_IMG_SHAPE)
-        image = tf.image.resize(image, size=cls.PREPROC_IMG_SHAPE[:-1])
-        image = tf.image.rot90(image, k=rotation)
-        return image
+    def _build(self):
+        """Builds data placeholdes for each class."""
+        data_tensors = []
+        for k in range(self.num_classes):
+            data_ph = tf.placeholder(
+                shape=(None,) + self.data_shapes,
+                dtype=self.data_types,
+                name=f"data_class_{k}",
+            )
+            data_tensors.append(data_ph)
+        self.data_tensors = tuple(data_tensors)
+
+    def get_feed_list(
+        self, data_arrays: Tuple[np.ndarray, ...]
+    ) -> List[Tuple[tf.Tensor, np.ndarray]]:
+        assert len(data_arrays) == len(self.data_tensors)
+        return list(zip(self.data_tensors, data_arrays))
 
 
-class OmniglotMetaDataset(base.MetaDataset):
-    """A meta-dataset with omniglot-specific data preprocessing."""
+class OmniglotMetaDataset(base.ClfMetaDataset):
+    """A meta-dataset that samples Omniglot datasets."""
 
     Dataset = OmniglotDataset
 
     def __init__(
-        self, categories, num_classes, max_distinct_datasets=None, rotations=(0,)
+        self,
+        data_source: OmniglotDataSource,
+        batch_size: int,
+        num_classes: int,
+        set_name: str,
+        name: Optional[str] = None,
+        seed: Optional[int] = 42,
+        **kwargs,
     ):
         super(OmniglotMetaDataset, self).__init__(
-            categories=categories,
+            data_source=data_source,
+            batch_size=batch_size,
             num_classes=num_classes,
-            max_distinct_datasets=max_distinct_datasets,
+            name=(name or self.__class__.__name__),
+            seed=seed,
+            **kwargs,
         )
-        self._dataset_kwargs = {"rotations": rotations}
+        self.set_name = set_name
+
+        # Internals.
+        self._rng = np.random.RandomState(seed)
+
+    def get_feed_batch(
+        self, requests: Optional[Tuple[Any, ...]] = None, replace: bool = False
+    ) -> Tuple[Tuple[Any, ...], List[List[Tuple[tf.Tensor, Any]]]]:
+        """Returns a feed list for the requested meta-batch of datasets."""
+        # If a batch of requests is not provided, generate from the data source.
+        if requests is None:
+            requests = tuple(
+                tuple(
+                    self._rng.choice(
+                        len(self.data_source[self.set_name]),
+                        size=self.num_classes,
+                        replace=replace,
+                    )
+                )
+                for _ in range(self.batch_size)
+            )
+        elif len(requests) != self.batch_size:
+            raise ValueError(
+                f"The number of requests ({len(requests)}) does not match "
+                f"the meta batch size ({self.batch_size})."
+            )
+        # Get feed dicts for each request.
+        feed_lists = []
+        for n, ids in enumerate(requests):
+            data_arrays = tuple(self.data_source[self.set_name][i].data for i in ids)
+            feed_lists.append(self.dataset_batch[n].get_feed_list(data_arrays))
+        return requests, feed_lists

@@ -1,0 +1,90 @@
+# Configuration for the classic 5-way 5-shot Omniglot benchmark.
+meta_blocks:
+  train:
+    meta_dataset:
+      batch_size: 50
+      num_classes: 5
+    tasks:
+      - set_name: train
+        log_dir: train/oracle
+        config:
+          name: classic_supervised
+          num_query_shots: 1
+          num_support_shots: 5
+        sampler:
+          name: uniform
+          stratified: true
+    max_steps: 20000
+    log_interval: 10
+    save_interval: 100
+  eval:
+    meta_dataset:
+      batch_size: 50
+      num_classes: 5
+    tasks:
+      # Train.
+      - set_name: train
+        log_dir: eval/train/oracle_1shot
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 1
+          max_labeled_points: 1000
+        sampler:
+          name: uniform
+          stratified: true
+      - set_name: train
+        log_dir: eval/train/oracle_5shot
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 5
+          max_labeled_points: 5000
+        sampler:
+          name: uniform
+          stratified: true
+      # Valid.
+      - set_name: valid
+        log_dir: eval/valid/oracle_1shot
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 1
+          max_labeled_points: 1000
+        sampler:
+          name: uniform
+          stratified: true
+      - set_name: valid
+        log_dir: eval/valid/oracle_5shot
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 5
+          max_labeled_points: 5000
+        sampler:
+          name: uniform
+          stratified: true
+      # Test.
+      - set_name: test
+        log_dir: eval/test/oracle_1shot
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 1
+          max_labeled_points: 1000
+        sampler:
+          name: uniform
+          stratified: true
+      - set_name: test
+        log_dir: eval/test/oracle_5shot
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 5
+          max_labeled_points: 5000
+        sampler:
+          name: uniform
+          stratified: true
+    repetitions: 1
+  run:
+    seed: 1

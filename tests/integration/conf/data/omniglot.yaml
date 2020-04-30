@@ -1,0 +1,10 @@
+data:
+  name: omniglot
+  source:
+    data_dir: ???
+    num_train_categories: 4
+    num_valid_categories: 2
+    num_test_categories: 2
+    rotations: [90, 180, 270]
+    shuffle_categories: true
+    shuffle_data: true

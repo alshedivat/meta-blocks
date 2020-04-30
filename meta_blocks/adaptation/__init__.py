@@ -4,7 +4,7 @@ from meta_blocks.adaptation.proto import Proto
 from meta_blocks.adaptation.reptile import Reptile
 
 
-def get(name, build=True, **kwargs):
+def get(name, **kwargs):
     if name == "maml":
         meta_learner = Maml(**kwargs)
     elif name == "proto":
@@ -13,6 +13,4 @@ def get(name, build=True, **kwargs):
         meta_learner = Reptile(**kwargs)
     else:
         raise ValueError(f"Unknown adaptation strategy: {name}.")
-    if build:
-        meta_learner.build()
     return meta_learner

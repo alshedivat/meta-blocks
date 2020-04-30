@@ -7,6 +7,7 @@ import tensorflow.compat.v1 as tf
 
 from meta_blocks import common
 from meta_blocks.adaptation import maml
+from meta_blocks.adaptation import maml_utils as utils
 
 __all__ = ["Reptile"]
 
@@ -34,15 +35,17 @@ class Reptile(maml.Maml):
     tasks : tuple of Tasks
         A tuple of tasks that provide access to data.
 
-    batch_size: int, optional (default: 16)
+    batch_size: int, optional
         Batch size used at adaptation time.
+
+    num_inner_steps : int, optional (default: 10)
+        Number of inner adaptation steps.
 
     inner_optimizer : Optimizer, optional (default: None)
         The optimizer to use for computing inner loop updates.
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
         Defines the mode of the computation graph (TRAIN or EVAL).
-        Note: this might be removed from the API down the line.
 
     name : str, optional (default: "Reptile")
         Name of the adaptation method.
@@ -53,82 +56,77 @@ class Reptile(maml.Maml):
         model,
         optimizer,
         tasks,
-        batch_size=16,
+        batch_size=None,
+        num_inner_steps=10,
         inner_optimizer=None,
         mode=common.ModeKeys.TRAIN,
-        name="Reptile",
-        **kwargs,
+        name=None,
+        **_unused_kwargs,
     ):
-        # Instantiate Reptile.
-
         super(Reptile, self).__init__(
             model=model,
             optimizer=optimizer,
             tasks=tasks,
             batch_size=batch_size,
+            num_inner_steps=num_inner_steps,
             inner_optimizer=inner_optimizer,
             first_order=True,
             mode=mode,
-            name=name,
-            **kwargs,
+            name=(name or self.__class__.__name__),
         )
 
-    def _build_meta_train(self):
-        """Internal fucntion for building meta-update op.
-        """
+    def _build_meta_learn(self):
+        """Builds meta-update op."""
+        # Reptile does not have a proper meta-loss.
+        meta_loss = tf.constant(-1.0)
+        # Compute meta-gradients and predictions.
+        preds_and_labels = []
         meta_grads = collections.defaultdict(list)
-        with tf.name_scope("meta-learning"):
-            # Build meta-loss.
-            losses = self._build_meta_losses()
-            meta_loss = tf.reduce_mean(losses)
-
-            # Compute updates for the global parameters, if available.
-            if self.model.global_parameters:
-                for i, loss in enumerate(losses):
-                    grads_and_vars = self.optimizer.compute_gradients(
-                        loss, self.model.global_parameters
-                    )
-                    for g, v in grads_and_vars:
-                        meta_grads[v].append(g)
-
-            # Compute updates for the adaptable parameters.
-            for i in range(len(self.tasks)):
-                for name, value in self.model.adaptable_parameters.items():
-                    value_upd = self._adapted_params[i][name]
+        for i, task in enumerate(self.tasks):
+            query_inputs, query_labels = task.query_tensors
+            with tf.name_scope(f"task{i}"):
+                for name, value in self.initial_parameters.items():
+                    value_upd = self.adapted_parameters[i][name]
                     meta_grads[value].append(value - value_upd)
-
-            # Build meta-train op.
-            meta_train_op = self.optimizer.apply_gradients(
-                [(tf.reduce_mean(g, axis=0), v) for v, g in meta_grads.items()]
-            )
-
-            return meta_loss, meta_train_op
+                adapted_model = self._build_adapted_model(task_id=i)
+                query_preds = adapted_model.build_predictions(query_inputs)
+                preds_and_labels.append((query_preds, query_labels))
+        # Build meta-train op.
+        meta_train_op = self.optimizer.apply_gradients(
+            [(tf.reduce_mean(g, axis=0), v) for v, g in meta_grads.items()]
+        )
+        return meta_loss, meta_train_op, preds_and_labels
 
     def _build_adaptation(self):
-        """Internal method for building adaption
-        """
-        # Placeholder for the number of adaptation steps.
-        self._adapt_steps_ph = tf.placeholder(dtype=tf.int32)
-
+        """Builds the adaptation loop."""
+        # Initial parameters.
+        self.initial_parameters = {}
+        for param in self.model.initial_parameters:
+            canonical_name = utils.canonical_variable_name(
+                param.name, outer_scope=self.model.name
+            )
+            self.initial_parameters[canonical_name] = param
         # Build adapted parameters.
-        self._adapted_params = []
+        self.adapted_parameters = []
         for i, task in enumerate(self.tasks):
             inputs, labels = task.support_tensors
-            if self.mode == common.ModeKeys.TRAIN:
-                query_inputs, query_labels = task.query_tensors
-                inputs = tf.concat([inputs, query_inputs], axis=0)
-                labels = tf.concat([labels, query_labels], axis=0)
-            self._adapted_params.append(
-                tf.cond(
-                    pred=tf.not_equal(tf.size(labels), 0),
-                    true_fn=lambda: self._build_adapted_params(
-                        inputs=inputs,
-                        labels=labels,
-                        init_params=self.model.adaptable_parameters,
-                        num_steps=self._adapt_steps_ph,
-                        back_prop=False,
-                    ),
-                    # If no support data, use initial parameters.
-                    false_fn=lambda: self.model.adaptable_parameters,
+            with tf.name_scope(f"task{i}"):
+                # Reptile does not distinguish between support and query sets.
+                if self.mode == common.ModeKeys.TRAIN:
+                    query_inputs, query_labels = task.query_tensors
+                    inputs = tf.concat([inputs, query_inputs], axis=0)
+                    labels = tf.concat([labels, query_labels], axis=0)
+                self.adapted_parameters.append(
+                    tf.cond(
+                        pred=tf.not_equal(tf.size(labels), 0),
+                        true_fn=lambda: self._build_adapted_parameters(
+                            inputs=inputs,
+                            labels=labels,
+                            initial_parameters=self.initial_parameters,
+                            num_steps=self.num_inner_steps,
+                            back_prop=False,
+                        ),
+                        # If support data is empty, use initial parameters.
+                        false_fn=lambda: self.initial_parameters,
+                    )
                 )
-            )

@@ -1,0 +1,12 @@
+meta_blocks:
+  network:
+    name: simple_cnn
+    filters: [64, 64, 64, 64]
+    kernel_size: 3
+    conv2d_kwargs:
+      strides: 2
+      padding: same
+    activation: relu
+    batch_norm:
+      center: true
+      scale: true

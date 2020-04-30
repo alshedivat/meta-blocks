@@ -1,0 +1,12 @@
+# Proto adaptation at training and test time.
+meta_blocks:
+  train:
+    adapt:
+      name: proto
+    optimizer:
+      name: multistep_adam
+      learning_rate: 0.002
+      n: 20
+  eval:
+    adapt:
+      name: proto
