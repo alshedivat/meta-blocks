@@ -3,7 +3,7 @@ from os import path
 
 from setuptools import find_packages, setup
 
-# Get __version__ from _version.py.
+# Get __version__ from version.py.
 __version__ = None
 ver_file = path.join("meta_blocks", "version.py")
 with open(ver_file) as fp:
@@ -51,7 +51,7 @@ setup(
         "keras",
         "python",
     ],
-    packages=find_packages(include=["meta_blocks", "hydra_plugins.meta_blocks"]),
+    packages=find_packages(),
     include_package_data=True,
     install_requires=requirements(),
     setup_requires=["setuptools>=38.6.0"],
