@@ -91,7 +91,7 @@ def train(cfg: DictConfig, work_dir: Optional[str] = None):
         tf.summary.scalar("loss", loss_ph)
         merged = tf.summary.merge_all()
         saver = tf.train.CheckpointManager(
-            exp.checkpoint, directory=work_dir, max_to_keep=1
+            exp.checkpoint, directory=work_dir, max_to_keep=5
         )
 
         # Do meta-learning iterations.

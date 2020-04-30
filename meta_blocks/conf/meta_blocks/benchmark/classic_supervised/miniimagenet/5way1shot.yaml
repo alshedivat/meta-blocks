@@ -1,9 +1,9 @@
-# Configuration for the classic 20-way 1-shot Omniglot benchmark.
+# Configuration for the classic 5-way 1-shot Omniglot benchmark.
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 50
-      num_classes: 20
+      batch_size: 10
+      num_classes: 5
     optimizer:
       name: adam
       beta1: 0.
@@ -23,8 +23,8 @@ meta_blocks:
     save_interval: 100
   eval:
     meta_dataset:
-      batch_size: 50
-      num_classes: 20
+      batch_size: 10
+      num_classes: 5
     tasks:
       # Train.
       - set_name: train
@@ -33,7 +33,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 1
-          max_labeled_points: 4000
+          max_labeled_points: 1000
         sampler:
           name: uniform
           stratified: true
@@ -43,7 +43,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 5
-          max_labeled_points: 20000
+          max_labeled_points: 5000
         sampler:
           name: uniform
           stratified: true
@@ -54,7 +54,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 1
-          max_labeled_points: 4000
+          max_labeled_points: 1000
         sampler:
           name: uniform
           stratified: true
@@ -64,7 +64,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 5
-          max_labeled_points: 20000
+          max_labeled_points: 5000
         sampler:
           name: uniform
           stratified: true
@@ -75,7 +75,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 1
-          max_labeled_points: 4000
+          max_labeled_points: 1000
         sampler:
           name: uniform
           stratified: true
@@ -85,7 +85,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 5
-          max_labeled_points: 20000
+          max_labeled_points: 5000
         sampler:
           name: uniform
           stratified: true

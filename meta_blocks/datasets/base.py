@@ -35,7 +35,6 @@ class DataSource(abc.ABC):
         self.name = name or self.__class__.__name__
 
         # Internals.
-        self.data = None
         self.built = False
 
     # --- Abstract properties. ---
@@ -51,10 +50,6 @@ class DataSource(abc.ABC):
         raise NotImplementedError("Abstract Property")
 
     # --- Methods. ---
-
-    def __getitem__(self, set_name):
-        """Returns the corresponding set of the data."""
-        return self.data[set_name]
 
     def build(self, **kwargs):
         """Builds the data source in the correct namespace."""

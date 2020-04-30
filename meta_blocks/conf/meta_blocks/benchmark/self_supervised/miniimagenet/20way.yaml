@@ -1,8 +1,8 @@
-# Configuration for the classic 20-way 1-shot Omniglot benchmark.
+# Configuration for the self-supervised 20-way mini-ImageNet benchmark.
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 50
+      batch_size: 10
       num_classes: 20
     optimizer:
       name: adam
@@ -10,20 +10,17 @@ meta_blocks:
       learning_rate: 0.005
     tasks:
       - set_name: train
-        log_dir: train/oracle
+        log_dir: train
         config:
-          name: classic_supervised
-          num_query_shots: 1
-          num_support_shots: 1
-        sampler:
-          name: uniform
-          stratified: true
+          name: self_supervised
+          num_augmented_shots: 1
+          inverse: false
     max_steps: 20000
     log_interval: 10
     save_interval: 100
   eval:
     meta_dataset:
-      batch_size: 50
+      batch_size: 10
       num_classes: 20
     tasks:
       # Train.

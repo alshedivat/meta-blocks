@@ -45,8 +45,13 @@ class OmniglotCharacter(base.DataSource):
     IMG_SHAPE = (28, 28, 1)
 
     def __init__(self, data_dir: str, rotation: int = 0, name: Optional[str] = None):
-        super(OmniglotCharacter, self).__init__(data_dir, name=name)
+        super(OmniglotCharacter, self).__init__(
+            data_dir, name=(name or self.__class__.__name__)
+        )
         self.rotation = rotation
+
+        # Internals.
+        self.data = None
 
     # --- Properties. ---
 
@@ -77,7 +82,7 @@ class OmniglotCharacter(base.DataSource):
                     image = image.rotate(self.rotation)
                 image = np.array(image).astype(np.float32)
                 data.append(np.expand_dims(image, axis=-1))
-        self.data = {"all": np.stack(data)}
+        self.data = np.stack(data)
 
 
 class OmniglotDataSource(base.DataSource):
@@ -108,6 +113,9 @@ class OmniglotDataSource(base.DataSource):
         self.shuffle_categories = shuffle_categories
         self.shuffle_data = shuffle_data
 
+        # Internals.
+        self.data = None
+
     @property
     def data_shapes(self):
         return OmniglotCharacter.IMG_SHAPE
@@ -117,6 +125,10 @@ class OmniglotDataSource(base.DataSource):
         return tf.float32
 
     # --- Methods. ---
+
+    def __getitem__(self, set_name):
+        """Returns the corresponding set of the data."""
+        return self.data[set_name]
 
     def initialize(self):
         """Loads train, valid, and test categories."""
@@ -183,23 +195,22 @@ class OmniglotDataset(base.ClfDataset):
         )
 
     def _build(self):
+        """Builds data placeholdes for each class."""
         data_tensors = []
-        with tf.name_scope(self.name):
-            # Data placeholders for each class.
-            for k in range(self.num_classes):
-                data_ph = tf.placeholder(
-                    shape=(None,) + self.data_shapes,
-                    dtype=self.data_types,
-                    name=f"data_class_{k}",
-                )
-                data_tensors.append(data_ph)
+        for k in range(self.num_classes):
+            data_ph = tf.placeholder(
+                shape=(None,) + self.data_shapes,
+                dtype=self.data_types,
+                name=f"data_class_{k}",
+            )
+            data_tensors.append(data_ph)
         self.data_tensors = tuple(data_tensors)
 
     def get_feed_list(
         self, data_arrays: Tuple[np.ndarray, ...]
-    ) -> List[Tuple[tf.Tensor, Any]]:
+    ) -> List[Tuple[tf.Tensor, np.ndarray]]:
         assert len(data_arrays) == len(self.data_tensors)
-        return [(ph, array) for array, ph in zip(data_arrays, self.data_tensors)]
+        return list(zip(self.data_tensors, data_arrays))
 
 
 class OmniglotMetaDataset(base.ClfMetaDataset):
@@ -239,7 +250,7 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
             requests = tuple(
                 tuple(
                     self._rng.choice(
-                        len(self.data_source.data[self.set_name]),
+                        len(self.data_source[self.set_name]),
                         size=self.num_classes,
                         replace=replace,
                     )
@@ -254,6 +265,6 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
         # Get feed dicts for each request.
         feed_lists = []
         for n, ids in enumerate(requests):
-            data_arrays = tuple(self.data_source[self.set_name][i]["all"] for i in ids)
+            data_arrays = tuple(self.data_source[self.set_name][i].data for i in ids)
             feed_lists.append(self.dataset_batch[n].get_feed_list(data_arrays))
         return requests, feed_lists

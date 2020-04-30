@@ -1,4 +1,4 @@
-# Configuration for the classic 5-way Omniglot benchmark.
+# Configuration for the classic 5-way 5-shot Omniglot benchmark.
 meta_blocks:
   train:
     meta_dataset:

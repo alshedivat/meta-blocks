@@ -1,30 +1,27 @@
-# Configuration for the classic 20-way 1-shot Omniglot benchmark.
+# Configuration for the self-supervised 5-way mini-ImageNet benchmark.
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 50
-      num_classes: 20
+      batch_size: 10
+      num_classes: 5
     optimizer:
       name: adam
       beta1: 0.
       learning_rate: 0.005
     tasks:
       - set_name: train
-        log_dir: train/oracle
+        log_dir: train
         config:
-          name: classic_supervised
-          num_query_shots: 1
-          num_support_shots: 1
-        sampler:
-          name: uniform
-          stratified: true
+          name: self_supervised
+          num_augmented_shots: 1
+          inverse: false
     max_steps: 20000
     log_interval: 10
     save_interval: 100
   eval:
     meta_dataset:
-      batch_size: 50
-      num_classes: 20
+      batch_size: 10
+      num_classes: 5
     tasks:
       # Train.
       - set_name: train
@@ -33,7 +30,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 1
-          max_labeled_points: 4000
+          max_labeled_points: 1000
         sampler:
           name: uniform
           stratified: true
@@ -43,7 +40,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 5
-          max_labeled_points: 20000
+          max_labeled_points: 5000
         sampler:
           name: uniform
           stratified: true
@@ -54,7 +51,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 1
-          max_labeled_points: 4000
+          max_labeled_points: 1000
         sampler:
           name: uniform
           stratified: true
@@ -64,7 +61,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 5
-          max_labeled_points: 20000
+          max_labeled_points: 5000
         sampler:
           name: uniform
           stratified: true
@@ -75,7 +72,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 1
-          max_labeled_points: 4000
+          max_labeled_points: 1000
         sampler:
           name: uniform
           stratified: true
@@ -85,7 +82,7 @@ meta_blocks:
           name: limited_supervised
           num_query_shots: 1
           num_support_shots: 5
-          max_labeled_points: 20000
+          max_labeled_points: 5000
         sampler:
           name: uniform
           stratified: true

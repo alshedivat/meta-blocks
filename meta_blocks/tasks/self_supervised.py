@@ -225,7 +225,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
         meta_dataset: MetaDataset,
         num_augmented_shots: int = 1,
         inverse: bool = True,
-        stratified: bool = True,
+        stratified: bool = False,
         num_task_batches_to_cache: int = 100,
         name: Optional[str] = None,
         seed: Optional[int] = 42,

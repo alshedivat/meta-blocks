@@ -19,10 +19,9 @@ meta_blocks:
     log_interval: 10
     save_interval: 100
   eval:
-    dataset:
-      num_classes: 20
-    meta:
+    meta_dataset:
       batch_size: 50
+      num_classes: 20
     tasks:
       # Train.
       - set_name: train
