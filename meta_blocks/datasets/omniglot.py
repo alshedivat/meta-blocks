@@ -43,6 +43,7 @@ class OmniglotCharacter(base.DataSource):
 
     RAW_IMG_SHAPE = (105, 105, 1)
     IMG_SHAPE = (28, 28, 1)
+    IMG_DTYPE = tf.float32
 
     def __init__(self, data_dir: str, rotation: int = 0, name: Optional[str] = None):
         super(OmniglotCharacter, self).__init__(
@@ -61,7 +62,7 @@ class OmniglotCharacter(base.DataSource):
 
     @property
     def raw_data_types(self):
-        return tf.float32
+        return self.IMG_DTYPE
 
     # --- Methods. ---
 
@@ -117,12 +118,12 @@ class OmniglotDataSource(base.DataSource):
         self.data = None
 
     @property
-    def data_shapes(self):
+    def raw_data_shapes(self):
         return OmniglotCharacter.IMG_SHAPE
 
     @property
-    def data_types(self):
-        return tf.float32
+    def raw_data_types(self):
+        return OmniglotCharacter.IMG_DTYPE
 
     # --- Methods. ---
 
