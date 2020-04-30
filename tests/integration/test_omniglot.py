@@ -55,7 +55,7 @@ def test_omniglot_integration(adaptation_method, experiment_setting):
                 f"test=omniglot/{experiment_setting}",
                 f"data=omniglot",
                 f"network=omniglot",
-                f"data.read_config.data_dir={data_path}",
+                f"data.source.data_dir={data_path}",
             ],
             strict=False,
         )
