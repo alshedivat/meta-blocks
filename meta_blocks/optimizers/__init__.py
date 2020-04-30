@@ -11,7 +11,7 @@ import functools
 
 import tensorflow.compat.v1 as tf
 
-# from tensor2tensor.utils.multistep_optimizer import MultistepAdamOptimizer
+from meta_blocks.optimizers.multistep_optimizer import MultistepAdamOptimizer
 
 DEFAULT_OPTIMIZER = functools.partial(tf.train.AdamOptimizer, beta1=0)
 
@@ -20,18 +20,18 @@ def get(name=None, name_prefix=None, **kwargs):
     if name is None:
         kwarg_names = ["learning_rate", "beta2", "epsilon"]
         opt_kwargs = {key: kwargs[key] for key in kwarg_names if key in kwargs}
-        name = (name_prefix or "") + tf.train.AdamOptimizer.__name__
-        return DEFAULT_OPTIMIZER(name=name, **opt_kwargs)
+        opt_name = (name_prefix or "") + tf.train.AdamOptimizer.__name__
+        return DEFAULT_OPTIMIZER(name=opt_name, **opt_kwargs)
     elif name == "adam":
         kwarg_names = ["learning_rate", "beta1", "beta2", "epsilon"]
         opt_kwargs = {key: kwargs[key] for key in kwarg_names if key in kwargs}
-        name = (name_prefix or "") + tf.train.AdamOptimizer.__name__
-        return tf.train.AdamOptimizer(name=name, **opt_kwargs)
-    # elif optimizer_name == "multistep_adam":
-    #     kwarg_names = ["learning_rate", "beta1", "beta2", "epsilon", "n"]
-    #     opt_kwargs = {key: kwargs[key] for key in kwarg_names if key in kwargs}
-    #     name = (name_prefix or "") + MultistepAdamOptimizer.__name__
-    #     return MultistepAdamOptimizer(name=name, **opt_kwargs)
+        opt_name = (name_prefix or "") + tf.train.AdamOptimizer.__name__
+        return tf.train.AdamOptimizer(name=opt_name, **opt_kwargs)
+    elif name == "multistep_adam":
+        kwarg_names = ["learning_rate", "beta1", "beta2", "epsilon", "n"]
+        opt_kwargs = {key: kwargs[key] for key in kwarg_names if key in kwargs}
+        opt_name = (name_prefix or "") + MultistepAdamOptimizer.__name__
+        return MultistepAdamOptimizer(name=opt_name, **opt_kwargs)
     elif name == "sgd":
         kwarg_names = ["learning_rate"]
         opt_kwargs = {key: kwargs[key] for key in kwarg_names if key in kwargs}
