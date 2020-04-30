@@ -1,3 +1,4 @@
 meta_blocks:
   model:
     name: proto
+    embedding_dim: 32
