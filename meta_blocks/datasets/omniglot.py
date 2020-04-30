@@ -56,11 +56,11 @@ class OmniglotCharacter(base.DataSource):
     # --- Properties. ---
 
     @property
-    def data_shapes(self):
+    def raw_data_shapes(self):
         return self.IMG_SHAPE
 
     @property
-    def data_types(self):
+    def raw_data_types(self):
         return tf.float32
 
     # --- Methods. ---

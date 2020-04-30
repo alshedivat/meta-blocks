@@ -54,8 +54,7 @@ def build_convnet(
     *,
     filters: List[int],
     kernel_size: Union[int, Tuple[int]],
-    strides: Union[int, Tuple[int]] = (1, 1),
-    padding: str = "same",
+    conv2d_kwargs: Optional[Dict[str, Any]] = None,
     activation: str = "relu",
     pooling: Optional[str] = None,
     pooling_kwargs: Optional[Dict[str, Any]] = None,
@@ -78,8 +77,7 @@ def build_convnet(
         x = tf.keras.layers.Conv2D(
             filters=filters[i],
             kernel_size=kernel_size,
-            strides=strides,
-            padding=padding,
+            **conv2d_kwargs,
             name=f"conv{i}",
         )(x)
         # Batch norm (optional).

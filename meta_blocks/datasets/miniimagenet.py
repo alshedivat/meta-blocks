@@ -40,8 +40,11 @@ class MiniImageNetCategory(base.DataSource):
         The name of the dataset.
     """
 
+    RAW_SHAPE = (None,)
+    RAW_DTYPE = tf.string
     RAW_IMG_SHAPE = (180, 180, 3)
     IMG_SHAPE = (84, 84, 3)
+    IMG_DTYPE = tf.float32
 
     def __init__(
         self,
@@ -67,12 +70,12 @@ class MiniImageNetCategory(base.DataSource):
     # --- Properties. ---
 
     @property
-    def data_shapes(self):
-        return self.IMG_SHAPE
+    def raw_data_shapes(self):
+        return self.RAW_SHAPE
 
     @property
-    def data_types(self):
-        return tf.float32
+    def raw_data_types(self):
+        return self.RAW_DTYPE
 
     # --- Class methods. ---
 
@@ -83,7 +86,7 @@ class MiniImageNetCategory(base.DataSource):
     @classmethod
     def decode(cls, serialized_image):
         image = tf.io.decode_image(serialized_image, channels=3)
-        image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+        image = tf.image.convert_image_dtype(image, dtype=cls.IMG_DTYPE)
         image.set_shape(cls.RAW_IMG_SHAPE)
         return image
 
@@ -108,7 +111,7 @@ class MiniImageNetCategory(base.DataSource):
         self.dataset = tf.data.Dataset.from_tensor_slices(filepaths)
 
         # Read and cache (if necessary).
-        self.dataset = self.dataset.map(self.read)
+        self.dataset = self.dataset.map(self.read, num_parallel_calls=1)
         if self.cache:
             self.dataset = self.dataset.cache()
 
@@ -156,12 +159,20 @@ class MiniImageNetDataSource(base.DataSource):
     # --- Properties. ---
 
     @property
+    def raw_data_shapes(self):
+        return MiniImageNetCategory.RAW_SHAPE
+
+    @property
+    def raw_data_types(self):
+        return MiniImageNetCategory.RAW_DTYPE
+
+    @property
     def data_shapes(self):
         return MiniImageNetCategory.IMG_SHAPE
 
     @property
     def data_types(self):
-        return tf.float32
+        return MiniImageNetCategory.IMG_DTYPE
 
     # --- Methods. ---
 

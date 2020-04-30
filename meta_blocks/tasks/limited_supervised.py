@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import samplers
-from meta_blocks.datasets import MetaDataset
+from meta_blocks.datasets.base import MetaDataset
 from meta_blocks.tasks.supervised import SupervisedTaskDistribution
 
 logger = logging.getLogger(__name__)

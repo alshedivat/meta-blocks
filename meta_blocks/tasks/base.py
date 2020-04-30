@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets import Dataset, MetaDataset
+from meta_blocks.datasets.base import Dataset, MetaDataset
 
 logger = logging.getLogger(__name__)
 

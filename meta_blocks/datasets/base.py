@@ -37,16 +37,30 @@ class DataSource(abc.ABC):
         # Internals.
         self.built = False
 
+    # --- Properties. ---
+
+    @property
+    def data_shapes(self):
+        """Data shapes after preprocessing. By default same as raw data shapes."""
+        return self.raw_data_shapes
+
+    @property
+    def data_types(self):
+        """Data types after preprocessing. By default same as raw data types."""
+        return self.raw_data_types
+
     # --- Abstract properties. ---
 
     @property
     @abc.abstractmethod
-    def data_shapes(self):
+    def raw_data_shapes(self):
+        """Data shapes before preprocessing."""
         raise NotImplementedError("Abstract Property")
 
     @property
     @abc.abstractmethod
-    def data_types(self):
+    def raw_data_types(self):
+        """Data types before preprocessing."""
         raise NotImplementedError("Abstract Property")
 
     # --- Methods. ---
@@ -187,8 +201,8 @@ class MetaDataset(abc.ABC):
         # Internals.
         self.dataset_batch = tuple(
             self.Dataset(
-                data_shapes=self.data_source.data_shapes,
-                data_types=self.data_source.data_types,
+                data_shapes=self.data_source.raw_data_shapes,
+                data_types=self.data_source.raw_data_types,
                 name=f"DS{i}",
                 **kwargs,
             )

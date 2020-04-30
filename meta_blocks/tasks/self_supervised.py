@@ -12,7 +12,7 @@ import albumentations as alb
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets import Dataset, MetaDataset
+from meta_blocks.datasets.base import Dataset, MetaDataset
 from meta_blocks.tasks import base
 
 logger = logging.getLogger(__name__)

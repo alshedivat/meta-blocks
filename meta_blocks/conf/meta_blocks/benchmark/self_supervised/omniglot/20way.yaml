@@ -4,10 +4,6 @@ meta_blocks:
     meta_dataset:
       batch_size: 50
       num_classes: 20
-    optimizer:
-      name: adam
-      beta1: 0.
-      learning_rate: 0.005
     tasks:
       - set_name: train
         log_dir: train

@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets import Dataset, MetaDataset
+from meta_blocks.datasets.base import Dataset, MetaDataset
 from meta_blocks.samplers.base import Sampler
 from meta_blocks.tasks import base
 

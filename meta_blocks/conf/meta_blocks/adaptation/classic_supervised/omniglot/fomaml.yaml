@@ -10,7 +10,6 @@ meta_blocks:
         learning_rate: 0.002
     optimizer:
       name: adam
-      beta1: 0.
       learning_rate: 0.005
   eval:
     adapt:

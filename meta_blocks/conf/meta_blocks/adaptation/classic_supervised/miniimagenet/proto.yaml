@@ -4,8 +4,9 @@ meta_blocks:
     adapt:
       name: proto
     optimizer:
-      name: adam
+      name: multistep_adam
       learning_rate: 0.002
+      n: 20
   eval:
     adapt:
       name: proto

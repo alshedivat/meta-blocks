@@ -2,12 +2,8 @@
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 10
+      batch_size: 2
       num_classes: 20
-    optimizer:
-      name: adam
-      beta1: 0.
-      learning_rate: 0.005
     tasks:
       - set_name: train
         log_dir: train/oracle
@@ -23,7 +19,7 @@ meta_blocks:
     save_interval: 100
   eval:
     meta_dataset:
-      batch_size: 10
+      batch_size: 2
       num_classes: 20
     tasks:
       # Train.
@@ -89,6 +85,6 @@ meta_blocks:
         sampler:
           name: uniform
           stratified: true
-    repetitions: 1
+    repetitions: 10
   run:
     seed: 1

@@ -1,10 +1,14 @@
 meta_blocks:
   network:
     name: simple_cnn
-    filters: [64, 64, 64, 64]
+    filters: [32, 32, 32, 32]
     kernel_size: 3
     conv2d_kwargs:
       strides: 2
+      padding: same
+    pooling: max
+    pooling_kwargs:
+      pool_size: [2, 2]
       padding: same
     activation: relu
     batch_norm:

@@ -98,7 +98,14 @@ def train(cfg: DictConfig, work_dir: Optional[str] = None):
         logger.info("Training...")
         for i in range(cfg.train.max_steps):
             # Training step.
-            losses = train_step(exp, sess=sess)
+            # Do multiple steps if the optimizer is multi-step.
+            if "multistep" in cfg.train.optimizer.name:
+                losses = [
+                    train_step(exp, sess=sess) for _ in range(cfg.train.optimizer.n)
+                ]
+                losses = list(map(np.mean, zip(*losses)))
+            else:
+                losses = train_step(exp, sess=sess)
             # Log metrics.
             if i % cfg.train.log_interval == 0 or i + 1 == cfg.train.max_steps:
                 log = f"step: {i}"

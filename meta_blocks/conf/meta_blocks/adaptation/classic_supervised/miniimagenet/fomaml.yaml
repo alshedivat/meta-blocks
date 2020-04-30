@@ -9,9 +9,9 @@ meta_blocks:
         name: sgd
         learning_rate: 0.002
     optimizer:
-      name: adam
-      beta1: 0.
+      name: multistep_adam
       learning_rate: 0.005
+      n: 20
   eval:
     adapt:
       name: maml

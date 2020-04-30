@@ -1,20 +1,16 @@
-# Configuration for the classic 5-way 5-shot Omniglot benchmark.
+# Configuration for the classic 5-way 1-shot Omniglot benchmark.
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 10
+      batch_size: 2
       num_classes: 5
-    optimizer:
-      name: adam
-      beta1: 0.
-      learning_rate: 0.005
     tasks:
       - set_name: train
         log_dir: train/oracle
         config:
           name: classic_supervised
           num_query_shots: 1
-          num_support_shots: 5
+          num_support_shots: 1
         sampler:
           name: uniform
           stratified: true
@@ -23,7 +19,7 @@ meta_blocks:
     save_interval: 100
   eval:
     meta_dataset:
-      batch_size: 10
+      batch_size: 2
       num_classes: 5
     tasks:
       # Train.
@@ -89,6 +85,6 @@ meta_blocks:
         sampler:
           name: uniform
           stratified: true
-    repetitions: 1
+    repetitions: 10
   run:
     seed: 1

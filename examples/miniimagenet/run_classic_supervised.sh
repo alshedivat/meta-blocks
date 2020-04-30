@@ -5,7 +5,7 @@ BACKBONE=simple_cnn
 DATASET=miniimagenet
 MODEL=feed_forward
 NUM_CLASSES=5
-NUM_SHOTS=1
+NUM_SHOTS=5
 
 BENCHMARK_TYPE=classic_supervised
 DATA_DIR=$(realpath .)/data/${DATASET}

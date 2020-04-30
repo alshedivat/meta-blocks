@@ -5,5 +5,5 @@ meta_blocks:
     source:
       data_dir: ???
       cache: true
-      max_size: 100
+      max_size: null
       shuffle_data: true
