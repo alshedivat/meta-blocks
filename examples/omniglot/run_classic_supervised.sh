@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ADAPTATION=reptile
+ADAPTATION=maml
 BACKBONE=simple_cnn
 DATASET=omniglot
 MODEL=feed_forward
