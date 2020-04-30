@@ -3,7 +3,6 @@ meta_blocks:
   train:
     adapt:
       name: reptile
-      batch_size: 10
       num_inner_steps: 10
       inner_optimizer:
         name: sgd
@@ -14,7 +13,6 @@ meta_blocks:
   eval:
     adapt:
       name: reptile
-      batch_size: 10
       num_inner_steps: 50
       inner_optimizer:
         name: sgd

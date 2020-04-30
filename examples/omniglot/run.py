@@ -1,7 +1,7 @@
 """Entry point for running experiments."""
 
 import logging
-from multiprocessing import Lock, Process
+from multiprocessing import Process
 
 import hydra
 from omegaconf import DictConfig
@@ -17,19 +17,18 @@ logger = logging.getLogger(__name__)
 def main(cfg: DictConfig):
     cfg = cfg.meta_blocks
     processes = []
-    lock = Lock()
 
     # Run evaluation process.
     if cfg.eval is not None:
         logger.debug("Starting evaluation...")
-        eval_process = Process(target=evaluate, args=(cfg, lock), name="EVAL")
+        eval_process = Process(target=evaluate, args=(cfg,), name="EVAL")
         eval_process.start()
         processes.append(eval_process)
 
     # Run training process.
     if cfg.train is not None:
         logger.debug("Starting training...")
-        train_process = Process(target=train, args=(cfg, lock), name="TRAIN")
+        train_process = Process(target=train, args=(cfg,), name="TRAIN")
         train_process.start()
         processes.append(train_process)
 

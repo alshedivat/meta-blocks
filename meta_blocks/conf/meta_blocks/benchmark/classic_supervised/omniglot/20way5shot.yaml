@@ -1,11 +1,9 @@
-# Configuration for the classic 20-way Omniglot benchmark.
+# Configuration for the classic 20-way 5-shot Omniglot benchmark.
 meta_blocks:
   train:
-    dataset:
-      num_classes: 20
-      rotations: [0, 1, 2, 3]  # in multiples of 90 degrees
-    meta:
+    meta_dataset:
       batch_size: 50
+      num_classes: 20
     optimizer:
       name: adam
       beta1: 0.
@@ -16,7 +14,7 @@ meta_blocks:
         config:
           name: classic_supervised
           num_query_shots: 1
-          num_support_shots: 1
+          num_support_shots: 5
         sampler:
           name: uniform
           stratified: true

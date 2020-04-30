@@ -1,10 +1,9 @@
-# MAML adaptation at training and test time.
+# First-order MAML adaptation at training and test time.
 meta_blocks:
   train:
     adapt:
       name: maml
-      batch_size: 10
-      first_order: false
+      first_order: true
       num_inner_steps: 4
       inner_optimizer:
         name: sgd
@@ -16,8 +15,7 @@ meta_blocks:
   eval:
     adapt:
       name: maml
-      batch_size: 10
-      first_order: false
+      first_order: true
       num_inner_steps: 8
       inner_optimizer:
         name: sgd
