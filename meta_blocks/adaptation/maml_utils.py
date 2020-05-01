@@ -44,10 +44,11 @@ def custom_make_variable(
     name of the variable being created (of the form `ModelName/.../var_name`)
     and looks it up in the `custom_variables` dict that maps canonical names
     to tensors. The function adheres the following logic:
-    - If there is a match, it does a few checks (shape, dtype, etc.) and returns
+
+    * If there is a match, it does a few checks (shape, dtype, etc.) and returns
       the found tensor instead of creating a new variable.
-    - If there is a match but checks fail, it throws an exception.
-    - If there are no matching `custom_variables`, it calls the original
+    * If there is a match but checks fail, it throws an exception.
+    * If there are no matching `custom_variables`, it calls the original
       `make_variable` utility function and returns a newly created variable.
 
     Parameters

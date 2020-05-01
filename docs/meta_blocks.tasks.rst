@@ -20,6 +20,29 @@ meta\_blocks.tasks.supervised module
    :undoc-members:
    :show-inheritance:
 
+meta\_blocks.tasks.classic_supervised module
+--------------------------------------------
+
+.. automodule:: meta_blocks.tasks.classic_supervised
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+meta\_blocks.tasks.limited_supervised module
+--------------------------------------------
+
+.. automodule:: meta_blocks.tasks.limited_supervised
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+meta\_blocks.tasks.self_supervised module
+-----------------------------------------
+
+.. automodule:: meta_blocks.tasks.self_supervised
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

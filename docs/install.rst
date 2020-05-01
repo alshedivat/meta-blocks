@@ -19,8 +19,7 @@ Alternatively, you could clone and run setup.py file:
    pip install .
 
 
-**Required Dependencies**\ :
-
+**Required Dependencies:**
 
 * albumentations
 * hydra-core
@@ -28,4 +27,4 @@ Alternatively, you could clone and run setup.py file:
 * Pillow
 * scipy
 * scikit-learn
-* tensorflow>=2.1
+* tensorflow==2.2.0rc3

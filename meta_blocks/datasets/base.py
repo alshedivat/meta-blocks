@@ -85,9 +85,9 @@ class DataSource(abc.ABC):
 class Dataset(abc.ABC):
     """The base abstract class for datasets.
 
-    Internally, `Dataset`s must build data tensors that will contain data at
-    execution time. Data tensors can be either `tf.placeholder`s or built around
-    `tf.data.Iterator`s. Implementation is typically dataset-specific.
+    Internally, `Dataset` must build data tensors that will contain data at
+    execution time. Each data tensor can be either `tf.placeholder` or built
+    around `tf.data.Iterator`. Implementation is typically dataset-specific.
 
     Parameters
     ----------

@@ -15,7 +15,7 @@
 The toolbox provides flexible APIs for working with `MetaDatasets`, `TaskDistributions`, and `MetaLearners` (see the figure below).
 The APIs make it easy to implement a variety of meta-learning algorithms, run them on well-established and emerging benchmarks, and add your own meta-learning problems to the suite and benchmark algorithms on them. 
 
- ![System Illustration](docs/figs/system_illustration.png)
+ ![System Illustration](docs/_static/img/system_illustration.png)
 
 **Meta-Blocks** package comes with:
 

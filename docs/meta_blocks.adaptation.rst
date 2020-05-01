@@ -20,6 +20,14 @@ meta\_blocks.adaptation.maml module
    :undoc-members:
    :show-inheritance:
 
+meta\_blocks.adaptation.maml\_utils module
+------------------------------------------
+
+.. automodule:: meta_blocks.adaptation.maml_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 meta\_blocks.adaptation.proto module
 ------------------------------------
 
@@ -28,18 +36,18 @@ meta\_blocks.adaptation.proto module
    :undoc-members:
    :show-inheritance:
 
-meta\_blocks.adaptation.reptile module
---------------------------------------
+meta\_blocks.adaptation.proto\_utils module
+-------------------------------------------
 
-.. automodule:: meta_blocks.adaptation.reptile
+.. automodule:: meta_blocks.adaptation.proto_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-meta\_blocks.adaptation.utils module
-------------------------------------
+meta\_blocks.adaptation.reptile module
+--------------------------------------
 
-.. automodule:: meta_blocks.adaptation.utils
+.. automodule:: meta_blocks.adaptation.reptile
    :members:
    :undoc-members:
    :show-inheritance:

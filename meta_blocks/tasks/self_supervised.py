@@ -29,9 +29,10 @@ class UmtraTask(base.Task):
 
     The tasks are constructed through data augmentation using a variation of
     the method proposed in [1]:
-        1.  Sample m points from the underlying dataset (used as a query set),
-            which represent m different classes.
-        2. Perturb each point k times and form a k-shot support set.
+
+    1. Sample m points from the underlying dataset (used as a query set),
+       which represent m different classes.
+    2. Perturb each point k times and form a k-shot support set.
 
     Parameters
     ----------

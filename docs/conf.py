@@ -29,8 +29,8 @@ exec(open(version_path).read())
 # -- Project information -----------------------------------------------------
 
 project = "meta_blocks"
-copyright = "2020, Maruan Al-Shedivat, Yue Zhao"
-author = "Maruan Al-Shedivat, Yue Zhao"
+copyright = "2020, Maruan Al-Shedivat"
+authors = ["Maruan Al-Shedivat", "Yue Zhao"]
 
 # The short X.Y version
 version = __version__
@@ -43,7 +43,9 @@ release = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "alabaster",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
@@ -51,6 +53,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinxcontrib.bibtex",
     "sphinx.ext.napoleon",
+    "sphinxemoji.sphinxemoji",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -60,7 +63,7 @@ templates_path = ["_templates"]
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
+source_suffix = [".rst"]
 
 # The master toctree document.
 master_doc = "index"
@@ -75,8 +78,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# html_theme = 'alabaster'
-html_theme = "default"
+# html_theme = 'default"
+html_theme = "alabaster"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -92,9 +95,9 @@ html_static_path = ["_static"]
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
-html_sidebars = {
-    "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
-}
+# html_sidebars = {
+#     "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
+# }
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
@@ -126,7 +129,7 @@ latex_documents = [
         master_doc,
         "meta_blocks.tex",
         "meta_blocks Documentation",
-        "Maruan Al-Shedivat, Yue Zhao",
+        ", ".join(authors),
         "manual",
     )
 ]
@@ -135,7 +138,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "meta_blocks", "meta_blocks Documentation", [author], 1)]
+man_pages = [(master_doc, "meta_blocks", "meta_blocks Documentation", authors, 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -147,7 +150,7 @@ texinfo_documents = [
         master_doc,
         "meta_blocks",
         "meta_blocks Documentation",
-        author,
+        ", ".join(authors),
         "meta_blocks",
         "A modular toolbox for accelerating meta-learning research",
         "Miscellaneous",
@@ -156,7 +159,25 @@ texinfo_documents = [
 
 # -- Extension configuration -------------------------------------------------
 
+autosectionlabel_prefix_document = True
+
+# -- Options for alabaster extension -----------------------------------------
+
+html_theme_options = {
+    "logo": "img/meta-blocks-2d.png",
+    "description": "A modular toolbox for meta-learning research with a focus on speed and reproducibility.",
+    "fixed_sidebar": True,
+    "github_user": "alshedivat",
+    "github_repo": "meta-blocks",
+    "github_button": True,
+    "github_type": "star",
+}
+
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"https://docs.python.org/": None}
+
+# -- Options for sphinxemoji extension ---------------------------------------
+
+sphinxemoji_style = "twemoji"

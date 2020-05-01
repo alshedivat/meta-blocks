@@ -20,18 +20,10 @@ meta\_blocks.datasets.omniglot module
    :undoc-members:
    :show-inheritance:
 
-meta\_blocks.datasets.omniglot\_v2 module
+meta\_blocks.datasets.miniimagenet module
 -----------------------------------------
 
-.. automodule:: meta_blocks.datasets.omniglot_v2
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-meta\_blocks.datasets.utils module
-----------------------------------
-
-.. automodule:: meta_blocks.datasets.utils
+.. automodule:: meta_blocks.datasets.miniimagenet
    :members:
    :undoc-members:
    :show-inheritance:
