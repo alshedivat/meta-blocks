@@ -1,4 +1,5 @@
 albumentations
+filelock
 hydra-core>=0.11,<1.0
 hydra-colorlog
 numpy
