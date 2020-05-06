@@ -79,12 +79,12 @@ class SupervisedTask(base.Task):
     # --- Properties. ---
 
     @property
-    def num_ways(self) -> tf.Tensor:
+    def num_ways(self) -> int:
         """Returns the number of classification ways."""
-        return tf.convert_to_tensor(self.dataset.num_classes, dtype=tf.int64)
+        return self.dataset.num_classes
 
     @property
-    def query_size(self) -> tf.Tensor:
+    def query_size(self) -> int:
         """Returns the size of the query set."""
         return self.num_query_shots * self.num_ways
 

@@ -139,6 +139,12 @@ class ClfDataset(Dataset):
     def size(self) -> int:
         return self._size
 
+    # --- Abstract methods. ---
+
+    @abc.abstractmethod
+    def get_feed_list(self, **kwargs) -> List[Tuple[tf.Tensor, Any]]:
+        raise NotImplementedError("Abstract Method")
+
 
 class MetaDataset(abc.ABC):
     """The base class for meta-datasets.
@@ -196,7 +202,7 @@ class MetaDataset(abc.ABC):
         self,
         requests_batch: Optional[Tuple[Any, ...]] = None,
         unique_classes: bool = True,
-    ) -> Tuple[Any, ...]:
+    ) -> Tuple[Tuple[Any, ...], List[Tuple[tf.Tensor, Any]]]:
         raise NotImplementedError("Abstract Method")
 
 

@@ -77,7 +77,7 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
                     f"{i + 1}/{self.num_task_batches_to_cache}"
                 )
             # Construct a batch of requests.
-            requests_batch = self.meta_dataset.request_datasets(unique_classes=True)
+            requests_batch, _ = self.meta_dataset.request_datasets(unique_classes=True)
             support_labeled_ids_batch = self.sampler.select_labeled(
                 size=self.support_labels_per_task
             )
@@ -95,9 +95,10 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         # Get the next batch.
         requests_batch = self._requests.pop()
         ids_batch = self._requested_ids.pop()
-        self.meta_dataset.request_datasets(requests_batch, unique_classes=True)
+        _, feed_list = self.meta_dataset.request_datasets(
+            requests_batch, unique_classes=True
+        )
         # Construct task feed.
-        feed_list_batch = [
-            task.get_feed_list(ids) for task, ids in zip(self.task_batch, ids_batch)
-        ]
-        return sum(feed_list_batch, [])
+        for task, ids in zip(self.task_batch, ids_batch):
+            feed_list.extend(task.get_feed_list(ids))
+        return feed_list

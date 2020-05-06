@@ -81,19 +81,19 @@ class UmtraTask(base.Task):
     # --- Properties. ---
 
     @property
-    def num_ways(self) -> tf.Tensor:
+    def num_ways(self) -> int:
         """Returns the number of classification ways."""
-        return tf.convert_to_tensor(self.dataset.num_classes, dtype=tf.int64)
+        return self.dataset.num_classes
 
     @property
-    def query_size(self) -> tf.Tensor:
+    def query_size(self) -> int:
         """Returns the size of the query set."""
         return self.num_query_shots * self.num_ways
 
     @property
-    def support_size(self) -> tf.Tensor:
+    def support_size(self) -> int:
         """Returns the size of the support set."""
-        return tf.convert_to_tensor(self.num_support_shots * self.num_ways)
+        return self.num_support_shots * self.num_ways
 
     @property
     def support_tensors(self) -> Tuple[tf.Tensor, tf.Tensor]:
@@ -266,7 +266,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
     def _refresh_requests(self):
         """Expands the number of labeled points by sampling more tasks."""
         for i in range(self.num_task_batches_to_cache):
-            requests_batch = self.meta_dataset.request_datasets(
+            requests_batch, _ = self.meta_dataset.request_datasets(
                 # If not stratified, samples classes with replacement,
                 # which results in tasks that may have different classes
                 # with the same underlying category.
@@ -281,5 +281,5 @@ class UmtraTaskDistribution(base.TaskDistribution):
         # Sample a meta-batch of tasks.
         requests_batch = self._requests.pop()
         # Build feed list for the meta-batch of tasks.
-        self.meta_dataset.request_datasets(requests_batch=requests_batch)
-        return []
+        _, feed_list = self.meta_dataset.request_datasets(requests_batch=requests_batch)
+        return feed_list

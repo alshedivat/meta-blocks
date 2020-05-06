@@ -98,10 +98,12 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
                     f"{requested_labels_so_far}/{num_labeled_points}"
                 )
             # Construct a batch of requests.
-            requests_batch = self.meta_dataset.request_datasets(unique_classes=True)
+            requests_batch, feed_list = self.meta_dataset.request_datasets(
+                unique_classes=True
+            )
             # Sample support labeled ids for the requested tasks.
             support_labeled_ids_batch = self.sampler.select_labeled(
-                size=self.support_labels_per_task, labels_per_step=self.num_classes
+                size=self.support_labels_per_task, feed_dict=dict(feed_list)
             )
             # Save sampled information.
             for i, ids in enumerate(support_labeled_ids_batch):
@@ -121,9 +123,8 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
         # Build feed list for the meta-batch of tasks.
         requests_batch = tuple(self._requests[i] for i in indices_batch)
         ids_batch = tuple(self._requested_ids[i] for i in indices_batch)
-        self.meta_dataset.request_datasets(requests_batch=requests_batch)
+        _, feed_list = self.meta_dataset.request_datasets(requests_batch=requests_batch)
         # Construct task feed.
-        feed_list_batch = [
-            task.get_feed_list(ids) for task, ids in zip(self.task_batch, ids_batch)
-        ]
-        return sum(feed_list_batch, [])
+        for task, ids in zip(self.task_batch, ids_batch):
+            feed_list.extend(task.get_feed_list(ids))
+        return feed_list

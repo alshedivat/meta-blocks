@@ -49,6 +49,6 @@ class Sampler(abc.ABC):
         raise NotImplementedError("Abstract Method")
 
     @abc.abstractmethod
-    def select_labeled(self, size: int) -> Tuple[np.ndarray]:
+    def select_labeled(self, size: int, **kwargs) -> Tuple[np.ndarray]:
         """Return an actively selected labeled data points from the dataset."""
         raise NotImplementedError("Abstract Method")

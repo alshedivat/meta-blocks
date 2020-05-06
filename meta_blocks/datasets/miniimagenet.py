@@ -14,6 +14,10 @@ from PIL import Image
 
 from meta_blocks.datasets import base
 
+# Disable DEBUG logging from filelock.
+filelock_logger = logging.getLogger(filelock.__name__)
+filelock_logger.setLevel(logging.ERROR)
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -48,6 +52,7 @@ class MiniImageNetCategory(base.DataSource):
         data_dir: str,
         shuffle: bool = True,
         max_size: Optional[int] = None,
+        already_cached: bool = False,
         name: Optional[str] = None,
     ):
         super(MiniImageNetCategory, self).__init__(
@@ -55,6 +60,7 @@ class MiniImageNetCategory(base.DataSource):
         )
         self.shuffle = shuffle
         self.max_size = max_size
+        self.already_cached = already_cached
 
         # Internals.
         self.dataset = None
@@ -78,10 +84,10 @@ class MiniImageNetCategory(base.DataSource):
 
     @classmethod
     def decode(cls, serialized_image):
-        image = tf.io.decode_image(serialized_image, channels=3)
+        image = tf.io.decode_image(serialized_image, channels=cls.IMG_SHAPE[-1])
         image = tf.image.convert_image_dtype(image, dtype=cls.IMG_DTYPE)
         image.set_shape(cls.IMG_SHAPE)
-        image = image / 0xFF  # Rescale image to [0, 1].
+        image = image / 0x80 - 1  # Rescale image to [-1, 1].
         return image
 
     # --- Methods. ---
@@ -90,8 +96,6 @@ class MiniImageNetCategory(base.DataSource):
         """Creates cached preprocessed images if the necessary."""
         logger.debug(f"Processing and caching {self.name}...")
         file_paths = glob.glob(os.path.join(self.data_dir, self.name, "*.JPEG"))
-        filelock_logger = logging.getLogger(filelock.__name__)
-        filelock_logger.setLevel(logging.ERROR)
 
         def _process_filepath(file_path):
             if "resized" not in file_path:
@@ -262,6 +266,10 @@ class MiniImageNetDataset(base.ClfDataset):
     def set_data_source_ids(self, data_source_ids: Tuple[np.ndarray, ...]):
         self.data_source_ids = data_source_ids
 
+    def get_feed_list(self, **_unused_kwargs) -> List:
+        """Returns an empty list as no feed is required."""
+        return []
+
 
 class MiniImageNetMetaDataset(base.ClfMetaDataset):
     """A meta-dataset that samples mini-ImageNet datasets."""
@@ -281,6 +289,9 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
             data_sources=data_sources,
             name=(name or self.__class__.__name__),
         )
+
+        # Random state must be set globally.
+        self._rng = np.random
 
         # Internals.
         self.dataset_batch = None
@@ -302,12 +313,12 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
         self,
         requests_batch: Optional[Tuple[np.ndarray, ...]] = None,
         unique_classes: bool = True,
-    ) -> Tuple[np.ndarray, ...]:
+    ) -> Tuple[Tuple[np.ndarray, ...], List]:
         """Returns a feed list for the requested meta-batch of datasets."""
         # If a batch of requests is not provided, generate from the data source.
         if requests_batch is None:
             requests_batch = tuple(
-                np.random.choice(
+                self._rng.choice(
                     len(self.data_sources),
                     size=self.num_classes,
                     replace=(not unique_classes),
@@ -322,4 +333,4 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
         # Use requests to set category ids for each dataset in the batch.
         for dataset, request in zip(self.dataset_batch, requests_batch):
             dataset.set_data_source_ids(request)
-        return requests_batch
+        return requests_batch, []
