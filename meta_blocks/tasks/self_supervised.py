@@ -249,7 +249,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
 
     def _build(self):
         # Build a batch of tasks.
-        self._task_batch = tuple(
+        self.task_batch = tuple(
             UmtraTask(
                 dataset=dataset,
                 inverse=self.inverse,
