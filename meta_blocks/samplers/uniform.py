@@ -1,4 +1,4 @@
-"""Uniform sampling."""
+"""Uniform sampling in NumPy."""
 
 from typing import Optional, Tuple
 
@@ -40,14 +40,16 @@ class UniformSampler(base.Sampler):
             num_query_shots = task.num_query_shots
             # Select indices of the elements to be labeled.
             if self.stratified:
+                # TODO: better handle edge cases + add tests.
                 assert size % num_classes == 0
                 assert data_size % num_classes == 0
                 data_size_per_class = data_size // num_classes
                 support_data_per_class = data_size_per_class - num_query_shots
                 sample_size_per_class = size // num_classes
+                # Select support elements uniformly stratified by class.
                 task_indices = []
                 for c in range(num_classes):
-                    id_offset = i * sample_size_per_class
+                    id_offset = c * support_data_per_class
                     c_ids = id_offset + self._rng.choice(
                         support_data_per_class,
                         size=sample_size_per_class,
@@ -56,6 +58,7 @@ class UniformSampler(base.Sampler):
                     task_indices.append(c_ids)
                 task_indices = np.concatenate(task_indices)
             else:
+                # Select support elements uniformly at random.
                 support_data_size = data_size - (num_classes * num_query_shots)
                 task_indices = self._rng.choice(
                     support_data_size, size=size, replace=False

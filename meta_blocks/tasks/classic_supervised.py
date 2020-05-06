@@ -77,10 +77,13 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
                     f"{i + 1}/{self.num_task_batches_to_cache}"
                 )
             # Construct a batch of requests.
-            requests_batch, _ = self.meta_dataset.request_datasets(unique_classes=True)
-            support_labeled_ids_batch = self.sampler.select_labeled(
-                size=self.support_labels_per_task
+            requests_batch, feed_list = self.meta_dataset.request_datasets(
+                unique_classes=True
             )
+            support_labeled_ids_batch = self.sampler.select_labeled(
+                size=self.support_labels_per_task, feed_dict=dict(feed_list)
+            )
+            # print(support_labeled_ids_batch)
             # Save the sampled information.
             self._requests.append(requests_batch)
             self._requested_ids.append(support_labeled_ids_batch)
