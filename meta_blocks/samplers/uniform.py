@@ -42,7 +42,7 @@ class UniformSampler(base.Sampler):
                 task_indices = utils.select_indices_stratified(
                     size=self._size,
                     scores=scores,
-                    clusters=task._support_labels_raw,
+                    clusters=task._support_labels_all,
                     indices=indices,
                 )
             else:

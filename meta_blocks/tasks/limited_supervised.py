@@ -2,10 +2,11 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import samplers
-from meta_blocks.datasets.base import MetaDataset
+from meta_blocks.datasets.base import ClfMetaDataset
 from meta_blocks.tasks.supervised import SupervisedTaskDistribution
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
 
     Parameters
     ----------
-    meta_dataset : MetaDataset
+    meta_dataset : ClfMetaDataset
 
     num_query_shots : int, optional (default: 1)
 
@@ -44,14 +45,13 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
 
     def __init__(
         self,
-        meta_dataset: MetaDataset,
+        meta_dataset: ClfMetaDataset,
         sampler_config: Dict[str, Any],
         num_query_shots: int = 1,
         num_support_shots: int = 1,
         max_labeled_points: int = None,
         init_labeled_points: int = None,
         name: Optional[str] = None,
-        seed: Optional[int] = 42,
         **_unused_kwargs,
     ):
         super(LimitedSupervisedTaskDistribution, self).__init__(
@@ -59,11 +59,13 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
             num_query_shots=num_query_shots,
             sampler=samplers.get(**sampler_config),
             name=(name or self.__class__.__name__),
-            seed=seed,
         )
         self.num_support_shots = num_support_shots
         self.max_labeled_points = max_labeled_points
         self.init_labeled_points = init_labeled_points
+
+        # The seeds must be set globally.
+        self._rng = np.random
 
         # Internals.
         self.num_requested_labels = None
@@ -79,7 +81,7 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
             self.init_labeled_points = self.max_labeled_points
 
         # Sample supervised tasks.
-        logger.debug(f"Initializing {self.name}...")
+        logger.info(f"Initializing {self.name}...")
         self.expand(self.init_labeled_points)
 
     def expand(self, num_labeled_points: int):
@@ -90,22 +92,16 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
         # Expand the number of requested labels.
         requested_labels_so_far = self.num_requested_labels
         while requested_labels_so_far < num_labeled_points:
-            logger.debug(
-                f"...requesting more labels: "
-                f"{requested_labels_so_far}/{num_labeled_points}"
-            )
+            if requested_labels_so_far % int(num_labeled_points / 10) == 0:
+                logger.debug(
+                    f"...requesting more labels: "
+                    f"{requested_labels_so_far}/{num_labeled_points}"
+                )
             # Construct a batch of requests.
-            requests_batch, feed_list_batch = self.meta_dataset.get_feed_batch()
-            # Get request kwargs.
-            request_kwargs_batch = [
-                [v for _, v in feed_list[self.num_classes :]]
-                for feed_list in feed_list_batch
-            ]
+            requests_batch = self.meta_dataset.request_datasets(unique_classes=True)
             # Sample support labeled ids for the requested tasks.
             support_labeled_ids_batch = self.sampler.select_labeled(
-                size=self.support_labels_per_task,
-                labels_per_step=self.num_classes,
-                feed_dict=dict(sum(feed_list_batch, [])),
+                size=self.support_labels_per_task, labels_per_step=self.num_classes
             )
             # Save sampled information.
             for i, ids in enumerate(support_labeled_ids_batch):
@@ -114,7 +110,6 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
                     break
                 self._requested_ids.append(ids)
                 self._requests.append(requests_batch[i])
-                self._requested_kwargs.append(request_kwargs_batch[i])
                 self.num_requested_labels = requested_labels_so_far
 
     def sample_task_feed(self, replace: bool = True) -> List[Tuple[tf.Tensor, Any]]:
@@ -124,17 +119,11 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
             len(self._requests), size=self.meta_batch_size, replace=replace
         )
         # Build feed list for the meta-batch of tasks.
-        requests_batch = [self._requests[i] for i in indices_batch]
-        ids_batch = [self._requested_ids[i] for i in indices_batch]
-        kwargs_batch = [self._requested_kwargs[i] for i in indices_batch]
-        _, feed_list_batch = self.meta_dataset.get_feed_batch(requests=requests_batch)
-        task_feed = []
-        for i, feed_list in enumerate(feed_list_batch):
-            # Truncate feed list.
-            task_feed += feed_list[: self.num_classes]
-            # Add kwargs feed.
-            kwarg_keys = [k for k, _ in feed_list[self.num_classes :]]
-            task_feed += [(k, v) for k, v in zip(kwarg_keys, kwargs_batch[i])]
-            # Add task-specific feed.
-            task_feed += self._task_batch[i].get_feed_list(ids_batch[i])
-        return task_feed
+        requests_batch = tuple(self._requests[i] for i in indices_batch)
+        ids_batch = tuple(self._requested_ids[i] for i in indices_batch)
+        self.meta_dataset.request_datasets(requests_batch=requests_batch)
+        # Construct task feed.
+        feed_list_batch = [
+            task.get_feed_list(ids) for task, ids in zip(self.task_batch, ids_batch)
+        ]
+        return sum(feed_list_batch, [])

@@ -19,14 +19,18 @@ def main(cfg: DictConfig):
     # Run evaluation process.
     if cfg.eval is not None:
         logger.debug("Starting evaluation...")
-        eval_process = Process(target=evaluate, args=(cfg,), name="EVAL")
+        eval_process = Process(
+            target=evaluate, kwargs={"cfg": cfg, "gpu_ids": "0"}, name="EVAL"
+        )
         eval_process.start()
         processes.append(eval_process)
 
     # Run training process.
     if cfg.train is not None:
         logger.debug("Starting training...")
-        train_process = Process(target=train, args=(cfg,), name="TRAIN")
+        train_process = Process(
+            target=train, kwargs={"cfg": cfg, "gpu_ids": "1"}, name="TRAIN"
+        )
         train_process.start()
         processes.append(train_process)
 

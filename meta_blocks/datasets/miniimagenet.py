@@ -4,10 +4,13 @@ import glob
 import logging
 import os
 import random
-from typing import Any, Callable, List, Optional, Tuple
+from concurrent import futures
+from typing import List, Optional, Tuple
 
+import filelock
 import numpy as np
 import tensorflow.compat.v1 as tf
+from PIL import Image
 
 from meta_blocks.datasets import base
 
@@ -33,49 +36,39 @@ class MiniImageNetCategory(base.DataSource):
     data_dir : str
         Path to the directory that contains the character data.
 
-    rotation : int (default: 0)
-        Rotation of the character in degrees.
-
     name : str, optional
         The name of the dataset.
     """
 
-    RAW_SHAPE = (None,)
-    RAW_DTYPE = tf.string
-    RAW_IMG_SHAPE = (180, 180, 3)
     IMG_SHAPE = (84, 84, 3)
     IMG_DTYPE = tf.float32
 
     def __init__(
         self,
         data_dir: str,
-        cache: bool = True,
-        max_size: Optional[int] = None,
         shuffle: bool = True,
+        max_size: Optional[int] = None,
         name: Optional[str] = None,
     ):
         super(MiniImageNetCategory, self).__init__(
             data_dir, name=(name or self.__class__.__name__)
         )
-        self.cache = cache
-        self.max_size = max_size
         self.shuffle = shuffle
+        self.max_size = max_size
 
         # Internals.
         self.dataset = None
-        self.iterator = None
-        self.string_handle = None
         self.size = None
 
     # --- Properties. ---
 
     @property
-    def raw_data_shapes(self):
-        return self.RAW_SHAPE
+    def data_shapes(self):
+        return self.IMG_SHAPE
 
     @property
-    def raw_data_types(self):
-        return self.RAW_DTYPE
+    def data_types(self):
+        return self.IMG_DTYPE
 
     # --- Class methods. ---
 
@@ -87,48 +80,61 @@ class MiniImageNetCategory(base.DataSource):
     def decode(cls, serialized_image):
         image = tf.io.decode_image(serialized_image, channels=3)
         image = tf.image.convert_image_dtype(image, dtype=cls.IMG_DTYPE)
-        image.set_shape(cls.RAW_IMG_SHAPE)
-        return image
-
-    @classmethod
-    def preprocess(cls, image):
-        image = tf.image.resize(image, size=cls.IMG_SHAPE[:-1])
+        image.set_shape(cls.IMG_SHAPE)
+        image = image / 0xFF  # Rescale image to [0, 1].
         return image
 
     # --- Methods. ---
 
+    def _preprocess_and_maybe_cache(self):
+        """Creates cached preprocessed images if the necessary."""
+        logger.debug(f"Processing and caching {self.name}...")
+        file_paths = glob.glob(os.path.join(self.data_dir, self.name, "*.JPEG"))
+        filelock_logger = logging.getLogger(filelock.__name__)
+        filelock_logger.setLevel(logging.ERROR)
+
+        def _process_filepath(file_path):
+            if "resized" not in file_path:
+                dir_path = os.path.dirname(file_path)
+                file_name = os.path.basename(file_path)
+                resized_name = file_name.split(".")[0] + ".resized.JPEG"
+                resized_path = os.path.join(dir_path, resized_name)
+                with filelock.FileLock(f"{file_path}.lock"):
+                    if not os.path.exists(resized_path):
+                        with filelock.FileLock(f"{resized_path}.lock"):
+                            img = Image.open(file_path).resize(self.IMG_SHAPE[:-1])
+                            img.save(resized_path, "JPEG", quality=99)
+            else:
+                resized_path = file_path
+            return resized_path
+
+        # Use multi-threading to speed up IO-bound processing.
+        with futures.ThreadPoolExecutor(max_workers=16) as executor:
+            resized_paths = list(
+                executor.map(_process_filepath, file_paths, chunksize=4)
+            )
+
+        return resized_paths
+
     def _build(self):
-        """Builds tf.datasets.Dataset for the underlying datasets resources."""
-        # Get file paths and determine dataset size.
-        filepaths = glob.glob(os.path.join(self.data_dir, self.name, "*.JPEG"))
+        """Builds tf.data.Dataset for the underlying data resources."""
+        # Get file paths.
+        file_paths = self._preprocess_and_maybe_cache()
+
+        # Shuffle and compute size.
         if self.shuffle:
-            random.shuffle(filepaths)
+            random.shuffle(file_paths)
         if self.max_size is not None:
-            filepaths = filepaths[: self.max_size]
-        self.size = len(filepaths)
+            file_paths = file_paths[: self.max_size]
+        self.size = len(file_paths)
 
         # Build the tf.data.Dataset.
-        self.dataset = tf.data.Dataset.from_tensor_slices(filepaths)
-
-        # Read and cache (if necessary).
-        self.dataset = self.dataset.map(self.read, num_parallel_calls=1)
-        if self.cache:
-            self.dataset = self.dataset.cache()
-
-        # Repeat, batch, prefetch.
         self.dataset = (
-            self.dataset.repeat()
+            tf.data.Dataset.from_tensor_slices(file_paths)
+            .map(self.read, num_parallel_calls=1)
+            .map(self.decode, num_parallel_calls=16)
             .batch(self.size)
-            .prefetch(tf.data.experimental.AUTOTUNE)
-        )
-
-        # Build string handles.
-        self.iterator = tf.data.make_one_shot_iterator(self.dataset)
-        self.string_handle = self.iterator.string_handle()
-
-    def initialize(self, **kwargs):
-        raise NotImplementedError(
-            "Categories must be initialized jointly by the data source."
+            .repeat()
         )
 
 
@@ -140,7 +146,6 @@ class MiniImageNetDataSource(base.DataSource):
     def __init__(
         self,
         data_dir: str,
-        cache: bool = True,
         max_size: Optional[int] = None,
         shuffle_data: bool = True,
         name: Optional[str] = None,
@@ -148,23 +153,13 @@ class MiniImageNetDataSource(base.DataSource):
         super(MiniImageNetDataSource, self).__init__(
             data_dir, name=(name or self.__class__.__name__)
         )
-        self.cache = cache
         self.max_size = max_size
         self.shuffle_data = shuffle_data
 
         # Internals.
         self.data = None
-        self.string_handles = None
 
     # --- Properties. ---
-
-    @property
-    def raw_data_shapes(self):
-        return MiniImageNetCategory.RAW_SHAPE
-
-    @property
-    def raw_data_types(self):
-        return MiniImageNetCategory.RAW_DTYPE
 
     @property
     def data_shapes(self):
@@ -181,7 +176,6 @@ class MiniImageNetDataSource(base.DataSource):
         return [
             MiniImageNetCategory(
                 data_dir=dir_path,
-                cache=self.cache,
                 max_size=self.max_size,
                 shuffle=self.shuffle_data,
                 name=name,
@@ -192,10 +186,10 @@ class MiniImageNetDataSource(base.DataSource):
 
     def __getitem__(self, set_name):
         """Returns string handles for the corresponding set of the data."""
-        return self.string_handles[set_name]
+        return self.data[set_name]
 
     def _build(self):
-        """Build train, valid, and test categories."""
+        """Build train, valid, and test data categories."""
         self.data = {}
         for set_name in ["train", "valid", "test"]:
             logger.debug(f"Building {self.name}: {set_name} categories...")
@@ -205,17 +199,6 @@ class MiniImageNetDataSource(base.DataSource):
             for category in self.data[set_name]:
                 category.build()
 
-    def initialize(self, sess: Optional[tf.Session] = None, **kwargs):
-        """Initialize all categories."""
-        if sess is None:
-            sess = tf.get_default_session()
-        self.string_handles = {}
-        for set_name in ["train", "valid", "test"]:
-            logger.debug(f"Initializing {self.name}: {set_name} categories...")
-            self.string_handles[set_name] = sess.run(
-                [category.string_handle for category in self.data[set_name]]
-            )
-
 
 class MiniImageNetDataset(base.ClfDataset):
     """Implements mini-ImageNet-specific preprocessing functionality."""
@@ -223,55 +206,59 @@ class MiniImageNetDataset(base.ClfDataset):
     def __init__(
         self,
         num_classes: int,
-        data_shapes: tf.TensorShape,
-        data_types: tf.DType,
+        data_sources: List[MiniImageNetCategory],
         name: Optional[str] = None,
         **_unused_kwargs,
     ):
         super(MiniImageNetDataset, self).__init__(
-            num_classes=num_classes,
-            data_shapes=data_shapes,
-            data_types=data_types,
-            name=(name or self.__class__.__name__),
+            num_classes=num_classes, name=(name or self.__class__.__name__)
         )
+        self.data_sources = data_sources
 
-        # Internals.
-        self.string_handle_phs = None
+        # Internal.
+        self.dataset = None
+        self.data_tensors = None
+        self.data_source_ids = None
+
+    # --- Methods. ---
+
+    def _build_category_choice_dataset(self):
+        """Creates a dataset of category ids used for choosing categories.
+        Consistently generates datasets with the classes that correspond to
+        `self.category_ids` which can be set externally.
+        """
+
+        def _gen_category_choices():
+            while True:
+                assert isinstance(self.data_source_ids, np.ndarray)
+                assert len(self.data_source_ids.shape) == 1
+                yield self.data_source_ids
+
+        category_choice_dataset = tf.data.Dataset.from_generator(
+            _gen_category_choices,
+            output_shapes=tf.TensorShape([self.num_classes]),
+            output_types=tf.int64,
+        ).unbatch()
+
+        return category_choice_dataset
 
     def _build(self):
-        """Builds data tensors for each class by instantiating an iterator."""
-        data_tensors = []
-        string_handle_phs = []
-        for k in range(self.num_classes):
-            string_handle_ph = tf.placeholder(
-                tf.string, shape=[], name=f"iterator_handle_class_{k}"
+        """Builds data tensors that represent classes."""
+        # Build the dataset from the underlying data sources.
+        self.dataset = (
+            tf.data.experimental.choose_from_datasets(
+                datasets=[c.dataset for c in self.data_sources],
+                choice_dataset=self._build_category_choice_dataset(),
             )
-            iterator = tf.data.Iterator.from_string_handle(
-                string_handle_ph,
-                output_types=self.data_types,
-                output_shapes=self.data_shapes,
-            )
-            data_tensor = iterator.get_next()
-            data_tensors.append(data_tensor)
-            string_handle_phs.append(string_handle_ph)
-        self.data_tensors = tuple(data_tensors)
-        self.string_handle_phs = tuple(string_handle_phs)
+            .batch(self.num_classes)
+            .prefetch(tf.data.experimental.AUTOTUNE)
+        )
+        data = self.dataset.make_one_shot_iterator().get_next()
+        # Tuple of <float32> [None, **MiniImageNetCategory.IMG_SHAPE].
+        self.data_tensors = tuple(map(tf.squeeze, tf.split(data, self.num_classes)))
 
-    def get_preprocessor(self) -> Optional[Callable]:
-        """Returns a preprocessor for the images."""
-
-        def _inner(args):
-            serialized_image, _ = args
-            image = MiniImageNetCategory.decode(serialized_image)
-            image = MiniImageNetCategory.preprocess(image)
-            return image
-
-        return _inner
-
-    def get_feed_list(self, string_handles: Tuple[str]) -> List[Tuple[tf.Tensor, str]]:
-        """Returns tensors with data and a feed dict with dependencies."""
-        assert len(string_handles) == self.num_classes
-        return list(zip(self.string_handle_phs, string_handles))
+    def set_data_source_ids(self, data_source_ids: Tuple[np.ndarray, ...]):
+        self.data_source_ids = data_source_ids
 
 
 class MiniImageNetMetaDataset(base.ClfMetaDataset):
@@ -281,51 +268,56 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
 
     def __init__(
         self,
-        data_source: MiniImageNetDataSource,
         batch_size: int,
         num_classes: int,
-        set_name: str,
+        data_sources: List[MiniImageNetCategory],
         name: Optional[str] = None,
-        seed: Optional[int] = 42,
-        **kwargs,
     ):
         super(MiniImageNetMetaDataset, self).__init__(
-            data_source=data_source,
             batch_size=batch_size,
             num_classes=num_classes,
+            data_sources=data_sources,
             name=(name or self.__class__.__name__),
-            seed=seed,
-            **kwargs,
         )
-        self.set_name = set_name
 
         # Internals.
-        self._rng = np.random.RandomState(seed)
+        self.dataset_batch = None
 
-    def get_feed_batch(
-        self, requests: Optional[Tuple[Any, ...]] = None, replace: bool = False
-    ) -> Tuple[Tuple[Any, ...], List[List[Tuple[tf.Tensor, Any]]]]:
+    # --- Methods. ---
+
+    def _build(self):
+        """Build datasets in the dataset batch."""
+        self.dataset_batch = tuple(
+            self.Dataset(
+                num_classes=self.num_classes,
+                data_sources=self.data_sources,
+                name=f"Dataset{i}",
+            ).build()
+            for i in range(self.batch_size)
+        )
+
+    def request_datasets(
+        self,
+        requests_batch: Optional[Tuple[np.ndarray, ...]] = None,
+        unique_classes: bool = True,
+    ) -> Tuple[np.ndarray, ...]:
         """Returns a feed list for the requested meta-batch of datasets."""
         # If a batch of requests is not provided, generate from the data source.
-        if requests is None:
-            requests = tuple(
-                tuple(
-                    self._rng.choice(
-                        len(self.data_source[self.set_name]),
-                        size=self.num_classes,
-                        replace=replace,
-                    )
+        if requests_batch is None:
+            requests_batch = tuple(
+                np.random.choice(
+                    len(self.data_sources),
+                    size=self.num_classes,
+                    replace=(not unique_classes),
                 )
                 for _ in range(self.batch_size)
             )
-        elif len(requests) != self.batch_size:
+        elif len(requests_batch) != self.batch_size:
             raise ValueError(
-                f"The number of requests ({len(requests)}) does not match "
+                f"The number of requests ({len(requests_batch)}) does not match "
                 f"the meta batch size ({self.batch_size})."
             )
-        # Get feed dicts for each request.
-        feed_lists = []
-        for n, ids in enumerate(requests):
-            category_handles = tuple(self.data_source[self.set_name][i] for i in ids)
-            feed_lists.append(self.dataset_batch[n].get_feed_list(category_handles))
-        return requests, feed_lists
+        # Use requests to set category ids for each dataset in the batch.
+        for dataset, request in zip(self.dataset_batch, requests_batch):
+            dataset.set_data_source_ids(request)
+        return requests_batch

@@ -54,13 +54,18 @@ def train_step(exp: Experiment, sess: Optional[tf.Session] = None, **kwargs):
     return losses
 
 
-def train(cfg: DictConfig, work_dir: Optional[str] = None):
+def train(
+    cfg: DictConfig, gpu_ids: Optional[str] = None, work_dir: Optional[str] = None
+):
     """Runs the training process for the provided config.
 
     Parameters
     ----------
     cfg : DictConfig
         The experiment configuration.
+
+    gpu_ids : str, optional
+        GPUs that will be visible.
 
     work_dir : str, optional
         Working directory used for saving checkpoints, logs, etc.
@@ -76,7 +81,7 @@ def train(cfg: DictConfig, work_dir: Optional[str] = None):
     tf.set_random_seed(cfg.run.seed)
 
     # Setup the session.
-    with utils.session(gpu_allow_growth=True) as sess:
+    with utils.session(gpu_ids=gpu_ids, gpu_allow_growth=False) as sess:
         # Build and initialize.
         exp = utils.build_and_initialize(cfg=cfg, mode=common.ModeKeys.TRAIN)
 

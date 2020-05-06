@@ -58,7 +58,7 @@ class Sampler(abc.ABC):
         self,
         size: int,
         sess: tf.Session,
-        feed_dict: Optional[Dict[tf.Tensor, Any]],
+        feed_dict: Optional[Dict[tf.Tensor, Any]] = None,
         **_unused_kwargs,
     ) -> Tuple[np.ndarray]:
         """Return an actively selected labeled data points from the dataset."""
