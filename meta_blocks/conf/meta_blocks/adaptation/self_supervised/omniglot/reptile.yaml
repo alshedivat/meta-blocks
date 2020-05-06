@@ -1,5 +1,7 @@
 # Reptile adaptation at training and test time.
 meta_blocks:
+  model:
+    name: feed_forward
   train:
     adapt:
       name: reptile

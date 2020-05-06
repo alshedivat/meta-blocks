@@ -32,7 +32,7 @@ def main(cfg: DictConfig):
         logger.debug("Starting training...")
         train_process = Process(
             target=train,
-            kwargs={"cfg": cfg, "gpu_ids": "1", "gpu_allow_growth": True},
+            kwargs={"cfg": cfg, "gpu_ids": "0", "gpu_allow_growth": True},
             name="TRAIN",
         )
         train_process.start()

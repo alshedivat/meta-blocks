@@ -4,6 +4,5 @@ defaults:
   # Experiment configuration.
   - meta_blocks/benchmark: ???
   - meta_blocks/data: ???
-  - meta_blocks/model: ???
   - meta_blocks/network: ???
   - meta_blocks/adaptation: ???
