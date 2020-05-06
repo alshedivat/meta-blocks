@@ -130,11 +130,14 @@ class ClfDataset(Dataset):
         super(ClfDataset, self).__init__(name=name or self.__class__.__name__)
         self.num_classes = num_classes
 
+        # Internals.
+        self._size = None
+
     # --- Properties. ---
 
-    def size(self) -> tf.Tensor:
-        """Returns the dynamic dataset size."""
-        return tf.reduce_sum([tf.shape(dt)[0] for dt in self.data_tensors])
+    @property
+    def size(self) -> int:
+        return self._size
 
 
 class MetaDataset(abc.ABC):

@@ -256,6 +256,8 @@ class MiniImageNetDataset(base.ClfDataset):
         data = self.dataset.make_one_shot_iterator().get_next()
         # Tuple of <float32> [None, **MiniImageNetCategory.IMG_SHAPE].
         self.data_tensors = tuple(map(tf.squeeze, tf.split(data, self.num_classes)))
+        # Determine dataset size.
+        self._size = self.num_classes * self.data_sources[0].size
 
     def set_data_source_ids(self, data_source_ids: Tuple[np.ndarray, ...]):
         self.data_source_ids = data_source_ids

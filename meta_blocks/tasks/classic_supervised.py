@@ -52,7 +52,7 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         meta_dataset: ClfMetaDataset,
         num_query_shots: int = 1,
         num_support_shots: int = 1,
-        num_task_batches_to_cache: int = 10,
+        num_task_batches_to_cache: int = 1000,
         name: Optional[str] = None,
         **_unused_kwargs,
     ):

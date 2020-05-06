@@ -1,7 +1,7 @@
 """Base classes and functionality for sampling."""
 
 import abc
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -49,17 +49,6 @@ class Sampler(abc.ABC):
         raise NotImplementedError("Abstract Method")
 
     @abc.abstractmethod
-    def compute_scores(self, task, **kwargs) -> tf.Tensor:
-        """Computes scores of each unlabeled instance in the support set."""
-        raise NotImplementedError("Abstract Method")
-
-    @abc.abstractmethod
-    def select_labeled(
-        self,
-        size: int,
-        sess: tf.Session,
-        feed_dict: Optional[Dict[tf.Tensor, Any]] = None,
-        **_unused_kwargs,
-    ) -> Tuple[np.ndarray]:
+    def select_labeled(self, size: int) -> Tuple[np.ndarray]:
         """Return an actively selected labeled data points from the dataset."""
         raise NotImplementedError("Abstract Method")
