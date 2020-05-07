@@ -22,3 +22,4 @@ eval:
 
 model:
   name: feed_forward
+  embedding_dim: 64
