@@ -93,7 +93,21 @@ class MiniImageNetCategory(base.DataSource):
     # --- Methods. ---
 
     def _preprocess_and_maybe_cache(self):
-        """Creates cached preprocessed images if the necessary."""
+        """Creates cached preprocessed images if the necessary.
+
+        Notes
+        -----
+        There are two alternative approaches to manual caching:
+        (1) preprocess (i.e., resize in our case) image data on the fly, or
+        (2) use tf.data.Dataset.cache functionality.
+
+        Approach (1) makes CPU throttle when meta-batches are relatively large.
+        Approach (2) would have been cleaner than manual caching, but it is
+        problematic for meta-batches of size > 1 in the graph-mode TF because
+        we have to create multiple dataset iterators (to enable parallelism)
+        which results in duplicated cache. Cache duplications is a known issue:
+        https://github.com/tensorflow/tensorflow/issues/20930#issuecomment-517843860.
+        """
         logger.debug(f"Processing and caching {self.name}...")
         file_paths = glob.glob(os.path.join(self.data_dir, self.name, "*.JPEG"))
 
