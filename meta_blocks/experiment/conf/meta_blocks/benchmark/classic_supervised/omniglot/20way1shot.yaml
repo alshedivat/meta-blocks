@@ -6,14 +6,11 @@ meta_blocks:
       num_classes: 20
     tasks:
       - set_name: train
-        log_dir: train/oracle
+        log_dir: train
         config:
           name: classic_supervised
           num_query_shots: 1
           num_support_shots: 1
-        sampler:
-          name: uniform
-          stratified: true
     max_steps: 20000
     log_interval: 10
     save_interval: 100
@@ -24,7 +21,7 @@ meta_blocks:
     tasks:
       # Train.
       - set_name: train
-        log_dir: eval/train/oracle_1shot
+        log_dir: eval/train/1shot
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -34,7 +31,7 @@ meta_blocks:
           name: uniform
           stratified: true
       - set_name: train
-        log_dir: eval/train/oracle_5shot
+        log_dir: eval/train/5shot
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -45,7 +42,7 @@ meta_blocks:
           stratified: true
       # Valid.
       - set_name: valid
-        log_dir: eval/valid/oracle_1shot
+        log_dir: eval/valid/1shot
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -55,7 +52,7 @@ meta_blocks:
           name: uniform
           stratified: true
       - set_name: valid
-        log_dir: eval/valid/oracle_5shot
+        log_dir: eval/valid/5shot
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -66,7 +63,7 @@ meta_blocks:
           stratified: true
       # Test.
       - set_name: test
-        log_dir: eval/test/oracle_1shot
+        log_dir: eval/test/1shot
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -76,7 +73,7 @@ meta_blocks:
           name: uniform
           stratified: true
       - set_name: test
-        log_dir: eval/test/oracle_5shot
+        log_dir: eval/test/5shot
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -86,6 +83,5 @@ meta_blocks:
           name: uniform
           stratified: true
     repetitions: 1
-    timeout: 300
   run:
     seed: 1

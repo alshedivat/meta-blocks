@@ -2,6 +2,7 @@
 meta_blocks:
   model:
     name: feed_forward
+    embedding_dim: 64
   train:
     adapt:
       name: reptile

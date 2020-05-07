@@ -15,5 +15,5 @@ python -u -m meta_blocks.experiment.run \
   meta_blocks/data=${DATASET} \
   meta_blocks/network=${BENCHMARK_TYPE}/${DATASET}/${BACKBONE} \
   meta_blocks.data.source.data_dir=${DATA_DIR} \
-  meta_blocks.compute.gpus.train="0" \
-  meta_blocks.compute.gpus.eval="0" \
+  meta_blocks.compute.gpus.train.ids="0" \
+  meta_blocks.compute.gpus.eval.ids="0" \
