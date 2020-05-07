@@ -265,7 +265,13 @@ class UmtraTaskDistribution(base.TaskDistribution):
 
     def _refresh_requests(self):
         """Expands the number of labeled points by sampling more tasks."""
+        logger.debug(f"Sampling new task batches from {self.name}... ")
         for i in range(self.num_task_batches_to_cache):
+            if i % int(self.num_task_batches_to_cache / 10) == 0:
+                logger.debug(
+                    f"...sampling more batches: "
+                    f"{i + 1}/{self.num_task_batches_to_cache}"
+                )
             requests_batch, _ = self.meta_dataset.request_datasets(
                 # If not stratified, samples classes with replacement,
                 # which results in tasks that may have different classes

@@ -81,7 +81,7 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
             self.init_labeled_points = self.max_labeled_points
 
         # Sample supervised tasks.
-        logger.info(f"Initializing {self.name}...")
+        logger.debug(f"Initializing {self.name}...")
         self.expand(self.init_labeled_points)
 
     def expand(self, num_labeled_points: int):
@@ -91,6 +91,7 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
 
         # Expand the number of requested labels.
         requested_labels_so_far = self.num_requested_labels
+        logger.debug(f"Sampling new task batches from {self.name}... ")
         while requested_labels_so_far < num_labeled_points:
             if requested_labels_so_far % int(num_labeled_points / 10) == 0:
                 logger.debug(

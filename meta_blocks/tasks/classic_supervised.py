@@ -69,7 +69,7 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
 
     def _refresh_requests(self):
         """Re-samples new task requests."""
-        logger.info(f"Sampling new task batches from {self.name}... ")
+        logger.debug(f"Sampling new task batches from {self.name}... ")
         for i in range(self.num_task_batches_to_cache):
             if i % int(self.num_task_batches_to_cache / 10) == 0:
                 logger.debug(
@@ -83,7 +83,6 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
             support_labeled_ids_batch = self.sampler.select_labeled(
                 size=self.support_labels_per_task, feed_dict=dict(feed_list)
             )
-            # print(support_labeled_ids_batch)
             # Save the sampled information.
             self._requests.append(requests_batch)
             self._requested_ids.append(support_labeled_ids_batch)
