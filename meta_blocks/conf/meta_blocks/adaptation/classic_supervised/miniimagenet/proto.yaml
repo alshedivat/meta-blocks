@@ -1,5 +1,8 @@
 # Proto adaptation at training and test time.
 meta_blocks:
+  model:
+    name: proto
+    embedding_dim: 64
   train:
     adapt:
       name: proto

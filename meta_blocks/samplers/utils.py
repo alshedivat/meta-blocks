@@ -1,6 +1,5 @@
 """A collection of utility functions for sampling."""
 
-import numpy as np
 import tensorflow.compat.v1 as tf
 
 # Transition to V2 will happen in stages.

@@ -47,16 +47,8 @@ class Task(abc.ABC):
     # --- Properties. ---
 
     @property
-    def num_classes(self) -> tf.Tensor:
-        return self.dataset.num_classes
-
-    @property
     def dataset_size(self) -> tf.Tensor:
         return self.dataset.size
-
-    @property
-    def query_size(self) -> tf.Tensor:
-        return self.num_query_shots * self.num_classes
 
     # --- Abstract properties. ---
 
@@ -148,7 +140,7 @@ class TaskDistribution(abc.ABC):
         self.name = name or self.__class__.__name__
 
         # Internals.
-        self._task_batch = None
+        self.task_batch = None
 
         self.built = False
 
@@ -163,11 +155,6 @@ class TaskDistribution(abc.ABC):
     def num_classes(self) -> int:
         """Returns the number of classes in each task."""
         return self.meta_dataset.num_classes
-
-    @property
-    def task_batch(self) -> Tuple[Task, ...]:
-        """Returns a tuple of tasks from the distribution."""
-        return self._task_batch
 
     # --- Methods. ---
 

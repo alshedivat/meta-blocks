@@ -76,7 +76,7 @@ def eval_step(
     return results
 
 
-def evaluate(cfg: DictConfig, work_dir: Optional[str] = None):
+def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
     """Runs the evaluation process for the provided config.
 
     Parameters
@@ -87,6 +87,9 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None):
     work_dir : str, optional
         Working directory used for saving checkpoints, logs, etc.
         If None, it is set to `os.getcwd()`.
+
+    **session_kwargs : kwargs
+        Keyword arguments for configuring TF session
     """
     # Set working dir.
     if work_dir is None:
@@ -97,7 +100,7 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None):
     np.random.seed(cfg.run.seed)
     tf.set_random_seed(cfg.run.seed)
 
-    with utils.session(gpu_allow_growth=True) as sess:
+    with utils.session(**session_kwargs) as sess:
         # Build and initialize.
         exp = utils.build_and_initialize(cfg=cfg, mode=common.ModeKeys.EVAL)
 

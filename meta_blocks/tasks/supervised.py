@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets.base import Dataset, MetaDataset
+from meta_blocks.datasets.base import ClfDataset, ClfMetaDataset
 from meta_blocks.samplers.base import Sampler
 from meta_blocks.tasks import base
 
@@ -53,7 +53,7 @@ class SupervisedTask(base.Task):
 
     Parameters
     ----------
-    dataset : Dataset
+    dataset : ClfDataset
 
     num_query_shots : int, optional (default: 1)
 
@@ -61,7 +61,7 @@ class SupervisedTask(base.Task):
     """
 
     def __init__(
-        self, dataset: Dataset, num_query_shots: int = 1, name: Optional[str] = None
+        self, dataset: ClfDataset, num_query_shots: int = 1, name: Optional[str] = None
     ):
         super(SupervisedTask, self).__init__(
             dataset=dataset,
@@ -70,16 +70,23 @@ class SupervisedTask(base.Task):
         )
 
         # Internals.
-        self._preprocessor = None
         self._support_labeled_ids = None
-        self._support_inputs_raw = None
-        self._support_labels_raw = None
-        self._support_inputs = None
-        self._support_labels = None
+        self._support_inputs_all = None
+        self._support_labels_all = None
         self._support_tensors = None
         self._query_tensors = None
 
     # --- Properties. ---
+
+    @property
+    def num_ways(self) -> int:
+        """Returns the number of classification ways."""
+        return self.dataset.num_classes
+
+    @property
+    def query_size(self) -> int:
+        """Returns the size of the query set."""
+        return self.num_query_shots * self.num_ways
 
     @property
     def support_size(self) -> tf.Tensor:
@@ -89,40 +96,30 @@ class SupervisedTask(base.Task):
     @property
     def unlabeled_support_size(self) -> tf.Tensor:
         """Returns the size of the full unlabeled support set."""
-        return tf.shape(self.unlabeled_support_inputs_raw)[0]
+        return tf.shape(self._support_inputs_all)[0]
 
     @property
     def support_tensors(self) -> Tuple[tf.Tensor, tf.Tensor]:
-        """Returns a tuple of support (inputs, labels) tensors.
-        The input tensors are mapped through dataset's preprocessor.
-        """
+        """Returns a tuple of support (inputs, labels) tensors."""
         return self._support_tensors
 
     @property
     def query_tensors(self) -> Tuple[tf.Tensor, tf.Tensor]:
-        """Returns a tuple of query (inputs, labels) tensors.
-        The inputs are mapped through dataset's preprocessor.
-        """
+        """Returns a tuple of query (inputs, labels) tensors."""
         return self._query_tensors
 
     @property
     def unlabeled_support_inputs(self) -> tf.Tensor:
-        """Returns a tensor of all unlabeled support inputs from the dataset.
-        The inputs are mapped through dataset's preprocessor.
-        """
-        return self._support_inputs
-
-    @property
-    def unlabeled_support_inputs_raw(self) -> tf.Tensor:
-        """Returns a tensor of all unlabeled support inputs from the dataset.
-        The inputs are NOT preprocessed (taken as is from the dataset).
-        """
-        return self._support_inputs_raw
+        """Returns a tensor of all unlabeled support inputs from the dataset."""
+        return self._support_inputs_all
 
     # --- Auxiliary methods. ---
 
+    @staticmethod
     def _get_inputs_and_labels(
-        self, start_index: int, end_index: Optional[int] = None
+        data_tensors: Tuple[tf.Tensor],
+        start_index: int,
+        end_index: Optional[int] = None,
     ) -> tf.Tensor:
         """Slices data tensors of the dataset and constructs inputs and labels.
 
@@ -131,36 +128,14 @@ class SupervisedTask(base.Task):
         `data_tensors`, concatenates them to construct inputs, and builds
         the corresponding labels tensor.
         """
-        inputs = [x[start_index:end_index] for x in self.dataset.data_tensors]
+        inputs = [x[start_index:end_index] for x in data_tensors]
         labels = [tf.fill(tf.shape(x)[:1], k) for k, x in enumerate(inputs)]
         return tf.concat(inputs, axis=0), tf.concat(labels, axis=0)
-
-    def _preprocess(
-        self,
-        inputs: tf.Tensor,
-        labels: tf.Tensor,
-        back_prop: bool = False,
-        parallel_iterations: int = 16,
-    ) -> Tuple[tf.Tensor, tf.Tensor]:
-        """Applies dataset-provided preprocessor to inputs and labels."""
-        if self._preprocessor is not None:
-            # TODO: determine if manual device placement is better.
-            # with tf.device("CPU:0"):
-            inputs = tf.map_fn(
-                dtype=tf.float32,  # TODO: look up in self.dataset.
-                fn=self._preprocessor,
-                elems=(inputs, labels),
-                back_prop=back_prop,
-                parallel_iterations=parallel_iterations,
-            )
-        return inputs, labels
 
     # --- Methods. ---
 
     def _build(self):
         """Builds internals of the task."""
-        # Input preprocessor.
-        self._preprocessor = self.dataset.get_preprocessor()
         # Build a placeholder for labeled support ids.
         self._support_labeled_ids = tf.placeholder(
             tf.int32, shape=[None], name="support_labeled_ids"
@@ -168,28 +143,22 @@ class SupervisedTask(base.Task):
         # Build query tensors.
         start_index = 0
         end_index = start_index + self.num_query_shots
-        inputs, labels = self._get_inputs_and_labels(start_index, end_index)
-        self._query_tensors = self._preprocess(inputs, labels)
+        self._query_tensors = self._get_inputs_and_labels(
+            self.dataset.data_tensors, start_index, end_index
+        )
         # Build support tensors.
         start_index = end_index
         (
-            self._support_inputs_raw,
-            self._support_labels_raw,
-        ) = self._get_inputs_and_labels(start_index, None)
-        # Note: self._support_{inputs,labels} are computationally expensive to
-        #       obtain for large datasets since it requires preprocessing the
-        #       full support data; hence this field is not exposed through a
-        #       public SupervisedTask API.
-        self._support_inputs, self._support_labels = self._preprocess(
-            self._support_inputs_raw, self._support_labels_raw
-        )
-        self._support_tensors_raw = tuple(
+            self._support_inputs_all,
+            self._support_labels_all,
+        ) = self._get_inputs_and_labels(self.dataset.data_tensors, start_index, None)
+        # Build labeled support tensors.
+        self._support_tensors = tuple(
             map(
                 lambda x: tf.gather(x, self._support_labeled_ids, axis=0),
-                (self._support_inputs_raw, self._support_labels_raw),
+                (self._support_inputs_all, self._support_labels_all),
             )
         )
-        self._support_tensors = self._preprocess(*self._support_tensors_raw)
 
     def get_feed_list(
         self, support_labeled_ids: np.ndarray
@@ -204,25 +173,22 @@ class SupervisedTaskDistribution(base.TaskDistribution):
 
     Parameters
     ----------
-    meta_dataset : MetaDataset
+    meta_dataset : ClfMetaDataset
 
     num_query_shots : int, optional (default: 1)
 
     num_support_shots : int, optional (default: 1)
 
     name: str, optional
-
-    seed : int, optional (default: 42)
     """
 
     def __init__(
         self,
-        meta_dataset: MetaDataset,
+        meta_dataset: ClfMetaDataset,
         sampler: Sampler,
         num_query_shots: int = 1,
         num_support_shots: int = 1,
         name: Optional[str] = None,
-        seed: Optional[int] = 42,
     ):
         super(SupervisedTaskDistribution, self).__init__(
             meta_dataset=meta_dataset,
@@ -232,14 +198,10 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         self.num_support_shots = num_support_shots
         self.sampler = sampler
 
-        # Setup random number generator.
-        self._rng = np.random.RandomState(seed=seed)
-
         # Internals.
         self.num_requested_labels = None
         self._requests = None
         self._requested_ids = None
-        self._requested_kwargs = None
 
     # --- Properties. ---
 
@@ -255,7 +217,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
 
     def _build(self):
         """Builds internals."""
-        self._task_batch = tuple(
+        self.task_batch = tuple(
             SupervisedTask(
                 dataset=dataset,
                 num_query_shots=self.num_query_shots,
@@ -268,8 +230,7 @@ class SupervisedTaskDistribution(base.TaskDistribution):
         """Initializes task distribution."""
         self._requests = []
         self._requested_ids = []
-        self._requested_kwargs = []
         self.num_requested_labels = 0
 
         # Build the sampler.
-        self.sampler.build(tasks=self._task_batch, **kwargs)
+        self.sampler.build(tasks=self.task_batch, **kwargs)

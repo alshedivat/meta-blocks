@@ -5,6 +5,7 @@ import contextlib
 import datetime
 import logging
 import re
+from typing import Optional
 
 import colorlog
 import tensorflow.compat.v1 as tf
@@ -44,16 +45,23 @@ class Experiment(
 
 
 @contextlib.contextmanager
-def session(gpu_allow_growth=True, log_device_placement=False):
+def session(
+    gpu_ids: Optional[str] = None,
+    gpu_allow_growth: bool = True,
+    log_device_placement: bool = False,
+):
     """Sets up an experiment and returns a tf.Session.
 
     Parameters
     ----------
-    gpu_allow_growth : bool, optional (default=True)
+    gpu_ids : str, optional
+        GPUs that will be made visible.
+
+    gpu_allow_growth : bool (default: True)
         Used to configure tf.Session.
         See tf.ConfigProto.gpu_options.allow_growth.
 
-    log_device_placement : bool, optional (default=False)
+    log_device_placement : bool (default: False)
         Used for debugging tensor placement on devices.
         See tf.ConfigProto.log_device_placement.
     """
@@ -62,6 +70,8 @@ def session(gpu_allow_growth=True, log_device_placement=False):
 
     # Create and configure a tf.Session.
     config = tf.ConfigProto()
+    if gpu_ids is not None:
+        config.gpu_options.visible_device_list = gpu_ids
     if gpu_allow_growth:
         config.gpu_options.allow_growth = True
     if log_device_placement:
@@ -104,8 +114,7 @@ def build_and_initialize(cfg, mode=common.ModeKeys.TRAIN):
     meta_datasets = {
         task.set_name: datasets.get_meta_dataset(
             name=cfg.data.name,
-            data_source=data_source,
-            set_name=task.set_name,
+            data_sources=data_source[task.set_name],
             **cfg[mode].meta_dataset,
         ).build()
         for task in cfg[mode].tasks
@@ -145,18 +154,17 @@ def build_and_initialize(cfg, mode=common.ModeKeys.TRAIN):
         adaptation.get(
             model=model,
             optimizer=optimizer,
-            tasks=task_dists[i].task_batch,
+            tasks=task_dist.task_batch,
             mode=mode,
             **cfg[mode].adapt,
         ).build()
-        for i, task in enumerate(cfg[mode].tasks)
+        for task, task_dist in zip(cfg[mode].tasks, task_dists)
     ]
 
     # Run global init.
     sess.run(tf.global_variables_initializer())
 
-    # Initialize.
-    data_source.initialize()
+    # Initialize task distributions.
     for task_dist in task_dists:
         task_dist.initialize()
 

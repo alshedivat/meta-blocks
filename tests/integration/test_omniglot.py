@@ -9,6 +9,7 @@ import urllib.request
 import zipfile
 
 import pytest
+from hydra._internal.hydra import GlobalHydra
 from hydra.experimental import compose as hydra_compose
 from hydra.experimental import initialize as hydra_init
 
@@ -22,7 +23,9 @@ AVAILABLE_SETTINGS = ("classic_supervised", "self_supervised")
 OMNIGLOT_URL = "https://raw.githubusercontent.com/brendenlake/omniglot/master/python/"
 
 # Initialize hydra.
-hydra_init(config_dir="conf", strict=False)
+# TODO: is there a way to check if hydra is initialized using public API?
+if not GlobalHydra().is_initialized():
+    hydra_init(config_dir="conf", strict=False)
 
 
 @pytest.mark.parametrize("adaptation_method", AVAILABLE_METHODS)
@@ -44,7 +47,6 @@ def test_omniglot_integration(adaptation_method, experiment_setting):
                 shutil.move(category_dir, os.path.join(omniglot_dir, category_name))
 
     with tempfile.TemporaryDirectory() as dir_path:
-        # Fetch Omniglot.
         logger.info(f"Fetching omniglot...")
         fetch_omniglot(dir_path)
         data_path = os.path.join(dir_path, "omniglot")
@@ -59,7 +61,6 @@ def test_omniglot_integration(adaptation_method, experiment_setting):
             ],
             strict=False,
         )
-        # Run train and eval.
         logger.info(f"Training...")
         if cfg.train is not None:
             train(cfg, work_dir=dir_path)

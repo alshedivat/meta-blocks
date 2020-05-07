@@ -1,5 +1,7 @@
 # Reptile adaptation at training and test time.
 meta_blocks:
+  model:
+    name: feed_forward
   train:
     adapt:
       name: reptile
@@ -7,7 +9,6 @@ meta_blocks:
       inner_optimizer:
         name: sgd
         learning_rate: 0.0005
-    # TODO: switch to multi-step SGD
     optimizer:
       name: sgd
       learning_rate: 1.0

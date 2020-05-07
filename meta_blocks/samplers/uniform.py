@@ -1,15 +1,11 @@
-"""Uniform sampling."""
+"""Uniform sampling in NumPy."""
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional, Tuple
 
-import tensorflow.compat.v1 as tf
+import numpy as np
 
-from meta_blocks.samplers import base, utils
+from meta_blocks.samplers import base
 from meta_blocks.tasks.supervised import SupervisedTask
-
-# Transition to V2 will happen in stages.
-tf.disable_v2_behavior()
-tf.enable_resource_variables()
 
 __all__ = ["UniformSampler"]
 
@@ -24,47 +20,48 @@ class UniformSampler(base.Sampler):
             stratified=stratified, name=(name or self.__class__.__name__)
         )
 
+        # Random state must be set globally.
+        self._rng = np.random
+
         # Internal.
-        self._size = None
-        self._selected_indices = None
+        self.tasks = None
 
     def _build(self, tasks: Tuple[SupervisedTask], **_unused_kwargs):
         """Builds a tuple of selected indices tensors."""
-        self._size = tf.placeholder(tf.int32, shape=(), name="size")
+        self.tasks = tasks
 
+    def select_labeled(self, size: int, **_unused_kwargs) -> Tuple[np.ndarray]:
+        """Return an actively selected labeled data points from the dataset."""
         # Build selected indices tensors.
         selected_indices = []
-        for i, task in enumerate(tasks):
-            # Compute scores.
-            indices, scores = self.compute_scores(task)
+        for i, task in enumerate(self.tasks):
+            data_size = task.dataset.size
+            num_classes = task.dataset.num_classes
+            num_query_shots = task.num_query_shots
             # Select indices of the elements to be labeled.
             if self.stratified:
-                task_indices = utils.select_indices_stratified(
-                    size=self._size,
-                    scores=scores,
-                    clusters=task._support_labels_raw,
-                    indices=indices,
-                )
+                # TODO: better handle edge cases + add tests.
+                assert size % num_classes == 0
+                assert data_size % num_classes == 0
+                data_size_per_class = data_size // num_classes
+                support_data_per_class = data_size_per_class - num_query_shots
+                sample_size_per_class = size // num_classes
+                # Select support elements uniformly stratified by class.
+                task_indices = []
+                for c in range(num_classes):
+                    id_offset = c * support_data_per_class
+                    c_ids = id_offset + self._rng.choice(
+                        support_data_per_class,
+                        size=sample_size_per_class,
+                        replace=False,
+                    )
+                    task_indices.append(c_ids)
+                task_indices = np.concatenate(task_indices)
             else:
-                task_indices = utils.select_indices(
-                    size=self._size, indices=indices, scores=scores
+                # Select support elements uniformly at random.
+                support_data_size = data_size - (num_classes * num_query_shots)
+                task_indices = self._rng.choice(
+                    support_data_size, size=size, replace=False
                 )
             selected_indices.append(task_indices)
-        self._selected_indices = tuple(selected_indices)
-
-    def compute_scores(self, task: SupervisedTask, **_unused_kwargs):
-        indices = tf.range(task.unlabeled_support_size, dtype=tf.int32)
-        scores = tf.random.uniform(shape=(task.unlabeled_support_size,))
-        return indices, scores
-
-    def select_labeled(
-        self,
-        size: int,
-        feed_dict: Optional[Dict[tf.Tensor, Any]] = None,
-        **_unused_kwargs,
-    ) -> Tuple[tf.Tensor]:
-        """Return an actively selected labeled data points from the dataset."""
-        sess = tf.get_default_session()
-        feed_dict = feed_dict or {}
-        feed_dict[self._size] = size
-        return sess.run(self._selected_indices, feed_dict=feed_dict)
+        return tuple(selected_indices)

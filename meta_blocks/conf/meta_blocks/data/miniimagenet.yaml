@@ -4,6 +4,5 @@ meta_blocks:
     name: miniimagenet
     source:
       data_dir: ???
-      cache: true
-      max_size: null
+      max_size: 599
       shuffle_data: true

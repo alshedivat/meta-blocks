@@ -1,8 +1,8 @@
-# Configuration for the classic 20-way 5-shot Omniglot benchmark.
+# Configuration for the classic 20-way 5-shot mini-ImageNet benchmark.
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 2
+      batch_size: 10
       num_classes: 20
     tasks:
       - set_name: train
@@ -19,7 +19,7 @@ meta_blocks:
     save_interval: 100
   eval:
     meta_dataset:
-      batch_size: 2
+      batch_size: 1
       num_classes: 20
     tasks:
       # Train.

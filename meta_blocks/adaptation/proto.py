@@ -131,13 +131,13 @@ class Proto(base.AdaptationStrategy):
                     true_fn=lambda: self._build_prototypes(
                         inputs=inputs,
                         labels=labels,
-                        num_classes=task.num_classes,
+                        num_classes=task.num_ways,
                         embedding_dim=self.model.embedding_dim,
                         back_prop=(self.mode == common.ModeKeys.TRAIN),
                     ),
                     # If no support data, use random prototypes.
                     false_fn=lambda: tf.random.normal(
-                        shape=(task.num_classes, self.model.embedding_dim), stddev=1.0
+                        shape=(task.num_ways, self.model.embedding_dim), stddev=1.0
                     ),
                 )
             )

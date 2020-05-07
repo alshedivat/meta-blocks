@@ -1,5 +1,7 @@
 # MAML adaptation at training and test time.
 meta_blocks:
+  model:
+    name: feed_forward
   train:
     adapt:
       name: maml
@@ -9,9 +11,8 @@ meta_blocks:
         name: sgd
         learning_rate: 0.002
     optimizer:
-      name: multistep_adam
+      name: adam
       learning_rate: 0.005
-      n: 20
   eval:
     adapt:
       name: maml

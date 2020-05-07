@@ -2,6 +2,6 @@
 omit =
     meta_blocks/version.py
     # omit optimizers (will be updated)
-    meta_blocks/optimizers.py
-    # omit heavy dataset loaders
-    meta_blocks/datasets/miniimagenet.py
+    meta_blocks/optimizers/__init__.py
+    # omit currently unused modules
+    meta_blocks/samplers/utils.py

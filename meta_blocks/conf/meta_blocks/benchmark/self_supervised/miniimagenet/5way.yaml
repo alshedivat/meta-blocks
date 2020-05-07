@@ -2,7 +2,7 @@
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 2
+      batch_size: 20
       num_classes: 5
     tasks:
       - set_name: train
@@ -16,7 +16,7 @@ meta_blocks:
     save_interval: 100
   eval:
     meta_dataset:
-      batch_size: 2
+      batch_size: 1
       num_classes: 5
     tasks:
       # Train.

@@ -12,7 +12,7 @@ import albumentations as alb
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets.base import Dataset, MetaDataset
+from meta_blocks.datasets.base import ClfDataset, ClfMetaDataset
 from meta_blocks.tasks import base
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class UmtraTask(base.Task):
 
     Parameters
     ----------
-    dataset : Dataset
+    dataset : ClfDataset
 
     num_augmented_shots: int (default: 1)
 
@@ -54,7 +54,7 @@ class UmtraTask(base.Task):
 
     def __init__(
         self,
-        dataset: Dataset,
+        dataset: ClfDataset,
         num_augmented_shots: int = 1,
         inverse: bool = True,
         name: Optional[str] = None,
@@ -81,21 +81,28 @@ class UmtraTask(base.Task):
     # --- Properties. ---
 
     @property
-    def support_size(self) -> tf.Tensor:
-        return tf.convert_to_tensor(self.num_support_shots * self.num_classes)
+    def num_ways(self) -> int:
+        """Returns the number of classification ways."""
+        return self.dataset.num_classes
+
+    @property
+    def query_size(self) -> int:
+        """Returns the size of the query set."""
+        return self.num_query_shots * self.num_ways
+
+    @property
+    def support_size(self) -> int:
+        """Returns the size of the support set."""
+        return self.num_support_shots * self.num_ways
 
     @property
     def support_tensors(self) -> Tuple[tf.Tensor, tf.Tensor]:
-        """Returns a tuple of support (inputs, labels) tensors.
-        The inputs are mapped through dataset's preprocessor.
-        """
+        """Returns a tuple of support (inputs, labels) tensors."""
         return self._support_tensors
 
     @property
     def query_tensors(self) -> Tuple[tf.Tensor, tf.Tensor]:
-        """Returns a tuple of query (inputs, labels) tensors.
-        The inputs are mapped through dataset's preprocessor.
-        """
+        """Returns a tuple of query (inputs, labels) tensors."""
         return self._query_tensors
 
     # --- Methods. ---
@@ -142,8 +149,6 @@ class UmtraTask(base.Task):
         parallel_iterations: int = 16,
     ) -> Tuple[tf.Tensor, tf.Tensor]:
         """Applies augmentation to the inputs and labels."""
-        # TODO: determine if manual device placement is better.
-        # with tf.device("CPU:0"):
         inputs = tf.map_fn(
             fn=self.get_augmentation(),
             elems=inputs,
@@ -152,30 +157,8 @@ class UmtraTask(base.Task):
         )
         return inputs, labels
 
-    def _preprocess(
-        self,
-        inputs: tf.Tensor,
-        labels: tf.Tensor,
-        back_prop: bool = False,
-        parallel_iterations: int = 16,
-    ) -> Tuple[tf.Tensor, tf.Tensor]:
-        """Applies dataset-provided preprocessor to inputs and labels."""
-        if self._preprocessor is not None:
-            # TODO: determine if manual device placement is better.
-            # with tf.device("CPU:0"):
-            inputs = tf.map_fn(
-                dtype=tf.float32,  # TODO: look up in self.dataset.
-                fn=self._preprocessor,
-                elems=(inputs, labels),
-                back_prop=back_prop,
-                parallel_iterations=parallel_iterations,
-            )
-        return inputs, labels
-
     def _build(self):
         """Builds the task internals in the correct name scope."""
-        # Input preprocessor.
-        self._preprocessor = self.dataset.get_preprocessor()
         # Build input and label tensors by selecting 1 random sample per class.
         indices = [
             tf.random.shuffle(tf.range(tf.shape(x)[0]))[:1]
@@ -185,14 +168,12 @@ class UmtraTask(base.Task):
             tf.gather(x, i, axis=0) for x, i in zip(self.dataset.data_tensors, indices)
         ]
         labels = [tf.fill(tf.shape(x)[:1], k) for k, x in enumerate(inputs)]
-        inputs = tf.concat(inputs, axis=0)
-        labels = tf.concat(labels, axis=0)
-        tensors = self._preprocess(inputs, labels)
+        tensors = tf.concat(inputs, axis=0), tf.concat(labels, axis=0)
         # Build augmented tensors.
         tiles = [[self.num_augmented_shots] + [1] * (len(t.shape) - 1) for t in tensors]
         aug_tensors = self._augment(
-            inputs=tf.tile(tensors[0][: self.num_classes], tiles[0]),
-            labels=tf.tile(tensors[1][: self.num_classes], tiles[1]),
+            inputs=tf.tile(tensors[0][: self.num_ways], tiles[0]),
+            labels=tf.tile(tensors[1][: self.num_ways], tiles[1]),
         )
         # Determine whether support or query are augmented.
         if self.inverse:
@@ -202,11 +183,11 @@ class UmtraTask(base.Task):
 
 
 class UmtraTaskDistribution(base.TaskDistribution):
-    """A distribution that provides access to unsupervised tasks.
+    """A distribution that provides access to self-supervised UMTRA tasks.
 
     Parameters
     ----------
-    meta_dataset : MetaDataset
+    meta_dataset : ClfMetaDataset
 
     num_augmented_shots : int, optional (default: 1)
 
@@ -223,13 +204,12 @@ class UmtraTaskDistribution(base.TaskDistribution):
 
     def __init__(
         self,
-        meta_dataset: MetaDataset,
+        meta_dataset: ClfMetaDataset,
         num_augmented_shots: int = 1,
         inverse: bool = True,
         stratified: bool = False,
         num_task_batches_to_cache: int = 100,
         name: Optional[str] = None,
-        seed: Optional[int] = 42,
         **_unused_kwargs,
     ):
         super(UmtraTaskDistribution, self).__init__(
@@ -248,8 +228,8 @@ class UmtraTaskDistribution(base.TaskDistribution):
             self.num_support_shots = 1
             self.num_query_shots = num_augmented_shots
 
-        # Setup random number generator.
-        self._rng = np.random.RandomState(seed=seed)
+        # Random states must be seeded globally.
+        self._rng = np.random
 
         # Internals.
         self.num_requested_labels = None
@@ -269,7 +249,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
 
     def _build(self):
         # Build a batch of tasks.
-        self._task_batch = tuple(
+        self.task_batch = tuple(
             UmtraTask(
                 dataset=dataset,
                 inverse=self.inverse,
@@ -286,11 +266,11 @@ class UmtraTaskDistribution(base.TaskDistribution):
     def _refresh_requests(self):
         """Expands the number of labeled points by sampling more tasks."""
         for i in range(self.num_task_batches_to_cache):
-            requests_batch, feed_list_batch = self.meta_dataset.get_feed_batch(
+            requests_batch, _ = self.meta_dataset.request_datasets(
                 # If not stratified, samples classes with replacement,
                 # which results in tasks that may have different classes
                 # with the same underlying category.
-                replace=(not self.stratified)
+                unique_classes=self.stratified
             )
             self._requests.append(requests_batch)
 
@@ -301,5 +281,5 @@ class UmtraTaskDistribution(base.TaskDistribution):
         # Sample a meta-batch of tasks.
         requests_batch = self._requests.pop()
         # Build feed list for the meta-batch of tasks.
-        _, feed_list_batch = self.meta_dataset.get_feed_batch(requests=requests_batch)
-        return sum(feed_list_batch, [])
+        _, feed_list = self.meta_dataset.request_datasets(requests_batch=requests_batch)
+        return feed_list
