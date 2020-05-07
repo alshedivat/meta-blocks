@@ -16,10 +16,10 @@ def build_prototypes(embeddings: tf.Tensor, labels: tf.Tensor, num_classes: int)
 
     Parameters
     ----------
-    embeddings : Tensor <float32> [num_inputs, emb_size]
+    embeddings : Tensor <float32> [None, emb_size]
         A collection of embeddings for each input point.
 
-    labels : Tensor <int32> [num_inputs]
+    labels : Tensor <int32> [None]
         Labels for each input point.
 
     num_classes : int
@@ -34,9 +34,9 @@ def build_prototypes(embeddings: tf.Tensor, labels: tf.Tensor, num_classes: int)
     class_counts : Tensor <float32> [num_classes].
         A vector representing the number of points of each class.
     """
-    # <float32> [num_inputs, num_classes].
+    # <float32> [None, num_classes].
     labels_onehot = tf.one_hot(labels, num_classes)
-    # <float32> [num_classes, emb_dim].
+    # <float32> [None, emb_dim].
     prototypes = tf.einsum("ij,ik->kj", embeddings, labels_onehot)
     # <float32> [num_classes].
     class_counts = tf.reduce_sum(labels_onehot, axis=0)

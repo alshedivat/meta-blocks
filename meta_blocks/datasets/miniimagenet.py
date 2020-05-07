@@ -258,8 +258,11 @@ class MiniImageNetDataset(base.ClfDataset):
             .prefetch(tf.data.experimental.AUTOTUNE)
         )
         data = self.dataset.make_one_shot_iterator().get_next()
+        # Tuple of <float32> [1, None, **MiniImageNetCategory.IMG_SHAPE].
+        data_tensors = tf.split(data, self.num_classes)
         # Tuple of <float32> [None, **MiniImageNetCategory.IMG_SHAPE].
-        self.data_tensors = tuple(map(tf.squeeze, tf.split(data, self.num_classes)))
+        # Note: do not use tf.squeeze; the results will be of unknown shape.
+        self.data_tensors = tuple(map(lambda x: x[0], data_tensors))
         # Determine dataset size.
         self._size = self.num_classes * self.data_sources[0].size
 
