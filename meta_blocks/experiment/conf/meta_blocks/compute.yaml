@@ -1,0 +1,6 @@
+# Configure computational resources.
+meta_blocks:
+  compute:
+    gpus:
+      eval: "0"
+      train: "0"
