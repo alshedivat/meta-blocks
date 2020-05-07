@@ -2,5 +2,9 @@
 meta_blocks:
   compute:
     gpus:
-      eval: "0"
-      train: "0"
+      eval:
+        ids: "0"
+        allow_growth: true
+      train:
+        ids: "0"
+        allow_growth: true

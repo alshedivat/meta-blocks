@@ -25,8 +25,8 @@ def main(cfg: DictConfig):
             target=evaluate,
             kwargs={
                 "cfg": cfg,
-                "gpu_ids": cfg.compute.gpus.train,
-                "gpu_allow_growth": True,
+                "gpu_ids": str(cfg.compute.gpus.train.ids),
+                "gpu_allow_growth": cfg.compute.gpus.train.allow_growth,
             },
             name="EVAL",
         )
@@ -40,8 +40,8 @@ def main(cfg: DictConfig):
             target=train,
             kwargs={
                 "cfg": cfg,
-                "gpu_ids": cfg.compute.gpus.eval,
-                "gpu_allow_growth": True,
+                "gpu_ids": str(cfg.compute.gpus.eval.ids),
+                "gpu_allow_growth": cfg.compute.gpus.eval.allow_growth,
             },
             name="TRAIN",
         )

@@ -68,9 +68,7 @@ def test_omniglot_integration(adaptation_method, experiment_setting):
             ],
             strict=False,
         )
-        logger.info(f"Training...")
         if cfg.train is not None:
             train(cfg, work_dir=dir_path)
-        logger.info(f"Evaluating...")
         if cfg.eval is not None:
             evaluate(cfg, work_dir=dir_path)

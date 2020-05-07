@@ -20,7 +20,7 @@ tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
 
-def train_step(exp: Experiment, sess: Optional[tf.Session] = None, **kwargs):
+def train_step(exp: Experiment, *, sess: Optional[tf.Session] = None, **kwargs):
     """Performs one meta-training step.
 
     Parameters
@@ -41,9 +41,7 @@ def train_step(exp: Experiment, sess: Optional[tf.Session] = None, **kwargs):
         sess = tf.get_default_session()
 
     # Sample from the task distribution.
-    feed_lists = [
-        td.sample_task_feed() for ml, td in zip(exp.meta_learners, exp.task_dists)
-    ]
+    feed_lists = [td.sample_task_feed() for td in exp.task_dists]
 
     # Train and compute losses.
     losses = []

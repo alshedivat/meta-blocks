@@ -83,5 +83,6 @@ meta_blocks:
           name: uniform
           stratified: true
     repetitions: 50
+    timeout: 600
   run:
     seed: 1

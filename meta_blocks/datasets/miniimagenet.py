@@ -269,7 +269,7 @@ class MiniImageNetDataset(base.ClfDataset):
                 choice_dataset=self._build_category_choice_dataset(),
             )
             .batch(self.num_classes)
-            .prefetch(tf.data.experimental.AUTOTUNE)
+            .prefetch(1)
         )
         data = self.dataset.make_one_shot_iterator().get_next()
         # Tuple of <float32> [1, None, **MiniImageNetCategory.IMG_SHAPE].
