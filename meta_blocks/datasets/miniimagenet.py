@@ -87,7 +87,7 @@ class MiniImageNetCategory(base.DataSource):
         image = tf.io.decode_image(serialized_image, channels=cls.IMG_SHAPE[-1])
         image = tf.image.convert_image_dtype(image, dtype=cls.IMG_DTYPE)
         image.set_shape(cls.IMG_SHAPE)
-        image = image / 0x80 - 1  # Rescale image to [-1, 1].
+        image = image / 0xFF  # Rescale image to [0, 1].
         return image
 
     # --- Methods. ---
