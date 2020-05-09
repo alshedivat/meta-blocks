@@ -43,13 +43,11 @@ class DataSource(abc.ABC):
     @abc.abstractmethod
     def data_shapes(self):
         """Data shapes before preprocessing."""
-        raise NotImplementedError("Abstract Property")
 
     @property
     @abc.abstractmethod
     def data_types(self):
         """Data types before preprocessing."""
-        raise NotImplementedError("Abstract Property")
 
     # --- Methods. ---
 
@@ -66,7 +64,6 @@ class DataSource(abc.ABC):
     @abc.abstractmethod
     def _build(self, **kwargs):
         """Builds the data source. Must be implemented by a subclass."""
-        raise NotImplementedError("Abstract Method")
 
 
 class Dataset(abc.ABC):
@@ -94,7 +91,6 @@ class Dataset(abc.ABC):
     @abc.abstractmethod
     def size(self) -> tf.Tensor:
         """Returns the dynamic dataset size. Must be implemented by a subclass."""
-        raise NotImplementedError("Abstract Property")
 
     # --- Methods. ---
 
@@ -111,7 +107,6 @@ class Dataset(abc.ABC):
     @abc.abstractmethod
     def _build(self):
         """Builds dataset internals. Must be implemented by a subclass."""
-        raise NotImplementedError("Abstract Method")
 
 
 class ClfDataset(Dataset):
@@ -137,13 +132,14 @@ class ClfDataset(Dataset):
 
     @property
     def size(self) -> int:
+        """Returns the size of the dataset."""
         return self._size
 
     # --- Abstract methods. ---
 
     @abc.abstractmethod
     def get_feed_list(self, **kwargs) -> List[Tuple[tf.Tensor, Any]]:
-        raise NotImplementedError("Abstract Method")
+        """Returns the placeholder feed for the dataset."""
 
 
 class MetaDataset(abc.ABC):
@@ -195,7 +191,6 @@ class MetaDataset(abc.ABC):
     @abc.abstractmethod
     def _build(self):
         """Builds meta-dataset internals. Must be implemented in a subclass."""
-        raise NotImplementedError("AbstractMethod")
 
     @abc.abstractmethod
     def request_datasets(
@@ -203,7 +198,7 @@ class MetaDataset(abc.ABC):
         requests_batch: Optional[Tuple[Any, ...]] = None,
         unique_classes: bool = True,
     ) -> Tuple[Tuple[Any, ...], List[Tuple[tf.Tensor, Any]]]:
-        raise NotImplementedError("Abstract Method")
+        """Returns a batch of dataset requests and the corresponding feed."""
 
 
 class ClfMetaDataset(MetaDataset):

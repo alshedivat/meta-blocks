@@ -78,6 +78,8 @@ class Maml(base.AdaptationStrategy):
         self.inner_optimizer = optimizers.get(**(inner_optimizer or {}))
         self.adapted_parameters = None
 
+    # --- Methods. ---
+
     def _build_adapted_model(self, *, parameters=None, task_id=None):
         """Builds a model with the specified adapted parameters."""
         if parameters is None:

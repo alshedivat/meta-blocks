@@ -56,7 +56,6 @@ class Task(abc.ABC):
     @abc.abstractmethod
     def support_size(self) -> tf.Tensor:
         """Returns size of the support set. Must be implemented by a subclass."""
-        raise NotImplementedError("Abstract Method")
 
     @property
     @abc.abstractmethod
@@ -64,7 +63,6 @@ class Task(abc.ABC):
         """Returns a tuple of support tensors (each corresponds to a class).
         Must be implemented by a subclass.
         """
-        raise NotImplementedError("Abstract Method")
 
     @property
     @abc.abstractmethod
@@ -72,7 +70,6 @@ class Task(abc.ABC):
         """Returns a tuple of query tensors (each corresponds to a class).
         Must be implemented by a subclass.
         """
-        raise NotImplementedError("Abstract Method")
 
     # --- Methods. ---
 
@@ -95,7 +92,6 @@ class Task(abc.ABC):
     @abc.abstractmethod
     def _build(self) -> None:
         """Builds internals of the task. Must be implemented by a subclass."""
-        raise NotImplementedError("Abstract Method")
 
 
 class TaskDistribution(abc.ABC):
@@ -171,12 +167,14 @@ class TaskDistribution(abc.ABC):
 
     @abc.abstractmethod
     def _build(self) -> None:
-        raise NotImplementedError("Abstract Method")
+        """Builds task distribution internals. Must be implemented in a subclass."""
 
     @abc.abstractmethod
     def initialize(self, **kwargs) -> None:
-        raise NotImplementedError("Abstract Method")
+        """Initializes task distribution. Must be implemented in a subclass."""
 
     @abc.abstractmethod
     def sample_task_feed(self, **kwargs) -> List[Tuple[tf.Tensor, Any]]:
-        raise NotImplementedError("Abstract Method")
+        """Returns placeholder feed for the task distribution.
+        Must be implemented in a subclass.
+        """

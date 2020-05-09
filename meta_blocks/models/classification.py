@@ -48,13 +48,14 @@ class ClassificationModel(abc.ABC):
         self.loss = None
         self.preds = None
 
+    # --- Abstract properties. ---
+
     @property
     @abc.abstractmethod
     def parameters(self):
         """Returns a list of variables that parameterize the model.
         Must be implemented in a subclass.
         """
-        raise NotImplementedError("Abstract Method")
 
     @property
     @abc.abstractmethod
@@ -62,7 +63,8 @@ class ClassificationModel(abc.ABC):
         """Returns a list with the subset of variables that are trainable.
         Must be implemented in a subclass.
         """
-        raise NotImplementedError("Abstract Method")
+
+    # --- Methods. ---
 
     def build(self):
         """Builds the model graph in the correct name scope."""
@@ -70,25 +72,11 @@ class ClassificationModel(abc.ABC):
             self._build()
         return self
 
-    @abc.abstractmethod
-    def _build(self):
-        """Builds the model graph for prediction.
-        Must be implemented in a subclass.
-        """
-        raise NotImplementedError("Abstract Method")
-
     def build_embeddings(self, inputs: tf.Tensor):
         """Builds embeddings for the provided inputs."""
         with tf.name_scope(self.name):
             embeddings = self._build_embeddings(inputs)
         return embeddings
-
-    @abc.abstractmethod
-    def _build_embeddings(self, inputs: tf.Tensor):
-        """Builds a part of the model graph for computing input embeddings.
-        Must be implemented in a subclass.
-        """
-        raise NotImplementedError("Abstract Method")
 
     def build_logits(self, inputs: tf.Tensor):
         """Builds the logits for the provided inputs."""
@@ -96,13 +84,6 @@ class ClassificationModel(abc.ABC):
             # <float32> [None, num_classes].
             logits = self._build_logits(inputs)
         return logits
-
-    @abc.abstractmethod
-    def _build_logits(self, inputs: tf.Tensor):
-        """Builds a part of the model graph for computing output logits.
-        Must be implemented in a subclass.
-        """
-        raise NotImplementedError("Abstract Method")
 
     def build_loss(self, inputs: tf.Tensor, labels: tf.Tensor):
         """Builds the model loss on top provided data placeholders."""
@@ -127,6 +108,26 @@ class ClassificationModel(abc.ABC):
             # <float32> [None].
             preds = tf.argmax(logits, axis=-1, output_type=tf.int32)
         return preds
+
+    # --- Abstract methods. ---
+
+    @abc.abstractmethod
+    def _build(self):
+        """Builds the model graph for prediction.
+        Must be implemented in a subclass.
+        """
+
+    @abc.abstractmethod
+    def _build_embeddings(self, inputs: tf.Tensor):
+        """Builds a part of the model graph for computing input embeddings.
+        Must be implemented in a subclass.
+        """
+
+    @abc.abstractmethod
+    def _build_logits(self, inputs: tf.Tensor):
+        """Builds a part of the model graph for computing output logits.
+        Must be implemented in a subclass.
+        """
 
 
 class FeedForwardModel(ClassificationModel):
@@ -191,6 +192,20 @@ class FeedForwardModel(ClassificationModel):
         self.body_network = None
         self.head_network = None
 
+    # --- Properties. ---
+
+    @property
+    def parameters(self):
+        """Returns a list of variables that parameterize the model."""
+        return self.network.variables
+
+    @property
+    def trainable_parameters(self):
+        """Returns a list with the subset of variables that are trainable."""
+        return self.network.trainable_variables
+
+    # --- Methods. ---
+
     def _build(self):
         """Builds all parametric components of the model graph."""
         if self.embedding_dim is not None:
@@ -244,16 +259,6 @@ class FeedForwardModel(ClassificationModel):
         logits = self.network(inputs, training=True)
         return logits
 
-    @property
-    def parameters(self):
-        """Returns a list of variables that parameterize the model."""
-        return self.network.variables
-
-    @property
-    def trainable_parameters(self):
-        """Returns a list with the subset of variables that are trainable."""
-        return self.network.trainable_variables
-
 
 class ProtoModel(ClassificationModel):
     """Prototype-based classification model.
@@ -296,6 +301,20 @@ class ProtoModel(ClassificationModel):
         self.network = None
         self.prototypes = None
 
+    # --- Properties. ---
+
+    @property
+    def parameters(self):
+        """Returns a list of variables that parameterize the model."""
+        return self.network.variables
+
+    @property
+    def trainable_parameters(self):
+        """Returns a list with the subset of variables that are trainable."""
+        return self.network.trainable_variables
+
+    # --- Methods. ---
+
     def _build(self):
         """Builds all parametric components of the model graph."""
         self.network = self.network_builder(
@@ -334,13 +353,3 @@ class ProtoModel(ClassificationModel):
         )
         # <float32> [None, num_classes].
         return tf.nn.log_softmax(-square_dists_emb_proto, axis=-1)
-
-    @property
-    def parameters(self):
-        """Returns a list of variables that parameterize the model."""
-        return self.network.variables
-
-    @property
-    def trainable_parameters(self):
-        """Returns a list with the subset of variables that are trainable."""
-        return self.network.trainable_variables

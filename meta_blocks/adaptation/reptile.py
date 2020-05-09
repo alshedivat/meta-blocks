@@ -75,6 +75,8 @@ class Reptile(maml.Maml):
             name=(name or self.__class__.__name__),
         )
 
+    # --- Methods. ---
+
     def _build_meta_learn(self):
         """Builds meta-update op."""
         # Reptile does not have a proper meta-loss.

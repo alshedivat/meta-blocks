@@ -32,9 +32,10 @@ class Sampler(abc.ABC):
 
         self._built = False
 
+    # --- Methods. ---
+
     def build(self, *args, **kwargs):
-        """Builds sampler internals.
-        """
+        """Builds sampler internals."""
         if not self._built:
             with tf.name_scope(self.name):
                 self._build(*args, **kwargs)
@@ -45,10 +46,10 @@ class Sampler(abc.ABC):
 
     @abc.abstractmethod
     def _build(self, *args, **kwargs):
-        """Builds sampler internals."""
-        raise NotImplementedError("Abstract Method")
+        """Builds sampler internals. Must be implemented in a subclass."""
 
     @abc.abstractmethod
     def select_labeled(self, size: int, **kwargs) -> Tuple[np.ndarray]:
-        """Return an actively selected labeled data points from the dataset."""
-        raise NotImplementedError("Abstract Method")
+        """Return indices of the selected labeled support points.
+        Must be implemented in a subclass.
+        """

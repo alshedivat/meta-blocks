@@ -58,6 +58,8 @@ class Proto(base.AdaptationStrategy):
         # Inner loop.
         self.prototypes = None
 
+    # --- Methods. ---
+
     def _build_adapted_model(self, *, prototypes=None, task_id=None):
         """Returns a model with the specified prototypes."""
         if prototypes is None:

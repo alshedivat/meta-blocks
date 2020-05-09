@@ -50,15 +50,7 @@ class AdaptationStrategy(abc.ABC):
         self.name = name or self.__class__.__name__
         self.built = False
 
-    @abc.abstractmethod
-    def _build_adapted_model(self, **kwargs):
-        """Builds adapted model graph. Must be implemented in a subclass."""
-        raise NotImplementedError("Abstract Method")
-
-    @abc.abstractmethod
-    def _build_adaptation(self):
-        """Builds the adaptation graph. Must be implemented in a subclass."""
-        raise NotImplementedError("Abstract Method")
+    # --- Methods. ---
 
     def _build_meta_losses(self):
         """Builds meta-losses for each task."""
@@ -107,3 +99,13 @@ class AdaptationStrategy(abc.ABC):
                 ) = self._build_meta_learn()
             logger.debug("Done.")
         return self
+
+    # --- Abstract methods. ---
+
+    @abc.abstractmethod
+    def _build_adapted_model(self, **kwargs):
+        """Builds adapted model graph. Must be implemented in a subclass."""
+
+    @abc.abstractmethod
+    def _build_adaptation(self):
+        """Builds the adaptation graph. Must be implemented in a subclass."""
