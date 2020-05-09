@@ -134,9 +134,9 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
 
         # Run continuous eval.
         for latest_checkpoint in tf.train.checkpoints_iterator(work_dir):
-            # Restore graph from the checkpoint.
+            # Restore (partial) graph from the checkpoint.
             status = exp.checkpoint.restore(latest_checkpoint)
-            status.assert_consumed().run_restore_ops()
+            status.assert_nontrivial_match().run_restore_ops()
 
             # Run evaluation.
             metric_values = eval_step(

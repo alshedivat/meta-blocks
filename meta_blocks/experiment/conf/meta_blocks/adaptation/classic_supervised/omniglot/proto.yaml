@@ -1,14 +1,17 @@
 # Proto adaptation at training and test time.
 meta_blocks:
-  model:
-    name: proto
-    embedding_dim: 64
   train:
+    model:
+      name: proto
+      embedding_dim: 64
     adapt:
       name: proto
     optimizer:
       name: adam
       learning_rate: 0.002
   eval:
+    model:
+      name: proto
+      embedding_dim: 64
     adapt:
       name: proto

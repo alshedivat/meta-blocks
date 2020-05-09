@@ -6,7 +6,8 @@ meta_blocks:
       num_classes: 5
     tasks:
       - set_name: train
-        log_dir: train/umtra
+        regime: umtra
+        log_dir: train
         config:
           name: self_supervised
           num_augmented_shots: 1
@@ -18,10 +19,15 @@ meta_blocks:
     meta_dataset:
       batch_size: 1
       num_classes: 5
+    metrics:
+      - name: accuracy
+        ci: 95
+    repetitions: 50
     tasks:
       # Train.
       - set_name: train
-        log_dir: eval/train/1shot
+        regime: 1shot
+        log_dir: eval/train
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -31,7 +37,8 @@ meta_blocks:
           name: uniform
           stratified: true
       - set_name: train
-        log_dir: eval/train/5shot
+        regime: 5shot
+        log_dir: eval/train
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -42,7 +49,8 @@ meta_blocks:
           stratified: true
       # Valid.
       - set_name: valid
-        log_dir: eval/valid/1shot
+        regime: 1shot
+        log_dir: eval/valid
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -52,7 +60,8 @@ meta_blocks:
           name: uniform
           stratified: true
       - set_name: valid
-        log_dir: eval/valid/5shot
+        regime: 5shot
+        log_dir: eval/valid
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -63,7 +72,8 @@ meta_blocks:
           stratified: true
       # Test.
       - set_name: test
-        log_dir: eval/test/1shot
+        regime: 1shot
+        log_dir: eval/test
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -73,7 +83,8 @@ meta_blocks:
           name: uniform
           stratified: true
       - set_name: test
-        log_dir: eval/test/5shot
+        regime: 5shot
+        log_dir: eval/test
         config:
           name: limited_supervised
           num_query_shots: 1
@@ -82,6 +93,5 @@ meta_blocks:
         sampler:
           name: uniform
           stratified: true
-    repetitions: 50
   run:
     seed: 1

@@ -1,9 +1,9 @@
 # Reptile adaptation at training and test time.
 meta_blocks:
-  model:
-    name: feed_forward
-    embedding_dim: 64
   train:
+    model:
+      name: feed_forward
+      embedding_dim: 64
     adapt:
       name: reptile
       num_inner_steps: 10
@@ -14,6 +14,9 @@ meta_blocks:
       name: sgd
       learning_rate: 1.0
   eval:
+    model:
+      name: feed_forward
+      embedding_dim: 64
     adapt:
       name: reptile
       num_inner_steps: 50
