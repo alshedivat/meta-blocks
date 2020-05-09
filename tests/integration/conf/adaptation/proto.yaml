@@ -1,14 +1,15 @@
 train:
+  model:
+    name: proto
+    embedding_dim: 32
   adapt:
     name: proto
   optimizer:
     name: adam
     learning_rate: 0.005
-
 eval:
+  model:
+    name: proto
+    embedding_dim: 32
   adapt:
     name: proto
-
-model:
-  name: proto
-  embedding_dim: 32

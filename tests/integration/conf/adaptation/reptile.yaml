@@ -1,4 +1,7 @@
 train:
+  model:
+    name: feed_forward
+    embedding_dim: 64
   adapt:
     name: reptile
     num_inner_steps: 4
@@ -8,15 +11,13 @@ train:
   optimizer:
     name: sgd
     learning_rate: 1.0
-
 eval:
+  model:
+    name: feed_forward
+    embedding_dim: 64
   adapt:
     name: reptile
     num_inner_steps: 8
     inner_optimizer:
       name: sgd
       learning_rate: 1.0
-
-model:
-  name: feed_forward
-  embedding_dim: 64

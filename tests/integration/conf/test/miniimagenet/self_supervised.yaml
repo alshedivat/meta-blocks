@@ -8,22 +8,27 @@ train:
     learning_rate: 0.005
   tasks:
     - set_name: train
-      log_dir: train/oracle
+      regime: umtra
+      log_dir: train
       config:
         name: self_supervised
         num_augmented_shots: 1
   max_steps: 5
   log_interval: 1
   save_interval: 5
-
 eval:
   meta_dataset:
     batch_size: 4
     num_classes: 2
+  metrics:
+    - name: accuracy
+      ci: 95
+  repetitions: 1
   tasks:
     # Test.
     - set_name: test
-      log_dir: eval/test/oracle_1shot
+      regime: 1shot
+      log_dir: eval/test
       config:
         name: limited_supervised
         num_query_shots: 1
@@ -33,7 +38,8 @@ eval:
         name: uniform
         stratified: true
     - set_name: test
-      log_dir: eval/test/oracle_5shot
+      regime: 5shot
+      log_dir: eval/test
       config:
         name: limited_supervised
         num_query_shots: 1
@@ -41,5 +47,4 @@ eval:
         max_labeled_points: 200
       sampler:
         name: uniform
-        stratified: true
-  repetitions: 1
+        stratified: false
