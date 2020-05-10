@@ -6,13 +6,13 @@ generated using various heuristics. Hence, self-supervised is a more accurate
 term to use for such tasks.
 """
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Optional, Tuple
 
 import albumentations as alb
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets.base import ClfDataset, ClfMetaDataset
+from meta_blocks.datasets.base import ClfDataset, ClfMetaDataset, FeedList
 from meta_blocks.tasks import base
 
 logger = logging.getLogger(__name__)
@@ -267,11 +267,6 @@ class UmtraTaskDistribution(base.TaskDistribution):
         """Expands the number of labeled points by sampling more tasks."""
         logger.debug(f"Sampling new task batches from {self.name}... ")
         for i in range(self.num_task_batches_to_cache):
-            if i % int(self.num_task_batches_to_cache / 10) == 0:
-                logger.debug(
-                    f"...sampling more batches: "
-                    f"{i + 1}/{self.num_task_batches_to_cache}"
-                )
             requests_batch, _ = self.meta_dataset.request_datasets(
                 # If not stratified, samples classes with replacement,
                 # which results in tasks that may have different classes
@@ -280,12 +275,12 @@ class UmtraTaskDistribution(base.TaskDistribution):
             )
             self._requests.append(requests_batch)
 
-    def sample_task_feed(self, **_unused_kwargs) -> List[Tuple[tf.Tensor, Any]]:
+    def sample_task_feed(self, **_unused_kwargs) -> FeedList:
         """Samples a meta-batch of tasks and returns a feed-dict."""
         if not self._requests:
             self._refresh_requests()
         # Sample a meta-batch of tasks.
         requests_batch = self._requests.pop()
         # Build feed list for the meta-batch of tasks.
-        _, feed_list = self.meta_dataset.request_datasets(requests_batch=requests_batch)
+        _, feed_list = self.meta_dataset.request_datasets(requests_batch)
         return feed_list

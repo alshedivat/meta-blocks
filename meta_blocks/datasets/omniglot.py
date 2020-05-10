@@ -4,13 +4,13 @@ import glob
 import logging
 import os
 import random
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
 from PIL import Image, PngImagePlugin
 
-from meta_blocks.datasets import base
+from meta_blocks.datasets import base, utils
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,15 @@ __all__ = [
     "OmniglotDataset",
     "OmniglotMetaDataset",
 ]
+
+# Types.
+DatasetRequest = Tuple[
+    # Data source IDs that represent dataset classes.
+    np.ndarray,
+    # A tuple of selected image ids for each data class.
+    Tuple[np.ndarray],
+]
+FeedList = List[Tuple[tf.Tensor, np.ndarray]]
 
 
 class OmniglotCharacter(base.DataSource):
@@ -49,20 +58,11 @@ class OmniglotCharacter(base.DataSource):
     IMG_SHAPE = (28, 28, 1)
     IMG_DTYPE = tf.float32
 
-    def __init__(
-        self,
-        data_dir: str,
-        rotation: int = 0,
-        shuffle: bool = True,
-        max_size: Optional[int] = None,
-        name: Optional[str] = None,
-    ):
+    def __init__(self, data_dir: str, rotation: int = 0, name: Optional[str] = None):
         super(OmniglotCharacter, self).__init__(
             data_dir, name=(name or self.__class__.__name__)
         )
         self.rotation = rotation
-        self.shuffle = shuffle
-        self.max_size = max_size
 
         # Internals.
         self.data = None
@@ -85,8 +85,6 @@ class OmniglotCharacter(base.DataSource):
         file_paths = glob.glob(os.path.join(self.data_dir, "*.png"))
         if self.shuffle:
             random.shuffle(file_paths)
-        if self.max_size is not None:
-            file_paths = file_paths[: self.max_size]
         self.size = len(file_paths)
         # Load data.
         data = []
@@ -111,10 +109,8 @@ class OmniglotDataSource(base.DataSource):
         num_train_categories: int = 1000,
         num_valid_categories: int = 200,
         num_test_categories: int = 463,
-        max_category_size: Optional[int] = None,
         rotations: Optional[Tuple[int]] = None,
-        shuffle_categories: bool = True,
-        shuffle_data: bool = True,
+        shuffle: bool = True,
         name: Optional[str] = None,
     ):
         super(OmniglotDataSource, self).__init__(
@@ -123,10 +119,8 @@ class OmniglotDataSource(base.DataSource):
         self.num_train = num_train_categories
         self.num_valid = num_valid_categories
         self.num_test = num_test_categories
-        self.max_size = max_category_size
         self.rotations = rotations
-        self.shuffle_categories = shuffle_categories
-        self.shuffle_data = shuffle_data
+        self.shuffle = shuffle
 
         # Internals.
         self.data = None
@@ -161,14 +155,9 @@ class OmniglotDataSource(base.DataSource):
                 char_dir = os.path.join(self.data_dir, alphabet_name, name)
                 char_name = f"{alphabet_name}_{name}".replace("(", "").replace(")", "")
                 characters.append(
-                    OmniglotCharacter(
-                        data_dir=char_dir,
-                        shuffle=self.shuffle_data,
-                        max_size=self.max_size,
-                        name=char_name,
-                    ).build()
+                    OmniglotCharacter(data_dir=char_dir, name=char_name).build()
                 )
-        if self.shuffle_categories:
+        if self.shuffle:
             random.shuffle(characters)
         self.data = {
             "train": tuple(characters[: self.num_train]),
@@ -184,8 +173,6 @@ class OmniglotDataSource(base.DataSource):
                         OmniglotCharacter(
                             data_dir=char.data_dir,
                             rotation=rot,
-                            shuffle=self.shuffle_data,
-                            max_size=self.max_size,
                             name=f"{char.name}_{rot}",
                         ).build()
                     )
@@ -199,6 +186,7 @@ class OmniglotDataset(base.ClfDataset):
         self,
         num_classes: int,
         data_sources: List[OmniglotCharacter],
+        data_source_size: Optional[int] = None,
         name: Optional[str] = None,
         **_unused_kwargs,
     ):
@@ -206,6 +194,7 @@ class OmniglotDataset(base.ClfDataset):
             num_classes=num_classes, name=(name or self.__class__.__name__)
         )
         self.data_sources = data_sources
+        self.data_source_size = data_source_size
         self.data_shapes = self.data_sources[0].data_shapes
         self.data_types = self.data_sources[0].data_types
 
@@ -222,11 +211,10 @@ class OmniglotDataset(base.ClfDataset):
             data_tensors.append(data_ph)
         self.data_tensors = tuple(data_tensors)
         # Determine dataset size.
-        self._size = self.num_classes * self.data_sources[0].size
+        data_source_size = self.data_source_size or self.data_sources[0].size
+        self._size = self.num_classes * data_source_size
 
-    def get_feed_list(
-        self, data_arrays: Tuple[np.ndarray, ...]
-    ) -> List[Tuple[tf.Tensor, np.ndarray]]:
+    def get_feed_list(self, data_arrays: Tuple[np.ndarray, ...]) -> FeedList:
         """Returns a feed list of for the internal data placeholders."""
         assert len(data_arrays) == len(self.data_tensors)
         return list(zip(self.data_tensors, data_arrays))
@@ -240,6 +228,7 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
         batch_size: int,
         num_classes: int,
         data_sources: List[OmniglotCharacter],
+        data_source_size: Optional[int] = None,
         name: Optional[str] = None,
     ):
         super(OmniglotMetaDataset, self).__init__(
@@ -248,6 +237,7 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
             data_sources=data_sources,
             name=(name or self.__class__.__name__),
         )
+        self.data_source_size = data_source_size
 
         # Random state must be set globally.
         self._rng = np.random
@@ -258,6 +248,7 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
             OmniglotDataset(
                 num_classes=self.num_classes,
                 data_sources=self.data_sources,
+                data_source_size=self.data_source_size,
                 name=f"Dataset{i}",
             ).build()
             for i in range(self.batch_size)
@@ -265,19 +256,18 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
 
     def request_datasets(
         self,
-        requests_batch: Optional[Tuple[Any, ...]] = None,
+        requests_batch: Optional[Tuple[DatasetRequest, ...]] = None,
         unique_classes: bool = True,
-    ) -> Tuple[Tuple[Any, ...], List[List[Tuple[tf.Tensor, Any]]]]:
+    ) -> Tuple[Tuple[DatasetRequest, ...], FeedList]:
         """Returns a feed list for the requested meta-batch of datasets."""
         # If a batch of requests is not provided, generate from the data source.
         if requests_batch is None:
             requests_batch = tuple(
-                tuple(
-                    self._rng.choice(
-                        len(self.data_sources),
-                        size=self.num_classes,
-                        replace=(not unique_classes),
-                    )
+                utils.generate_dataset_request(
+                    data_sources=self.data_sources,
+                    num_classes=self.num_classes,
+                    unique_classes=unique_classes,
+                    data_source_size=self.data_source_size,
                 )
                 for _ in range(self.batch_size)
             )
@@ -288,7 +278,11 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
             )
         # Get feed dicts for each request.
         feed_list = []
-        for n, ids in enumerate(requests_batch):
-            data_arrays = tuple(self.data_sources[i].data for i in ids)
+        for n, (data_source_ids, selected_ids) in enumerate(requests_batch):
+            data_arrays = tuple(
+                # From each data array take only selected items.
+                self.data_sources[i].data[selected_ids[i]]
+                for i in data_source_ids
+            )
             feed_list.extend(self.dataset_batch[n].get_feed_list(data_arrays))
         return requests_batch, feed_list

@@ -14,6 +14,11 @@ tf.enable_resource_variables()
 __all__ = ["DataSource", "Dataset", "MetaDataset"]
 
 
+# Types.
+FeedList = List[Tuple[tf.Tensor, Any]]
+DatasetRequest = Any
+
+
 class DataSource(abc.ABC):
     """The base abstract class for data sources.
 
@@ -135,12 +140,6 @@ class ClfDataset(Dataset):
         """Returns the size of the dataset."""
         return self._size
 
-    # --- Abstract methods. ---
-
-    @abc.abstractmethod
-    def get_feed_list(self, **kwargs) -> List[Tuple[tf.Tensor, Any]]:
-        """Returns the placeholder feed for the dataset."""
-
 
 class MetaDataset(abc.ABC):
     """The base class for meta-datasets.
@@ -159,8 +158,6 @@ class MetaDataset(abc.ABC):
     name : str, optional
         The name of the dataset.
     """
-
-    Dataset = Dataset
 
     def __init__(
         self,
@@ -194,10 +191,8 @@ class MetaDataset(abc.ABC):
 
     @abc.abstractmethod
     def request_datasets(
-        self,
-        requests_batch: Optional[Tuple[Any, ...]] = None,
-        unique_classes: bool = True,
-    ) -> Tuple[Tuple[Any, ...], List[Tuple[tf.Tensor, Any]]]:
+        self, requests_batch: Optional[Any] = None, unique_classes: bool = True
+    ) -> Tuple[Tuple[DatasetRequest], FeedList]:
         """Returns a batch of dataset requests and the corresponding feed."""
 
 
@@ -218,8 +213,6 @@ class ClfMetaDataset(MetaDataset):
     name : str, optional
         The name of the dataset.
     """
-
-    Dataset = ClfDataset
 
     def __init__(
         self,

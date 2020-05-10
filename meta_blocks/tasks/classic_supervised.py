@@ -5,7 +5,7 @@ from typing import Any, List, Optional, Tuple
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import samplers
-from meta_blocks.datasets.base import ClfMetaDataset
+from meta_blocks.datasets.base import ClfMetaDataset, FeedList
 from meta_blocks.tasks.supervised import SupervisedTaskDistribution
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         meta_dataset: ClfMetaDataset,
         num_query_shots: int = 1,
         num_support_shots: int = 1,
-        num_task_batches_to_cache: int = 1000,
+        num_task_batches_to_cache: int = 100,
         name: Optional[str] = None,
         **_unused_kwargs,
     ):
@@ -71,11 +71,6 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         """Re-samples new task requests."""
         logger.debug(f"Sampling new task batches from {self.name}... ")
         for i in range(self.num_task_batches_to_cache):
-            if i % int(self.num_task_batches_to_cache / 10) == 0:
-                logger.debug(
-                    f"...sampling more batches: "
-                    f"{i + 1}/{self.num_task_batches_to_cache}"
-                )
             # Construct a batch of requests.
             requests_batch, feed_list = self.meta_dataset.request_datasets(
                 unique_classes=True
@@ -90,16 +85,14 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
                 len(ids) for ids in support_labeled_ids_batch
             )
 
-    def sample_task_feed(self, **_unused_kwargs) -> List[Tuple[tf.Tensor, Any]]:
+    def sample_task_feed(self, **_unused_kwargs) -> FeedList:
         """Samples a meta-batch of tasks and returns a feed list."""
         if not self._requests:
             self._refresh_requests()
         # Get the next batch.
         requests_batch = self._requests.pop()
         ids_batch = self._requested_ids.pop()
-        _, feed_list = self.meta_dataset.request_datasets(
-            requests_batch, unique_classes=True
-        )
+        _, feed_list = self.meta_dataset.request_datasets(requests_batch)
         # Construct task feed.
         for task, ids in zip(self.task_batch, ids_batch):
             feed_list.extend(task.get_feed_list(ids))

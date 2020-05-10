@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import samplers
-from meta_blocks.datasets.base import ClfMetaDataset
+from meta_blocks.datasets.base import ClfMetaDataset, FeedList
 from meta_blocks.tasks.supervised import SupervisedTaskDistribution
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ class LimitedSupervisedTaskDistribution(SupervisedTaskDistribution):
                 self._requests.append(requests_batch[i])
                 self.num_requested_labels = requested_labels_so_far
 
-    def sample_task_feed(self, replace: bool = True) -> List[Tuple[tf.Tensor, Any]]:
+    def sample_task_feed(self, replace: bool = True) -> FeedList:
         """Samples a meta-batch of tasks and returns a feed list."""
         # Sample a meta-batch of tasks.
         indices_batch = self._rng.choice(

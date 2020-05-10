@@ -3,33 +3,44 @@
 # Fetch Mini-ImageNet.
 #
 
-IMAGENET_URL=http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_train.tar
+WORK_DIR=$(pwd)
+TARGET_DIR="data/miniimagenet"
+IMAGENET_TERMS=$(cat imagenet_terms.txt)
 
+# Exit if any command fails.
 set -e
 
-mkdir tmp
-trap 'rm -r tmp' EXIT
+echo "MiniImageNet is a subset of the ImageNet dataset and is only allowed to be " \
+     "downloaded by researchers for non-commercial research and educational purposes."
+echo "To download the data, you need to agree to the terms of ImageNet:"
+echo "---"
+echo "$IMAGENET_TERMS"
+echo "---"
+
+read -r -p "Do you agree to follow the terms? [y/N] " response
+if [[ ! $response =~ ^([yY][eE][sS]|[yY])+$ ]]
+then
+   echo "Aborting."
+   [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1
+fi
 
 if [ ! -d data ]; then
     mkdir data
 fi
 
-if [ ! -d data/miniimagenet ]; then
-    mkdir tmp/miniimagenet
-    for subset in train test val; do
-        mkdir "tmp/miniimagenet/$subset"
-        echo "Fetching Mini-ImageNet $subset set ..."
-        for csv in $(ls metadata/miniimagenet/$subset); do
-            echo "Fetching wnid: ${csv%.csv}"
-            dst_dir="tmp/miniimagenet/$subset/${csv%.csv}"
-            mkdir "$dst_dir"
-            for entry in $(cat metadata/miniimagenet/$subset/$csv); do
-                name=$(echo "$entry" | cut -f 1 -d ,)
-                range=$(echo "$entry" | cut -f 2 -d ,)
-                curl -s -H "range: bytes=$range" $IMAGENET_URL > "$dst_dir/$name" &
-            done
-            wait
-        done
-    done
-    mv tmp/miniimagenet data/miniimagenet
+if [ ! -d "$TARGET_DIR" ]; then
+  mkdir "$TARGET_DIR"
+  cd "$TARGET_DIR"
+  echo "Fetching miniImageNet..."
+  for set in "train" "valid" "test"; do
+    wget "https://www.cs.cmu.edu/~mshediva/data/miniimagent/$set.tar"
+    tar -xf "$set.tar"
+    rm "$set.tar"
+  done
+  # Rename val to valid.
+  mv val/ valid/
+  cd "$WORK_DIR"
+  echo "Done."
+else
+  echo "miniImageNet has been already been fetched."
 fi
