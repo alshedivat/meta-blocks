@@ -2,6 +2,7 @@ train:
   meta_dataset:
     batch_size: 4
     num_classes: 2
+    data_source_size: 2
   optimizer:
     name: adam
     beta1: 0.
@@ -24,6 +25,7 @@ eval:
   meta_dataset:
     batch_size: 4
     num_classes: 2
+    data_source_size: 6
   metrics:
     - name: accuracy
       ci: 95

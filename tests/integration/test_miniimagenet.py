@@ -36,7 +36,7 @@ def test_omniglot_integration(adaptation_method, experiment_setting):
         """
         num_dummy_categories = 20
         num_dummy_img_per_category = 10
-        min_img_size, max_img_size = 100, 300
+        img_height, img_width = 84, 84
         data_path = os.path.join(dir_path, "miniimagent")
         for set_name in ["train", "valid", "test"]:
             set_path = os.path.join(data_path, set_name)
@@ -45,12 +45,10 @@ def test_omniglot_integration(adaptation_method, experiment_setting):
                 dummy_category_path = os.path.join(set_path, dummy_category_name)
                 os.makedirs(dummy_category_path)
                 for img_id in range(num_dummy_img_per_category):
-                    img_height = np.random.randint(min_img_size, max_img_size)
-                    img_width = np.random.randint(min_img_size, max_img_size)
                     img_array = np.full(
                         (img_height, img_width), img_id * 20, dtype=np.int8
                     )
-                    img_path = os.path.join(dummy_category_path, f"{img_id}.JPEG")
+                    img_path = os.path.join(dummy_category_path, f"{img_id}.jpg")
                     Image.fromarray(img_array).convert("RGB").save(img_path)
 
     with tempfile.TemporaryDirectory() as dir_path:

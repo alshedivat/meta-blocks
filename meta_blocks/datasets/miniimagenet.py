@@ -3,7 +3,6 @@
 import glob
 import logging
 import os
-import random
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -50,16 +49,11 @@ class MiniImageNetCategory(base.DataSource):
     IMG_DTYPE = tf.float32
 
     def __init__(
-        self,
-        data_dir: str,
-        shuffle: bool = True,
-        already_cached: bool = False,
-        name: Optional[str] = None,
+        self, data_dir: str, already_cached: bool = False, name: Optional[str] = None
     ):
         super(MiniImageNetCategory, self).__init__(
             data_dir, name=(name or self.__class__.__name__)
         )
-        self.shuffle = shuffle
         self.already_cached = already_cached
 
         # Internals.
@@ -96,11 +90,7 @@ class MiniImageNetCategory(base.DataSource):
         """Builds tf.data.Dataset for the underlying data resources."""
         # Get file paths.
         file_paths = glob.glob(os.path.join(self.data_dir, self.name, "*.jpg"))
-
-        # Shuffle and compute size.
         self.size = len(file_paths)
-        if self.shuffle:
-            random.shuffle(file_paths)
 
         # Build the tf.data.Dataset.
         self.dataset = (
@@ -117,13 +107,10 @@ class MiniImageNetDataSource(base.DataSource):
 
     NUM_CATEGORIES = 100
 
-    def __init__(
-        self, data_dir: str, shuffle_data: bool = True, name: Optional[str] = None
-    ):
+    def __init__(self, data_dir: str, name: Optional[str] = None):
         super(MiniImageNetDataSource, self).__init__(
             data_dir, name=(name or self.__class__.__name__)
         )
-        self.shuffle_data = shuffle_data
 
         # Internals.
         self.data = None
@@ -143,9 +130,7 @@ class MiniImageNetDataSource(base.DataSource):
     def read_categories(self, dir_path):
         """Reads categories from the provided directory."""
         return [
-            MiniImageNetCategory(
-                data_dir=dir_path, shuffle=self.shuffle_data, name=name
-            )
+            MiniImageNetCategory(data_dir=dir_path, name=name)
             for name in os.listdir(dir_path)
             if os.path.isdir(os.path.join(dir_path, name))
         ]

@@ -83,8 +83,6 @@ class OmniglotCharacter(base.DataSource):
     def _build(self):
         # Infer dataset size.
         file_paths = glob.glob(os.path.join(self.data_dir, "*.png"))
-        if self.shuffle:
-            random.shuffle(file_paths)
         self.size = len(file_paths)
         # Load data.
         data = []
@@ -281,8 +279,8 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
         for n, (data_source_ids, selected_ids) in enumerate(requests_batch):
             data_arrays = tuple(
                 # From each data array take only selected items.
-                self.data_sources[i].data[selected_ids[i]]
-                for i in data_source_ids
+                self.data_sources[i].data[ids]
+                for i, ids in zip(data_source_ids, selected_ids)
             )
             feed_list.extend(self.dataset_batch[n].get_feed_list(data_arrays))
         return requests_batch, feed_list

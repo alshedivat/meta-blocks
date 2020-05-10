@@ -6,5 +6,4 @@ data:
     num_valid_categories: 2
     num_test_categories: 2
     rotations: [90, 180, 270]
-    shuffle_categories: true
-    shuffle_data: true
+    shuffle: true
