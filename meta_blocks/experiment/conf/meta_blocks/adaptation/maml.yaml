@@ -1,0 +1,19 @@
+# First-order MAML config template.
+meta_blocks:
+  train:
+    model:
+      name: feed_forward
+    adapt:
+      name: maml
+      first_order: false
+      num_inner_steps: ???
+      inner_optimizer: ???
+    optimizer: ???
+  eval:
+    model:
+      name: feed_forward
+    adapt:
+      name: maml
+      first_order: false
+      num_inner_steps: ???
+      inner_optimizer: ???

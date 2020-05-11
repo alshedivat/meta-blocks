@@ -8,5 +8,4 @@ meta_blocks:
       num_valid_categories: 200
       num_test_categories: 463
       rotations: [90, 180, 270]
-      shuffle_categories: true
-      shuffle_data: true
+      shuffle: true

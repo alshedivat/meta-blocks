@@ -4,6 +4,7 @@ meta_blocks:
     meta_dataset:
       batch_size: 20
       num_classes: 5
+      data_source_size: null
     tasks:
       - set_name: train
         regime: 1shot
@@ -19,6 +20,7 @@ meta_blocks:
     meta_dataset:
       batch_size: 1
       num_classes: 5
+      data_source_size: null
     metrics:
       - name: accuracy
         ci: 95

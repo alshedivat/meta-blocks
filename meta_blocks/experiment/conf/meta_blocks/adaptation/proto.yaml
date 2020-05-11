@@ -1,0 +1,15 @@
+# Proto adaptation config template.
+meta_blocks:
+  train:
+    model:
+      name: proto
+      embedding_dim: ???
+    adapt:
+      name: proto
+    optimizer: ???
+  eval:
+    model:
+      name: proto
+      embedding_dim: ???
+    adapt:
+      name: proto

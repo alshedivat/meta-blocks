@@ -1,0 +1,10 @@
+# Configures train and eval to run on separate GPUs.
+meta_blocks:
+  compute:
+    gpus:
+      eval:
+        ids: "1"
+        allow_growth: true
+      train:
+        ids: "0"
+        allow_growth: true

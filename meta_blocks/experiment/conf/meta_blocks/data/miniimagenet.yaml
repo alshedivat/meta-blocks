@@ -4,4 +4,3 @@ meta_blocks:
     name: miniimagenet
     source:
       data_dir: ???
-      shuffle_data: true
