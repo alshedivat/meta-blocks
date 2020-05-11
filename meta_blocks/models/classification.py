@@ -64,6 +64,13 @@ class ClassificationModel(abc.ABC):
         Must be implemented in a subclass.
         """
 
+    @property
+    @abc.abstractmethod
+    def non_trainable_parameters(self):
+        """Returns a list with the subset of variables that are non-trainable.
+        Must be implemented in a subclass.
+        """
+
     # --- Methods. ---
 
     def build(self):
@@ -204,6 +211,11 @@ class FeedForwardModel(ClassificationModel):
         """Returns a list with the subset of variables that are trainable."""
         return self.network.trainable_variables
 
+    @property
+    def non_trainable_parameters(self):
+        """Returns a list with the subset of variables that are non-trainable."""
+        return self.network.non_trainable_variables
+
     # --- Methods. ---
 
     def _build(self):
@@ -284,8 +296,8 @@ class ProtoModel(ClassificationModel):
         self,
         input_shapes: tf.TensorShape,
         input_types: tf.DType,
-        embedding_dim: int,
         network_builder: Callable,
+        embedding_dim: Optional[int] = None,
         name: Optional[str] = None,
         **_unused_kwargs
     ):
@@ -313,6 +325,11 @@ class ProtoModel(ClassificationModel):
         """Returns a list with the subset of variables that are trainable."""
         return self.network.trainable_variables
 
+    @property
+    def non_trainable_parameters(self):
+        """Returns a list with the subset of variables that are non-trainable."""
+        return self.network.non_trainable_variables
+
     # --- Methods. ---
 
     def _build(self):
@@ -322,6 +339,8 @@ class ProtoModel(ClassificationModel):
             input_shape=self.input_shapes,
             input_type=self.input_types,
         )
+        if self.embedding_dim is None:
+            self.embedding_dim = self.network.output.shape[-1]
         if self.initial_parameters is None:
             self.initial_parameters = self.network.trainable_variables
 

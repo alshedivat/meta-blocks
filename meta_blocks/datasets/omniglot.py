@@ -166,7 +166,7 @@ class OmniglotDataSource(base.DataSource):
         if self.rotations is not None:
             rotated_train_characters = []
             for rot in self.rotations:
-                for char in self.data["train"]:
+                for char in characters[: self.num_train]:
                     rotated_train_characters.append(
                         OmniglotCharacter(
                             data_dir=char.data_dir,
@@ -174,7 +174,7 @@ class OmniglotDataSource(base.DataSource):
                             name=f"{char.name}_{rot}",
                         ).build()
                     )
-            self.data["train"] = self.data["train"] + tuple(rotated_train_characters)
+            self.data["train"] += tuple(rotated_train_characters)
 
 
 class OmniglotDataset(base.ClfDataset):

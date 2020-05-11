@@ -3,18 +3,15 @@
 import logging
 from multiprocessing import Process
 
-import hydra
 from omegaconf import DictConfig
 
-from meta_blocks.experiment import config_path
 from meta_blocks.experiment.eval import evaluate
 from meta_blocks.experiment.train import train
 
 logger = logging.getLogger(__name__)
 
 
-@hydra.main(config_path=config_path, strict=False)
-def main(cfg: DictConfig):
+def run_experiment(cfg: DictConfig):
     cfg = cfg.meta_blocks
     processes = []
 
@@ -25,8 +22,8 @@ def main(cfg: DictConfig):
             target=evaluate,
             kwargs={
                 "cfg": cfg,
-                "gpu_ids": str(cfg.compute.gpus.train.ids),
-                "gpu_allow_growth": cfg.compute.gpus.train.allow_growth,
+                "gpu_ids": str(cfg.compute.gpus.eval.ids),
+                "gpu_allow_growth": cfg.compute.gpus.eval.allow_growth,
             },
             name="EVAL",
         )
@@ -40,8 +37,8 @@ def main(cfg: DictConfig):
             target=train,
             kwargs={
                 "cfg": cfg,
-                "gpu_ids": str(cfg.compute.gpus.eval.ids),
-                "gpu_allow_growth": cfg.compute.gpus.eval.allow_growth,
+                "gpu_ids": str(cfg.compute.gpus.train.ids),
+                "gpu_allow_growth": cfg.compute.gpus.train.allow_growth,
             },
             name="TRAIN",
         )
@@ -51,7 +48,3 @@ def main(cfg: DictConfig):
     # Join processes.
     for p in processes:
         p.join(timeout=cfg.run.timeout)
-
-
-if __name__ == "__main__":
-    main()

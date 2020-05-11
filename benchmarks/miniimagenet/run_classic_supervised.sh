@@ -2,6 +2,7 @@
 
 METHOD=maml
 BACKBONE=simple_cnn
+DATASET=miniimagenet
 NUM_CLASSES=5
 NUM_SHOTS=1
 
