@@ -1,9 +1,8 @@
-Benchmarking on Mini-ImageNet
------------------------------
+# Benchmarking on Mini-ImageNet
 
 
-# Classic Supervised Benchmarks
+## Classic Supervised Benchmarks
 
 
-# Unsupervised Benchmarks
+## Unsupervised Benchmarks
 

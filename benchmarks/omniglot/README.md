@@ -1,9 +1,8 @@
-Benchmarking on Omniglot
-------------------------
+# Benchmarking on Omniglot
 
 
-# Classic Supervised Benchmarks
+## Classic Supervised Benchmarks
 
 
-# Unsupervised Benchmarks
+## Unsupervised Benchmarks
 
