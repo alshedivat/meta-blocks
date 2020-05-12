@@ -1,4 +1,4 @@
-"""Simple models."""
+"""Simple networks."""
 
 from typing import Any, Dict, List, Optional, Tuple, Union
 

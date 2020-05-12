@@ -90,7 +90,7 @@ class Reptile(maml.Maml):
                 for name, value in self.initial_parameters.items():
                     value_upd = self.adapted_parameters[i][name]
                     meta_grads[value].append(value - value_upd)
-                adapted_model = self._build_adapted_model(task_id=i)
+                adapted_model = self._get_adapted_model(task_id=i)
                 query_preds = adapted_model.build_predictions(query_inputs)
                 preds_and_labels.append((query_preds, query_labels))
         # Build meta-train op.
