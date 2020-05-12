@@ -1,7 +1,9 @@
 # MetaBlocks Benchmarking Suite
 
 **MetaBlocks** comes with a highly configurable suite of benchmarks enabling the ultimate reproducibility.
-Each variation, setting, and method are precisely configured using [hydra](https://hydra.cc) and the best configurations are committed and stored in the repository.
+Each variation, setting, and method are precisely configured using [hydra](https://hydra.cc) and the best configurations are committed to the repository.
+
+**Note:** Not all the current configurations are optimal; expect them to be updated.
 
 ## Getting started with benchmarks
 
@@ -32,7 +34,7 @@ The stdout log of the above example will look similar to the following:
                                                                           --------------------------------------------------
 ...
 ```
-Note that since training and eval are decoupled, we are able to train methods in one regime (e.g., on a distribution of 5-way, 1-shot training tasks) while concurrently evaluating in multiple other regimes (e.g., 1-/5-shot tasks from train, valid, and test distributions).
+Note that since training and eval are decoupled, we are able to train methods in one regime (e.g., on a distribution of 5-way, 1-shot training tasks) while concurrently evaluating in multiple other regimes (e.g., on 1- and 5-shot tasks from train, valid, and test distributions).
 
 ### Visualizing benchmark runs
 
@@ -61,7 +63,7 @@ python -u run.py \
 Here, `benchmark`, `backbone`, and `method` specify relative paths to YAML config files that will be loaded and combined by hydra; `meta_blocks.data.source.data_dir` overrides the path to the data, and `meta_blocks/compute` specifies the 1-GPU experiment setup pre-defined in the meta-blocks (see all the pre-defined cofigurations in `meta_blocks/experiment/conf`).
 To change any configuration, you can either override it in your run script or directly edit the corresponding YAML file.
 
-**Note:** current configurations are not heavily tuned, so if you can find a better configuration for any of the existing methods/setups, please consider submitting a quick PR! :pray:
+**Note:** current configurations are not heavily tuned, so if you can find a better configuration for any of the existing methods/setups, please consider submitting a quick pull request! :pray:
 
 ## Benchmarking on your own datasets
 
@@ -71,11 +73,11 @@ To benchmark existing methods on your own dataset (assuming you correctly implem
 * Add `fetch_data.sh` and `run.sh` script for fetching the data and running experiments.
 
 **Note:** We are actively looking to expand the benchmarking suite.
-If you have an cool meta-dataset, please consider submitting a PR!
+If you have implemented a new meta-dataset, please consider submitting a pull request!
 
 ## Benchmarking your own algorithms
 
 To add your own method to one of the existing benchmarks (assuming your method follows meta-blocks API), simply add YAML config files to `benchmark/<benchmark>/conf/method/**/<your-method>.yaml`.
 Each subdirectory within `benchmark/<benchmark>/conf/method/` corresponds to a variation of the benchmark (e.g., 5-/20-way and 1-/5-shot) and requires a separate configuration file for your method (since optimal parameters for your method might be different for different benchmark variations).
 
-Once configurations for your method are added, you should be able to run the benchmark using one of the provided run scripts.
+Once configurations are added, you should be able to run the benchmark using one of the provided run scripts.

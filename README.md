@@ -18,7 +18,7 @@ The API fully decouples data processing, construction of learning tasks (and the
 Additionally, the library features a [suite of benchmarks](benchmarks) that enable reproducibility.
 Everything is highly configurable through [hydra](https://hydra.cc/).
 
-The library is currently **under active development**.
+The library is **under active development**.
 The latest documentation is available at: https://meta-blocks.readthedocs.io/.
 
 ---
@@ -62,7 +62,7 @@ $ pre-commit run --all-files  # run pre-commit on all the files
 
 ## Getting started & use cases
 
-You can use the library as (1) a modular benchmarking suite or (2) a scaffold API for developing new learning-to-learn algorithms.
+You can use the library as (1) a modular benchmarking suite or (2) a scaffold API for new learning-to-learn algorithms.
 
 ### Benchmarking
 
