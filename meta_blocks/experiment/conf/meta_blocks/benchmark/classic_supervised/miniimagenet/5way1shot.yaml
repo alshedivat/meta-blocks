@@ -1,0 +1,99 @@
+# Configuration for the classic 5-way 1-shot mini-ImageNet benchmark.
+meta_blocks:
+  train:
+    meta_dataset:
+      batch_size: 20
+      num_classes: 5
+      data_source_size: null
+    tasks:
+      - set_name: train
+        regime: 1shot
+        log_dir: train
+        config:
+          name: classic_supervised
+          num_query_shots: 1
+          num_support_shots: 1
+    max_steps: 20000
+    log_interval: 10
+    save_interval: 100
+  eval:
+    meta_dataset:
+      batch_size: 1
+      num_classes: 5
+      data_source_size: null
+    metrics:
+      - name: accuracy
+        ci: 95
+    repetitions: 50
+    tasks:
+      # Train.
+      - set_name: train
+        regime: 1shot
+        log_dir: eval/train
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 1
+          max_labeled_points: 1000
+        sampler:
+          name: uniform
+          stratified: true
+      - set_name: train
+        regime: 5shot
+        log_dir: eval/train
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 5
+          max_labeled_points: 5000
+        sampler:
+          name: uniform
+          stratified: true
+      # Valid.
+      - set_name: valid
+        regime: 1shot
+        log_dir: eval/valid
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 1
+          max_labeled_points: 1000
+        sampler:
+          name: uniform
+          stratified: true
+      - set_name: valid
+        regime: 5shot
+        log_dir: eval/valid
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 5
+          max_labeled_points: 5000
+        sampler:
+          name: uniform
+          stratified: true
+      # Test.
+      - set_name: test
+        regime: 1shot
+        log_dir: eval/test
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 1
+          max_labeled_points: 1000
+        sampler:
+          name: uniform
+          stratified: true
+      - set_name: test
+        regime: 5shot
+        log_dir: eval/test
+        config:
+          name: limited_supervised
+          num_query_shots: 1
+          num_support_shots: 5
+          max_labeled_points: 5000
+        sampler:
+          name: uniform
+          stratified: true
+  run:
+    seed: 1

@@ -26,6 +26,8 @@ class UniformSampler(base.Sampler):
         # Internal.
         self.tasks = None
 
+    # --- Methods. ---
+
     def _build(self, tasks: Tuple[SupervisedTask], **_unused_kwargs):
         """Builds a tuple of selected indices tensors."""
         self.tasks = tasks

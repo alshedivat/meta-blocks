@@ -1,0 +1,6 @@
+# mini-Imagenet data configuration.
+meta_blocks:
+  data:
+    name: miniimagenet
+    source:
+      data_dir: ???

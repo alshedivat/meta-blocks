@@ -1,8 +1,0 @@
-# mini-Imagenet data configuration.
-meta_blocks:
-  data:
-    name: miniimagenet
-    source:
-      data_dir: ???
-      max_size: 599
-      shuffle_data: true

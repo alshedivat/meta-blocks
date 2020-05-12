@@ -17,7 +17,7 @@ tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
 
-class Maml(base.AdaptationStrategy):
+class Maml(base.MetaLearner):
     """MAML-based model adaptation.
 
     Parameters
@@ -78,7 +78,9 @@ class Maml(base.AdaptationStrategy):
         self.inner_optimizer = optimizers.get(**(inner_optimizer or {}))
         self.adapted_parameters = None
 
-    def _build_adapted_model(self, *, parameters=None, task_id=None):
+    # --- Methods. ---
+
+    def _get_adapted_model(self, *, parameters=None, task_id=None):
         """Builds a model with the specified adapted parameters."""
         if parameters is None:
             parameters = self.adapted_parameters[task_id]
@@ -145,7 +147,7 @@ class Maml(base.AdaptationStrategy):
             x = tf.gather(inputs, batched_indices[step], axis=0)
             y = tf.gather(labels, batched_indices[step], axis=0)
             # Build the loss with custom parameters.
-            adapted_model = self._build_adapted_model(parameters=parameters)
+            adapted_model = self._get_adapted_model(parameters=parameters)
             loss = adapted_model.build_loss(x, y)
             # Build new parameters.
             new_parameters = utils.build_new_parameters(

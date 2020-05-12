@@ -1,0 +1,9 @@
+defaults:
+  # Job logging configuration.
+  - hydra/job_logging: meta_blocks_log
+  # Data configuration.
+  - meta_blocks/data: omniglot_augmented
+  # Benchmark configuration.
+  - benchmark: ???
+  - backbone: ???
+  - method: ???

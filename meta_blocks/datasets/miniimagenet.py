@@ -3,20 +3,12 @@
 import glob
 import logging
 import os
-import random
-from concurrent import futures
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
-import filelock
 import numpy as np
 import tensorflow.compat.v1 as tf
-from PIL import Image
 
-from meta_blocks.datasets import base
-
-# Disable DEBUG logging from filelock.
-filelock_logger = logging.getLogger(filelock.__name__)
-filelock_logger.setLevel(logging.ERROR)
+from meta_blocks.datasets import base, utils
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +18,15 @@ __all__ = [
     "MiniImageNetDataset",
     "MiniImageNetMetaDataset",
 ]
+
+# Types.
+DatasetRequest = Tuple[
+    # Data source IDs that represent dataset classes.
+    np.ndarray,
+    # A tuple of selected image ids for each data class.
+    Tuple[np.ndarray],
+]
+FeedList = List[Tuple[tf.Tensor, np.ndarray]]
 
 
 def _bytes_feature_list(value):
@@ -48,18 +49,11 @@ class MiniImageNetCategory(base.DataSource):
     IMG_DTYPE = tf.float32
 
     def __init__(
-        self,
-        data_dir: str,
-        shuffle: bool = True,
-        max_size: Optional[int] = None,
-        already_cached: bool = False,
-        name: Optional[str] = None,
+        self, data_dir: str, already_cached: bool = False, name: Optional[str] = None
     ):
         super(MiniImageNetCategory, self).__init__(
             data_dir, name=(name or self.__class__.__name__)
         )
-        self.shuffle = shuffle
-        self.max_size = max_size
         self.already_cached = already_cached
 
         # Internals.
@@ -87,70 +81,22 @@ class MiniImageNetCategory(base.DataSource):
         image = tf.io.decode_image(serialized_image, channels=cls.IMG_SHAPE[-1])
         image = tf.image.convert_image_dtype(image, dtype=cls.IMG_DTYPE)
         image.set_shape(cls.IMG_SHAPE)
-        image = image / 0x80 - 1  # Rescale image to [-1, 1].
+        image = image / 0xFF  # Rescale image to [0, 1].
         return image
 
     # --- Methods. ---
 
-    def _preprocess_and_maybe_cache(self):
-        """Creates cached preprocessed images if the necessary.
-
-        Notes
-        -----
-        There are two alternative approaches to manual caching:
-        (1) preprocess (i.e., resize in our case) image data on the fly, or
-        (2) use tf.data.Dataset.cache functionality.
-
-        Approach (1) makes CPU throttle when meta-batches are relatively large.
-        Approach (2) would have been cleaner than manual caching, but it is
-        problematic for meta-batches of size > 1 in the graph-mode TF because
-        we have to create multiple dataset iterators (to enable parallelism)
-        which results in duplicated cache. Cache duplications is a known issue:
-        https://github.com/tensorflow/tensorflow/issues/20930#issuecomment-517843860.
-        """
-        logger.debug(f"Processing and caching {self.name}...")
-        file_paths = glob.glob(os.path.join(self.data_dir, self.name, "*.JPEG"))
-
-        def _process_filepath(file_path):
-            if "resized" not in file_path:
-                dir_path = os.path.dirname(file_path)
-                file_name = os.path.basename(file_path)
-                resized_name = file_name.split(".")[0] + ".resized.JPEG"
-                resized_path = os.path.join(dir_path, resized_name)
-                with filelock.FileLock(f"{file_path}.lock"):
-                    if not os.path.exists(resized_path):
-                        with filelock.FileLock(f"{resized_path}.lock"):
-                            img = Image.open(file_path).resize(self.IMG_SHAPE[:-1])
-                            img.save(resized_path, "JPEG", quality=99)
-            else:
-                resized_path = file_path
-            return resized_path
-
-        # Use multi-threading to speed up IO-bound processing.
-        with futures.ThreadPoolExecutor(max_workers=16) as executor:
-            resized_paths = list(
-                executor.map(_process_filepath, file_paths, chunksize=4)
-            )
-
-        return resized_paths
-
     def _build(self):
         """Builds tf.data.Dataset for the underlying data resources."""
         # Get file paths.
-        file_paths = self._preprocess_and_maybe_cache()
-
-        # Shuffle and compute size.
-        if self.shuffle:
-            random.shuffle(file_paths)
-        if self.max_size is not None:
-            file_paths = file_paths[: self.max_size]
+        file_paths = glob.glob(os.path.join(self.data_dir, self.name, "*.jpg"))
         self.size = len(file_paths)
 
         # Build the tf.data.Dataset.
         self.dataset = (
             tf.data.Dataset.from_tensor_slices(file_paths)
-            .map(self.read, num_parallel_calls=1)
-            .map(self.decode, num_parallel_calls=16)
+            .map(self.read, num_parallel_calls=8, deterministic=True)
+            .map(self.decode, num_parallel_calls=8, deterministic=True)
             .batch(self.size)
             .repeat()
         )
@@ -161,18 +107,10 @@ class MiniImageNetDataSource(base.DataSource):
 
     NUM_CATEGORIES = 100
 
-    def __init__(
-        self,
-        data_dir: str,
-        max_size: Optional[int] = None,
-        shuffle_data: bool = True,
-        name: Optional[str] = None,
-    ):
+    def __init__(self, data_dir: str, name: Optional[str] = None):
         super(MiniImageNetDataSource, self).__init__(
             data_dir, name=(name or self.__class__.__name__)
         )
-        self.max_size = max_size
-        self.shuffle_data = shuffle_data
 
         # Internals.
         self.data = None
@@ -192,12 +130,7 @@ class MiniImageNetDataSource(base.DataSource):
     def read_categories(self, dir_path):
         """Reads categories from the provided directory."""
         return [
-            MiniImageNetCategory(
-                data_dir=dir_path,
-                max_size=self.max_size,
-                shuffle=self.shuffle_data,
-                name=name,
-            )
+            MiniImageNetCategory(data_dir=dir_path, name=name)
             for name in os.listdir(dir_path)
             if os.path.isdir(os.path.join(dir_path, name))
         ]
@@ -225,6 +158,7 @@ class MiniImageNetDataset(base.ClfDataset):
         self,
         num_classes: int,
         data_sources: List[MiniImageNetCategory],
+        data_source_size: Optional[int] = None,
         name: Optional[str] = None,
         **_unused_kwargs,
     ):
@@ -232,13 +166,21 @@ class MiniImageNetDataset(base.ClfDataset):
             num_classes=num_classes, name=(name or self.__class__.__name__)
         )
         self.data_sources = data_sources
+        self.data_source_size = data_source_size
 
         # Internal.
         self.dataset = None
         self.data_tensors = None
         self.data_source_ids = None
+        self.selected_ids_phs = None
 
     # --- Methods. ---
+
+    def build(self):
+        """Builds the dataset in the correct namespace."""
+        # Ensure dataset construction ops are placed on the CPU.
+        with tf.device("CPU:0"):
+            return super(MiniImageNetDataset, self).build()
 
     def _build_category_choice_dataset(self):
         """Creates a dataset of category ids used for choosing categories.
@@ -262,6 +204,15 @@ class MiniImageNetDataset(base.ClfDataset):
 
     def _build(self):
         """Builds data tensors that represent classes."""
+        # Build selected ids placeholders.
+        self.selected_ids_phs = tuple(
+            tf.placeholder(
+                dtype=tf.int32,
+                shape=(self.data_source_size,),
+                name=f"{self.name}_class{k}_ids",
+            )
+            for k in range(self.num_classes)
+        )
         # Build the dataset from the underlying data sources.
         self.dataset = (
             tf.data.experimental.choose_from_datasets(
@@ -269,35 +220,41 @@ class MiniImageNetDataset(base.ClfDataset):
                 choice_dataset=self._build_category_choice_dataset(),
             )
             .batch(self.num_classes)
-            .prefetch(tf.data.experimental.AUTOTUNE)
+            .prefetch(1)
         )
         data = self.dataset.make_one_shot_iterator().get_next()
         # Tuple of <float32> [1, None, **MiniImageNetCategory.IMG_SHAPE].
         data_tensors = tf.split(data, self.num_classes)
         # Tuple of <float32> [None, **MiniImageNetCategory.IMG_SHAPE].
         # Note: do not use tf.squeeze; the results will be of unknown shape.
-        self.data_tensors = tuple(map(lambda x: x[0], data_tensors))
+        data_tensors = tuple(map(lambda x: x[0], data_tensors))
+        # Select the specified permutation of elements from data tensors.
+        self.data_tensors = tuple(
+            tf.gather(x, ids, axis=0)
+            for x, ids in zip(data_tensors, self.selected_ids_phs)
+        )
         # Determine dataset size.
-        self._size = self.num_classes * self.data_sources[0].size
+        data_source_size = self.data_source_size or self.data_sources[0].size
+        self._size = self.num_classes * data_source_size
 
     def set_data_source_ids(self, data_source_ids: Tuple[np.ndarray, ...]):
         self.data_source_ids = data_source_ids
 
-    def get_feed_list(self, **_unused_kwargs) -> List:
-        """Returns an empty list as no feed is required."""
-        return []
+    def get_feed_list(self, selected_ids: Tuple[np.ndarray]) -> FeedList:
+        """Returns a feed list of for the internal data placeholders."""
+        feed_list = list(zip(self.selected_ids_phs, selected_ids))
+        return feed_list
 
 
 class MiniImageNetMetaDataset(base.ClfMetaDataset):
     """A meta-dataset that samples mini-ImageNet datasets."""
-
-    Dataset = MiniImageNetDataset
 
     def __init__(
         self,
         batch_size: int,
         num_classes: int,
         data_sources: List[MiniImageNetCategory],
+        data_source_size: Optional[int] = None,
         name: Optional[str] = None,
     ):
         super(MiniImageNetMetaDataset, self).__init__(
@@ -306,6 +263,7 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
             data_sources=data_sources,
             name=(name or self.__class__.__name__),
         )
+        self.data_source_size = data_source_size
 
         # Random state must be set globally.
         self._rng = np.random
@@ -318,27 +276,36 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
     def _build(self):
         """Build datasets in the dataset batch."""
         self.dataset_batch = tuple(
-            self.Dataset(
+            MiniImageNetDataset(
                 num_classes=self.num_classes,
                 data_sources=self.data_sources,
+                data_source_size=self.data_source_size,
                 name=f"Dataset{i}",
             ).build()
             for i in range(self.batch_size)
         )
 
+    def get_feed_list(self, selected_masks: Dict[int, np.ndarray]) -> FeedList:
+        """Returns a feed list of for the internal data source placeholders."""
+        feed_list = []
+        for i, selected_mask in selected_masks.items():
+            feed_list.extend(self.data_sources[i].get_feed_list(selected_mask))
+        return feed_list
+
     def request_datasets(
         self,
-        requests_batch: Optional[Tuple[np.ndarray, ...]] = None,
+        requests_batch: Optional[Tuple[DatasetRequest, ...]] = None,
         unique_classes: bool = True,
-    ) -> Tuple[Tuple[np.ndarray, ...], List]:
+    ) -> Tuple[Tuple[DatasetRequest, ...], FeedList]:
         """Returns a feed list for the requested meta-batch of datasets."""
-        # If a batch of requests is not provided, generate from the data source.
+        # Generate a batch of requests is not provided.
         if requests_batch is None:
             requests_batch = tuple(
-                self._rng.choice(
-                    len(self.data_sources),
-                    size=self.num_classes,
-                    replace=(not unique_classes),
+                utils.generate_dataset_request(
+                    data_sources=self.data_sources,
+                    num_classes=self.num_classes,
+                    unique_classes=unique_classes,
+                    data_source_size=self.data_source_size,
                 )
                 for _ in range(self.batch_size)
             )
@@ -348,6 +315,9 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
                 f"the meta batch size ({self.batch_size})."
             )
         # Use requests to set category ids for each dataset in the batch.
+        feed_list = []
         for dataset, request in zip(self.dataset_batch, requests_batch):
-            dataset.set_data_source_ids(request)
-        return requests_batch, []
+            data_source_ids, selected_ids = request
+            dataset.set_data_source_ids(data_source_ids=data_source_ids)
+            feed_list.extend(dataset.get_feed_list(selected_ids=selected_ids))
+        return requests_batch, feed_list

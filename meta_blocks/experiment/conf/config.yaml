@@ -1,0 +1,8 @@
+defaults:
+  # Job logging configuration.
+  - hydra/job_logging: meta_blocks_log
+  # Experiment configuration.
+  - meta_blocks/compute: 1gpu
+  - meta_blocks/data: ???
+  - meta_blocks/network: ???
+  - meta_blocks/adaptation: ???

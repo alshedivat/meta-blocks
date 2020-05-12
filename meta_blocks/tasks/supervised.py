@@ -113,7 +113,7 @@ class SupervisedTask(base.Task):
         """Returns a tensor of all unlabeled support inputs from the dataset."""
         return self._support_inputs_all
 
-    # --- Auxiliary methods. ---
+    # --- Methods. ---
 
     @staticmethod
     def _get_inputs_and_labels(
@@ -131,8 +131,6 @@ class SupervisedTask(base.Task):
         inputs = [x[start_index:end_index] for x in data_tensors]
         labels = [tf.fill(tf.shape(x)[:1], k) for k, x in enumerate(inputs)]
         return tf.concat(inputs, axis=0), tf.concat(labels, axis=0)
-
-    # --- Methods. ---
 
     def _build(self):
         """Builds internals of the task."""

@@ -1,0 +1,10 @@
+# Omniglot data with rotation-based augmentation.
+meta_blocks:
+  data:
+    name: omniglot
+    source:
+      data_dir: ???
+      num_train_categories: 1000
+      num_valid_categories: 200
+      num_test_categories: 463
+      shuffle: true

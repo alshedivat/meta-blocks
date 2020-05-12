@@ -1,4 +1,4 @@
-from meta_blocks.adaptation.base import AdaptationStrategy
+from meta_blocks.adaptation.base import MetaLearner
 from meta_blocks.adaptation.maml import Maml
 from meta_blocks.adaptation.proto import Proto
 from meta_blocks.adaptation.reptile import Reptile

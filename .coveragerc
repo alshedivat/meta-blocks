@@ -5,3 +5,5 @@ omit =
     meta_blocks/optimizers/__init__.py
     # omit currently unused modules
     meta_blocks/samplers/utils.py
+    # omit run scripts
+    meta_blocks/experiment/run.py

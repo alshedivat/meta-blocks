@@ -1,11 +1,10 @@
 """Evaluation loop for meta-learning."""
 
-import collections
 import logging
 import os
 import random
-import time
-from typing import Optional
+from collections import defaultdict
+from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -13,6 +12,10 @@ from omegaconf import DictConfig
 
 from meta_blocks import common
 from meta_blocks.experiment import utils
+from meta_blocks.experiment.metrics import (
+    build_metrics_and_summaries,
+    get_layout_summary,
+)
 from meta_blocks.experiment.utils import Experiment
 
 logger = logging.getLogger(__name__)
@@ -23,7 +26,13 @@ tf.enable_resource_variables()
 
 
 def eval_step(
-    exp: Experiment, repetitions: int = 1, sess: Optional[tf.Session] = None, **kwargs
+    exp: Experiment,
+    *,
+    tasks: Tuple[DictConfig, ...],
+    metric_fns: Dict[str, Callable],
+    repetitions: int = 1,
+    sess: Optional[tf.Session] = None,
+    **kwargs,
 ):
     """Performs one evaluation step.
 
@@ -33,7 +42,14 @@ def eval_step(
         The object that represents the experiment.
         Contains `meta_learners`, `samplers`, and `task_dists`.
 
-    repetitions : int, optional (default: 1)
+    tasks : tuple of DictConfigs
+        Configurations for the evaluation tasks.
+
+    metric_fns : dict of functions
+        A dictionary of metric functions that map a list of (prediction, label)
+        tuples to a numeric value.
+
+    repetitions : int (default: 1)
         Number of evaluation repetitions. Typically, set to 1.
 
     sess : tf.Session, optional
@@ -41,8 +57,7 @@ def eval_step(
 
     Returns
     -------
-    results : list of dicts
-        List of dictionaries with eval metrics computed for each meta-learner.
+    metric_values : dict of dicts
     """
     if sess is None:
         sess = tf.get_default_session()
@@ -52,28 +67,25 @@ def eval_step(
         if td.sampler and td.sampler.stateful:
             td.initialize()
 
-    # Sample from the task distribution.
-    feed_lists = [
-        td.sample_task_feed() for ml, td in zip(exp.meta_learners, exp.task_dists)
-    ]
-
     # Do evaluation.
-    results = []
-    for ml, feed_list in zip(exp.meta_learners, feed_lists):
-        results.append(collections.defaultdict(float))
+    metric_values = defaultdict(dict)
+    for ml, td, t in zip(exp.meta_learners, exp.task_dists, tasks):
+        # Compute predictions and labels.
+        preds_and_labels = []
         for _ in range(repetitions):
-            # Perform predictions with adapted models on the query sets.
-            preds_and_labels = sess.run(
+            # Sample from the task distribution.
+            feed_list = td.sample_task_feed()
+            # Predict query set labels using adapted model.
+            preds_and_labels_batch = sess.run(
                 ml.preds_and_labels, feed_dict=dict(feed_list), **kwargs
             )
-            # Evaluate predictions.
-            avg_num_correct = 0.0
-            for preds, labels in preds_and_labels:
-                avg_num_correct += np.mean(preds == labels)
-            results[-1]["acc"] += avg_num_correct / len(preds_and_labels)
-        results[-1]["acc"] /= repetitions
+            preds_and_labels.extend(preds_and_labels_batch)
+        # Compute compute metrics.
+        task_scope = f"{t.set_name}/{t.regime}"
+        for metric_name, metric_fn in metric_fns.items():
+            metric_values[task_scope][metric_name] = metric_fn(preds_and_labels)
 
-    return results
+    return metric_values
 
 
 def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
@@ -104,44 +116,77 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
         # Build and initialize.
         exp = utils.build_and_initialize(cfg=cfg, mode=common.ModeKeys.EVAL)
 
-        # Setup logging and saving.
-        writers = [
-            tf.summary.FileWriter(logdir=os.path.join(work_dir, task.log_dir))
-            for task in cfg[common.ModeKeys.EVAL].tasks
-        ]
-        accuracy_ph = tf.placeholder(tf.float32, shape=())
-        tf.summary.scalar("accuracy", accuracy_ph)
-        merged = tf.summary.merge_all()
+        # Build metrics.
+        metric_fns, metric_phs, summary_ops = build_metrics_and_summaries(
+            metrics=cfg.eval.metrics, tasks=cfg.eval.tasks
+        )
+
+        # Setup TensorBoard layout.
+        layout_summary = get_layout_summary(
+            metrics=cfg.eval.metrics, tasks=cfg.eval.tasks
+        )
+        writers = {}
+        for log_dir in sorted(set(t.log_dir for t in cfg.eval.tasks)):
+            writers[log_dir] = tf.summary.FileWriter(
+                logdir=os.path.join(work_dir, log_dir)
+            )
+            writers[log_dir].add_summary(layout_summary)
 
         # Run continuous eval.
-        step = 0
-        old_checkpoint = None
-        while step + 1 < cfg.train.max_steps:
-            # Get latest checkpoint.
-            latest_checkpoint = tf.train.latest_checkpoint(work_dir)
-
-            # If no change, wait and continue.
-            if latest_checkpoint == old_checkpoint:
-                time.sleep(cfg.eval.wait_time or 1)
-                continue
-
-            # Restore graph from the checkpoint.
+        for latest_checkpoint in tf.train.checkpoints_iterator(work_dir):
+            # Restore (partial) graph from the checkpoint.
             status = exp.checkpoint.restore(latest_checkpoint)
-            status.assert_consumed().run_restore_ops()
-            old_checkpoint = latest_checkpoint
+            status.assert_nontrivial_match().run_restore_ops()
 
             # Run evaluation.
-            results = eval_step(exp, repetitions=cfg.eval.repetitions, sess=sess)
+            metric_values = eval_step(
+                exp,
+                tasks=cfg.eval.tasks,
+                metric_fns=metric_fns,
+                repetitions=cfg.eval.repetitions,
+                sess=sess,
+            )
 
-            # Log results.
+            # Log results and build feed list for saving summaries.
+            # TODO: create a utility function for logging.
+            summary_feed_lists = defaultdict(list)
             checkpoint_name = os.path.basename(latest_checkpoint)
-            log = f"{'-' * 40}\n" f"evaluated: {checkpoint_name}"
+            log = f"{'-' * 50}\n" f"evaluated: {checkpoint_name}"
             step = int(checkpoint_name.split("-")[1])
-            for result, td in zip(results, exp.task_dists):
-                log += f"\n{td.name} acc: {100 * result['acc']:.2f}"
-            log += f"\n{'-' * 40}"
+            for m in cfg.eval.metrics:
+                for t in cfg.eval.tasks:
+                    task_scope = f"{t.set_name}/{t.regime}"
+                    # Add metric to the log.
+                    mean_value, ci_value = metric_values[task_scope][m.name]
+                    ci_delta = (ci_value[1] - ci_value[0]) / 2.0
+                    log += (
+                        f"\n{task_scope}/{m.name} (CI {m.ci:.0f}%):".ljust(35)
+                        + f"{mean_value: >5.2f} ± {ci_delta: >5.2f}"
+                    )
+                    # Add items to the summary feed list.
+                    mean_ph, lower_ph, upper_ph = metric_phs[task_scope][m.name]
+                    summary_feed_lists[t.log_dir].extend(
+                        [
+                            (mean_ph, mean_value),
+                            (lower_ph, ci_value[0]),
+                            (upper_ph, ci_value[1]),
+                        ]
+                    )
+            log += f"\n{'-' * 50}"
             logger.info(log)
-            for result, td, writer in zip(results, exp.task_dists, writers):
-                summary = sess.run(merged, feed_dict={accuracy_ph: result["acc"]})
-                writer.add_summary(summary, step)
+
+            # Log summaries.
+            for log_dir, writer in writers.items():
+                feed_dict = dict(summary_feed_lists[log_dir])
+                summaries = sess.run(summary_ops[log_dir], feed_dict=feed_dict)
+                for summary in summaries:
+                    writer.add_summary(summary, step)
                 writer.flush()
+
+            # Exit evaluation loop if done.
+            if step + 1 >= cfg.train.max_steps:
+                break
+
+        # Close summary writers.
+        for writer in writers.values():
+            writer.close()

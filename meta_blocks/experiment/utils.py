@@ -127,7 +127,7 @@ def build_and_initialize(cfg, mode=common.ModeKeys.TRAIN):
         input_types=data_source.data_types,
         num_classes=cfg[mode].meta_dataset.num_classes,
         network_builder=network_builder,
-        **cfg.model,
+        **cfg[mode].model,
     ).build()
 
     # Build optimizer.

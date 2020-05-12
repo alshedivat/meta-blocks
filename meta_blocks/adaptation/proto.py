@@ -17,7 +17,7 @@ tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
 
-class Proto(base.AdaptationStrategy):
+class Proto(base.MetaLearner):
     """Prototype-based model adaptation.
 
     Parameters
@@ -58,7 +58,9 @@ class Proto(base.AdaptationStrategy):
         # Inner loop.
         self.prototypes = None
 
-    def _build_adapted_model(self, *, prototypes=None, task_id=None):
+    # --- Methods. ---
+
+    def _get_adapted_model(self, *, prototypes=None, task_id=None):
         """Returns a model with the specified prototypes."""
         if prototypes is None:
             prototypes = self.prototypes[task_id]

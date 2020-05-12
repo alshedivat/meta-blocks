@@ -1,7 +1,7 @@
 """Common utility functions."""
 
 
-class ModeKeys(object):
+class ModeKeys:
     """Standard names for modes."""
 
     TRAIN = "train"

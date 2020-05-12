@@ -1,0 +1,8 @@
+meta_blocks:
+  network:
+    name: simple_cnn
+    hidden_sizes: [64, 64]
+    activation: relu
+    batch_norm:
+      center: true
+      scale: true

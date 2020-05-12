@@ -1,4 +1,4 @@
-"""Simple models."""
+"""Simple networks."""
 
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -12,10 +12,10 @@ tf.enable_resource_variables()
 
 
 def build_mlp(
-    output_size: int,
     input_shape: Tuple[int],
     input_type: str,
     *,
+    output_size: Optional[int] = None,
     hidden_sizes: Tuple[int],
     activation: str = "relu",
     batch_norm: Optional[Dict[str, Any]] = None,
@@ -41,17 +41,21 @@ def build_mlp(
         # Activation.
         x = tf.keras.layers.Activation(activation, name=f"activation{i}")(x)
     # Add a fully connected output layer.
-    x = tf.keras.layers.Dense(output_size, activation=output_activation, name="fc")(x)
+    if output_size is not None:
+        OutputLayer = tf.keras.layers.Dense(
+            output_size, activation=output_activation, name="fc"
+        )
+        x = OutputLayer(x)
     # Build and output the model.
     model = tf.keras.models.Model(inputs, x, name=name)
     return model
 
 
 def build_convnet(
-    output_size: int,
     input_shape: Tuple[int],
     input_type: str,
     *,
+    output_size: Optional[int] = None,
     filters: List[int],
     kernel_size: Union[int, Tuple[int]],
     conv2d_kwargs: Optional[Dict[str, Any]] = None,
@@ -87,16 +91,22 @@ def build_convnet(
         x = tf.keras.layers.Activation(activation, name=f"activation{i}")(x)
         # Pooling (optional).
         if pooling == "avg":
-            x = tf.keras.layers.AvgPool2D(name=f"avgpool{i}", **(pooling_kwargs or {}))(
-                x
+            PoolingLayer = tf.keras.layers.AvgPool2D(
+                name=f"avgpool{i}", **(pooling_kwargs or {})
             )
+            x = PoolingLayer(x)
         elif pooling == "max":
-            x = tf.keras.layers.MaxPool2D(name=f"maxpool{i}", **(pooling_kwargs or {}))(
-                x
+            PoolingLayer = tf.keras.layers.MaxPool2D(
+                name=f"maxpool{i}", **(pooling_kwargs or {})
             )
+            x = PoolingLayer(x)
     x = tf.keras.layers.Flatten(name="flatten")(x)
-    # Add a fully connected layer.
-    x = tf.keras.layers.Dense(output_size, activation=output_activation, name="fc")(x)
+    # Add a fully connected layer, if necessary.
+    if output_size is not None:
+        OutputLayer = tf.keras.layers.Dense(
+            output_size, activation=output_activation, name="fc"
+        )
+        x = OutputLayer(x)
     # Build and output the model.
     model = tf.keras.models.Model(inputs, x, name=name)
     return model

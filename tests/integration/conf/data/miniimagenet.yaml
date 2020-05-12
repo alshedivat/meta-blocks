@@ -2,5 +2,3 @@ data:
   name: miniimagenet
   source:
     data_dir: ???
-    max_size: 10
-    shuffle_data: true

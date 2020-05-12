@@ -1,0 +1,19 @@
+# Proto adaptation at training and test time.
+meta_blocks:
+  train:
+    meta_dataset:
+      batch_size: 8
+      num_classes: 30
+    model:
+      name: proto
+    adapt:
+      name: proto
+    optimizer:
+      name: adam
+      learning_rate: 0.001
+      decay: 0.0005
+  eval:
+    model:
+      name: proto
+    adapt:
+      name: proto

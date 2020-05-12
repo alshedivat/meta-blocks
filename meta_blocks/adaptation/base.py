@@ -5,7 +5,7 @@ import logging
 
 import tensorflow.compat.v1 as tf
 
-__all__ = ["AdaptationStrategy"]
+__all__ = ["MetaLearner"]
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +14,8 @@ tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
 
-class AdaptationStrategy(abc.ABC):
-    """Base base class for meta-trainable adaptation strategies.
+class MetaLearner(abc.ABC):
+    """The base class for learning-to-learn algorithms.
 
     Parameters
     ----------
@@ -50,15 +50,7 @@ class AdaptationStrategy(abc.ABC):
         self.name = name or self.__class__.__name__
         self.built = False
 
-    @abc.abstractmethod
-    def _build_adapted_model(self, **kwargs):
-        """Builds adapted model graph. Must be implemented in a subclass."""
-        raise NotImplementedError("Abstract Method")
-
-    @abc.abstractmethod
-    def _build_adaptation(self):
-        """Builds the adaptation graph. Must be implemented in a subclass."""
-        raise NotImplementedError("Abstract Method")
+    # --- Methods. ---
 
     def _build_meta_losses(self):
         """Builds meta-losses for each task."""
@@ -66,7 +58,7 @@ class AdaptationStrategy(abc.ABC):
         for i, task in enumerate(self.tasks):
             inputs, labels = task.query_tensors
             with tf.name_scope(f"task{i}"):
-                adapted_model = self._build_adapted_model(task_id=i)
+                adapted_model = self._get_adapted_model(task_id=i)
                 loss = adapted_model.build_loss(inputs, labels)
                 meta_losses.append(loss)
         return meta_losses
@@ -77,7 +69,7 @@ class AdaptationStrategy(abc.ABC):
         for i, task in enumerate(self.tasks):
             query_inputs, query_labels = task.query_tensors
             with tf.name_scope(f"task{i}"):
-                adapted_model = self._build_adapted_model(task_id=i)
+                adapted_model = self._get_adapted_model(task_id=i)
                 loss = adapted_model.build_loss(query_inputs, query_labels)
                 query_preds = adapted_model.build_predictions(query_inputs)
                 preds_and_labels.append((query_preds, query_labels))
@@ -107,3 +99,13 @@ class AdaptationStrategy(abc.ABC):
                 ) = self._build_meta_learn()
             logger.debug("Done.")
         return self
+
+    # --- Abstract methods. ---
+
+    @abc.abstractmethod
+    def _get_adapted_model(self, *, task_id=None, **kwargs):
+        """Returns an adapted model. Must be implemented in a subclass."""
+
+    @abc.abstractmethod
+    def _build_adaptation(self):
+        """Builds the adaptation graph. Must be implemented in a subclass."""
