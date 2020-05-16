@@ -11,12 +11,12 @@ import tensorflow.compat.v1 as tf
 from omegaconf import DictConfig
 
 from meta_blocks import common
+from meta_blocks.adaptation.base import MetaLearner
 from meta_blocks.experiment import utils
 from meta_blocks.experiment.metrics import (
     build_metrics_and_summaries,
     get_layout_summary,
 )
-from meta_blocks.experiment.utils import Experiment
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ tf.enable_resource_variables()
 
 
 def eval_step(
-    exp: Experiment,
+    meta_learner: MetaLearner,
     *,
     tasks: Tuple[DictConfig, ...],
     metric_fns: Dict[str, Callable],
@@ -38,9 +38,7 @@ def eval_step(
 
     Parameters
     ----------
-    exp : Experiment
-        The object that represents the experiment.
-        Contains `meta_learners`, `samplers`, and `task_dists`.
+    meta_learner : MetaLearner
 
     tasks : tuple of DictConfigs
         Configurations for the evaluation tasks.
@@ -63,27 +61,32 @@ def eval_step(
         sess = tf.get_default_session()
 
     # Re-initialize task distributions if samplers are stateful.
-    for td in exp.task_dists:
+    for td in meta_learner.task_dists:
         if td.sampler and td.sampler.stateful:
             td.initialize()
 
     # Do evaluation.
     metric_values = defaultdict(dict)
-    for ml, td, t in zip(exp.meta_learners, exp.task_dists, tasks):
-        # Compute predictions and labels.
-        preds_and_labels = []
+    for preds_and_labels_batch_tf, td, t in zip(
+        meta_learner.preds_and_labels, meta_learner.task_dists, tasks
+    ):
+        # Compute preds_and_labels and labels.
+        preds_and_labels_np = []
         for _ in range(repetitions):
             # Sample from the task distribution.
             feed_list = td.sample_task_feed()
             # Predict query set labels using adapted model.
-            preds_and_labels_batch = sess.run(
-                ml.preds_and_labels, feed_dict=dict(feed_list), **kwargs
+            # TODO: compute all pre/post metrics on support/query.
+            preds_and_labels_batch_np = sess.run(
+                [pl["post"]["query"] for pl in preds_and_labels_batch_tf],
+                feed_dict=dict(feed_list),
+                **kwargs,
             )
-            preds_and_labels.extend(preds_and_labels_batch)
+            preds_and_labels_np.extend(preds_and_labels_batch_np)
         # Compute compute metrics.
         task_scope = f"{t.set_name}/{t.regime}"
         for metric_name, metric_fn in metric_fns.items():
-            metric_values[task_scope][metric_name] = metric_fn(preds_and_labels)
+            metric_values[task_scope][metric_name] = metric_fn(preds_and_labels_np)
 
     return metric_values
 
@@ -114,7 +117,13 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
 
     with utils.session(**session_kwargs) as sess:
         # Build and initialize.
-        exp = utils.build_and_initialize(cfg=cfg, mode=common.ModeKeys.EVAL)
+        meta_learner = utils.build_and_initialize(cfg, mode=common.ModeKeys.EVAL)
+
+        # Setup checkpoint.
+        checkpoint = tf.train.Checkpoint(
+            model_state=meta_learner.model.trainable_parameters,
+            optimizer=meta_learner.optimizer,
+        )
 
         # Build metrics.
         metric_fns, metric_phs, summary_ops = build_metrics_and_summaries(
@@ -134,13 +143,13 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
 
         # Run continuous eval.
         for latest_checkpoint in tf.train.checkpoints_iterator(work_dir):
-            # Restore (partial) graph from the checkpoint.
-            status = exp.checkpoint.restore(latest_checkpoint)
-            status.assert_nontrivial_match().run_restore_ops()
+            # Restore graph from the checkpoint.
+            status = checkpoint.restore(latest_checkpoint)
+            status.assert_consumed().run_restore_ops()
 
             # Run evaluation.
             metric_values = eval_step(
-                exp,
+                meta_learner,
                 tasks=cfg.eval.tasks,
                 metric_fns=metric_fns,
                 repetitions=cfg.eval.repetitions,

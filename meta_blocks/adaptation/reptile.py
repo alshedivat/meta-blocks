@@ -2,12 +2,14 @@
 
 import collections
 import logging
+from typing import Callable, List, Optional
 
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import common
 from meta_blocks.adaptation import maml
 from meta_blocks.adaptation import maml_utils as utils
+from meta_blocks.tasks.base import Task, TaskDistribution
 
 __all__ = ["Reptile"]
 
@@ -26,14 +28,14 @@ class Reptile(maml.Maml):
 
     Parameters
     ----------
-    model : Model
-        The model being adapted.
+    model_builder : Callable
+        A builder function for the model.
 
     optimizer : Optimizer
         The optimizer to use for meta-training.
 
-    tasks : tuple of Tasks
-        A tuple of tasks that provide access to data.
+    task_dists : list of TaskDistributions
+        A list of task distributions with which meta-learner interacts.
 
     batch_size: int, optional
         Batch size used at adaptation time.
@@ -47,26 +49,26 @@ class Reptile(maml.Maml):
     mode : str, optional (default: common.ModeKeys.TRAIN)
         Defines the mode of the computation graph (TRAIN or EVAL).
 
-    name : str, optional (default: "Reptile")
+    name : str, optional
         Name of the adaptation method.
     """
 
     def __init__(
         self,
-        model,
-        optimizer,
-        tasks,
-        batch_size=None,
-        num_inner_steps=10,
-        inner_optimizer=None,
-        mode=common.ModeKeys.TRAIN,
-        name=None,
+        model_builder: Callable,
+        optimizer: tf.train.Optimizer,
+        task_dists: List[TaskDistribution],
+        batch_size: Optional[int] = None,
+        num_inner_steps: int = 10,
+        inner_optimizer: Optional[dict] = None,
+        mode: str = common.ModeKeys.TRAIN,
+        name: Optional[str] = None,
         **_unused_kwargs,
     ):
         super(Reptile, self).__init__(
-            model=model,
+            model_builder=model_builder,
             optimizer=optimizer,
-            tasks=tasks,
+            task_dists=task_dists,
             batch_size=batch_size,
             num_inner_steps=num_inner_steps,
             inner_optimizer=inner_optimizer,
@@ -77,58 +79,56 @@ class Reptile(maml.Maml):
 
     # --- Methods. ---
 
-    def _build_meta_learn(self):
+    def _build_meta_train_ops(self):
         """Builds meta-update op."""
         # Reptile does not have a proper meta-loss.
-        meta_loss = tf.constant(-1.0)
-        # Compute meta-gradients and predictions.
-        preds_and_labels = []
+        self.meta_losses = [tf.constant(-1.0) for _ in self.task_dists]
+        # Compute Reptile's meta-gradients.
+        # Note: meta-gradients are computed as the difference between the
+        #       initial and adapted model parameters.
         meta_grads = collections.defaultdict(list)
-        for i, task in enumerate(self.tasks):
-            query_inputs, query_labels = task.query_tensors
-            with tf.name_scope(f"task{i}"):
-                for name, value in self.initial_parameters.items():
-                    value_upd = self.adapted_parameters[i][name]
-                    meta_grads[value].append(value - value_upd)
-                adapted_model = self._get_adapted_model(task_id=i)
-                query_preds = adapted_model.build_predictions(query_inputs)
-                preds_and_labels.append((query_preds, query_labels))
+        for td, td_adapted_models in zip(self.task_dists, self.adapted_models):
+            with tf.name_scope(td.name):
+                for task, adapted_model in zip(td.task_batch, td_adapted_models):
+                    with tf.name_scope(task.name):
+                        initial_params = self.model.trainable_parameters
+                        adapted_params = adapted_model.trainable_parameters
+                        for p, p_upd in zip(initial_params, adapted_params):
+                            meta_grads[p].append(p - p_upd)
         # Build meta-train op.
-        meta_train_op = self.optimizer.apply_gradients(
+        self.meta_train_op = self.optimizer.apply_gradients(
             [(tf.reduce_mean(g, axis=0), v) for v, g in meta_grads.items()]
         )
-        return meta_loss, meta_train_op, preds_and_labels
 
-    def _build_adaptation(self):
-        """Builds the adaptation loop."""
+    def build_adapted_model(self, task: Task):
+        """Builds a model with gradient-based adapted parameters."""
         # Initial parameters.
-        self.initial_parameters = {}
-        for param in self.model.initial_parameters:
+        initial_parameters = {}
+        for param in self.model.trainable_parameters:
             canonical_name = utils.canonical_variable_name(
                 param.name, outer_scope=self.model.name
             )
-            self.initial_parameters[canonical_name] = param
+            initial_parameters[canonical_name] = param
         # Build adapted parameters.
-        self.adapted_parameters = []
-        for i, task in enumerate(self.tasks):
-            inputs, labels = task.support_tensors
-            with tf.name_scope(f"task{i}"):
-                # Reptile does not distinguish between support and query sets.
-                if self.mode == common.ModeKeys.TRAIN:
-                    query_inputs, query_labels = task.query_tensors
-                    inputs = tf.concat([inputs, query_inputs], axis=0)
-                    labels = tf.concat([labels, query_labels], axis=0)
-                self.adapted_parameters.append(
-                    tf.cond(
-                        pred=tf.not_equal(tf.size(labels), 0),
-                        true_fn=lambda: self._build_adapted_parameters(
-                            inputs=inputs,
-                            labels=labels,
-                            initial_parameters=self.initial_parameters,
-                            num_steps=self.num_inner_steps,
-                            back_prop=False,
-                        ),
-                        # If support data is empty, use initial parameters.
-                        false_fn=lambda: self.initial_parameters,
-                    )
-                )
+        inputs, labels = task.support_tensors
+        # Reptile does not distinguish between support and query sets.
+        if self.mode == common.ModeKeys.TRAIN:
+            query_inputs, query_labels = task.query_tensors
+            inputs = tf.concat([inputs, query_inputs], axis=0)
+            labels = tf.concat([labels, query_labels], axis=0)
+        adapted_parameters = tf.cond(
+            pred=tf.not_equal(tf.size(labels), 0),
+            true_fn=lambda: self._build_adapted_parameters(
+                inputs=inputs,
+                labels=labels,
+                initial_parameters=initial_parameters,
+                num_steps=self.num_inner_steps,
+                back_prop=False,
+            ),
+            # If support data is empty, use initial parameters.
+            false_fn=lambda: initial_parameters,
+        )
+        # Build adapted model.
+        with utils.custom_make_variable(adapted_parameters, self.model.name):
+            adapted_model = self.model_builder()
+        return adapted_model

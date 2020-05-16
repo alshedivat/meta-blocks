@@ -37,7 +37,9 @@ def build_mlp(
         x = tf.keras.layers.Dense(units=hidden_size, name=f"fc{i}")(x)
         # Batch norm (optional).
         if batch_norm is not None:
-            x = tf.keras.layers.BatchNormalization(**batch_norm, name=f"bn{i}")(x)
+            x = tf.keras.layers.BatchNormalization(**batch_norm, name=f"bn{i}")(
+                x, training=True
+            )
         # Activation.
         x = tf.keras.layers.Activation(activation, name=f"activation{i}")(x)
     # Add a fully connected output layer.
@@ -86,7 +88,9 @@ def build_convnet(
         )(x)
         # Batch norm (optional).
         if batch_norm is not None:
-            x = tf.keras.layers.BatchNormalization(**batch_norm, name=f"bn{i}")(x)
+            x = tf.keras.layers.BatchNormalization(**batch_norm, name=f"bn{i}")(
+                x, training=True
+            )
         # Activation.
         x = tf.keras.layers.Activation(activation, name=f"activation{i}")(x)
         # Pooling (optional).

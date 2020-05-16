@@ -1,12 +1,15 @@
 """Prototypical adaptation strategies."""
 
+import copy
 import logging
+from typing import Callable, List, Optional
 
 import tensorflow.compat.v1 as tf
 
 from meta_blocks import common
 from meta_blocks.adaptation import base
 from meta_blocks.adaptation import proto_utils as utils
+from meta_blocks.tasks.base import Task, TaskDistribution
 
 __all__ = ["Proto"]
 
@@ -22,14 +25,14 @@ class Proto(base.MetaLearner):
 
     Parameters
     ----------
-    model : Model
-        The model being adapted.
+    model_builder : Callable
+        A builder function for the model.
 
     optimizer : Optimizer
         The optimizer to use for meta-training.
 
-    tasks : tuple of Tasks
-        A tuple of tasks that provide access to data.
+    task_dists : list of TaskDistributions
+        A list of task distributions with which meta-learner interacts.
 
     mode : str, optional (default: common.ModeKeys.TRAIN)
         Defines the mode of the computation graph (TRAIN or EVAL).
@@ -40,32 +43,22 @@ class Proto(base.MetaLearner):
 
     def __init__(
         self,
-        model,
-        optimizer,
-        tasks,
-        mode=common.ModeKeys.TRAIN,
-        name=None,
+        model_builder: Callable,
+        optimizer: tf.train.Optimizer,
+        task_dists: List[TaskDistribution],
+        mode: str = common.ModeKeys.TRAIN,
+        name: Optional[str] = None,
         **_unused_kwargs,
     ):
         super(Proto, self).__init__(
-            model=model,
+            model_builder=model_builder,
             optimizer=optimizer,
-            tasks=tasks,
+            task_dists=task_dists,
             mode=mode,
             name=(name or self.__class__.__name__),
         )
 
-        # Inner loop.
-        self.prototypes = None
-
     # --- Methods. ---
-
-    def _get_adapted_model(self, *, prototypes=None, task_id=None):
-        """Returns a model with the specified prototypes."""
-        if prototypes is None:
-            prototypes = self.prototypes[task_id]
-        self.model.prototypes = prototypes
-        return self.model
 
     def _build_prototypes(
         self,
@@ -82,6 +75,7 @@ class Proto(base.MetaLearner):
         # Note: We assume that the number of given data points is proportional
         #       to the number of classes in the data, so we can split it into
         #       the corresponding number of batches.
+        # TODO: make it work with imbalancend classes.
         num_steps = num_classes
         # <int32> [num_steps, batch_size].
         batched_indices = tf.stack(tf.split(indices, num_steps, axis=0))
@@ -121,25 +115,26 @@ class Proto(base.MetaLearner):
         # <float32> [num_classes, emb_dim].
         return tf.math.divide(cum_prototypes, cum_class_counts_eps)
 
-    def _build_adaptation(self):
-        """Builds the adaptation loop."""
-        self.prototypes = []
-        for i, task in enumerate(self.tasks):
-            # Build prototypes.
-            inputs, labels = task.support_tensors
-            self.prototypes.append(
-                tf.cond(
-                    pred=tf.not_equal(tf.size(labels), 0),
-                    true_fn=lambda: self._build_prototypes(
-                        inputs=inputs,
-                        labels=labels,
-                        num_classes=task.num_ways,
-                        embedding_dim=self.model.embedding_dim,
-                        back_prop=(self.mode == common.ModeKeys.TRAIN),
-                    ),
-                    # If no support data, use random prototypes.
-                    false_fn=lambda: tf.random.normal(
-                        shape=(task.num_ways, self.model.embedding_dim), stddev=1.0
-                    ),
-                )
-            )
+    def build_adapted_model(self, task: Task):
+        """Builds a model with task-specific prototypes."""
+        # Build prototypes.
+        inputs, labels = task.support_tensors
+        prototypes = tf.cond(
+            pred=tf.not_equal(tf.size(labels), 0),
+            true_fn=lambda: self._build_prototypes(
+                inputs=inputs,
+                labels=labels,
+                num_classes=task.num_ways,
+                embedding_dim=self.model.embedding_dim,
+                back_prop=(self.mode == common.ModeKeys.TRAIN),
+            ),
+            # If no support data, use random prototypes.
+            false_fn=lambda: tf.random.normal(
+                shape=(task.num_ways, self.model.embedding_dim), stddev=1.0
+            ),
+        )
+        # Build adapted model.
+        assert self.model.prototypes is None
+        adapted_model = copy.copy(self.model)
+        adapted_model.prototypes = prototypes
+        return adapted_model

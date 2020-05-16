@@ -1,6 +1,5 @@
 """Utility functions for running experiments."""
 
-import collections
 import contextlib
 import datetime
 import logging
@@ -25,23 +24,6 @@ logger = logging.getLogger(__name__)
 # Transition to V2 will happen in stages.
 tf.disable_v2_behavior()
 tf.enable_resource_variables()
-
-
-class Experiment(
-    collections.namedtuple("Experiment", ("checkpoint", "meta_learners", "task_dists"))
-):
-    """Represents built entities for the Experiment.
-
-    Parameters
-    ----------
-    checkpoint : tf.train.Checkpoint
-
-    meta_learners : list of meta-learners
-
-    task_dists : list of task distributions
-    """
-
-    pass
 
 
 @contextlib.contextmanager
@@ -110,67 +92,63 @@ def build_and_initialize(cfg, mode=common.ModeKeys.TRAIN):
         name=cfg.data.name, **cfg.data.source
     ).build()
 
-    # Build meta-datasets.
-    meta_datasets = {
-        task.set_name: datasets.get_meta_dataset(
+    # Build task distributions.
+    task_dists = []
+    for task in cfg[mode].tasks:
+        # Build a meta-dataset.
+        meta_dataset = datasets.get_meta_dataset(
             name=cfg.data.name,
             data_sources=data_source[task.set_name],
             **cfg[mode].meta_dataset,
         ).build()
-        for task in cfg[mode].tasks
-    }
+        # Build a task distribution.
+        task_dist = tasks.get_distribution(
+            meta_dataset=meta_dataset,
+            name_suffix=task.log_dir.replace("/", "_"),
+            sampler_config=task.sampler,
+            **task.config,
+        ).build()
+        task_dists.append(task_dist)
 
     # Build model.
     network_builder = networks.get(**cfg.network)
-    model = models.get(
+    model_builder = models.get(
         input_shapes=data_source.data_shapes,
         input_types=data_source.data_types,
         num_classes=cfg[mode].meta_dataset.num_classes,
         network_builder=network_builder,
         **cfg[mode].model,
-    ).build()
+    )
 
     # Build optimizer.
     optimizer = optimizers.get(**cfg.train.optimizer)
 
-    # Build checkpoint.
-    checkpoint = tf.train.Checkpoint(
-        model_state=model.initial_parameters, optimizer=optimizer
+    # Build meta-learner.
+    meta_learner = adaptation.get(
+        model_builder=model_builder,
+        optimizer=optimizer,
+        task_dists=task_dists,
+        mode=mode,
+        **cfg[mode].adapt,
     )
 
-    # Build task distributions.
-    task_dists = [
-        tasks.get_distribution(
-            meta_dataset=meta_datasets[task.set_name],
-            name_suffix=task.log_dir.replace("/", "_"),
-            sampler_config=task.sampler,
-            **task.config,
-        ).build()
-        for task in cfg[mode].tasks
-    ]
-
-    # Build meta-learners.
-    meta_learners = [
-        adaptation.get(
-            model=model,
-            optimizer=optimizer,
-            tasks=task_dist.task_batch,
-            mode=mode,
-            **cfg[mode].adapt,
-        ).build()
-        for task, task_dist in zip(cfg[mode].tasks, task_dists)
-    ]
-
-    # Run global init.
-    sess.run(tf.global_variables_initializer())
+    # Variable initialization.
+    if mode == common.ModeKeys.TRAIN:
+        # Initialize all the variables in the graph.
+        sess.run(tf.global_variables_initializer())
+    else:  # mode == common.ModeKeys.EVAL:
+        # Initialize only non-trainable variables.
+        # Note: Trainable variables must be loaded from a checkpoint.
+        #       Being explicit about which variables are initialized is better
+        #       prevents weird side effects when we are unaware of some created
+        #       variables that are silently initialized at evaluation time.
+        sess.run(tf.variables_initializer(meta_learner.non_trainable_parameters))
 
     # Initialize task distributions.
     for task_dist in task_dists:
         task_dist.initialize()
 
-    return Experiment(
-        checkpoint=checkpoint, meta_learners=meta_learners, task_dists=task_dists
-    )
+    return meta_learner
 
 
 class ExperimentFormatter(colorlog.ColoredFormatter):
