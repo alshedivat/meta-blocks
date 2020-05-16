@@ -2,7 +2,7 @@
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 50
+      batch_size: 32
       num_classes: 5
     tasks:
       - set_name: train
@@ -17,12 +17,12 @@ meta_blocks:
     save_interval: 100
   eval:
     meta_dataset:
-      batch_size: 50
+      batch_size: 32
       num_classes: 5
     metrics:
       - name: accuracy
         ci: 95
-    repetitions: 1
+    repetitions: 4
     tasks:
       # Train.
       - set_name: train
@@ -30,9 +30,9 @@ meta_blocks:
         log_dir: eval/train
         config:
           name: limited_supervised
-          num_query_shots: 1
+          num_query_shots: 5
           num_support_shots: 1
-          max_labeled_points: 1000
+          max_labeled_points: 3000
         sampler:
           name: uniform
           stratified: true
@@ -41,7 +41,7 @@ meta_blocks:
         log_dir: eval/train
         config:
           name: limited_supervised
-          num_query_shots: 1
+          num_query_shots: 5
           num_support_shots: 5
           max_labeled_points: 5000
         sampler:
@@ -53,9 +53,9 @@ meta_blocks:
         log_dir: eval/valid
         config:
           name: limited_supervised
-          num_query_shots: 1
+          num_query_shots: 5
           num_support_shots: 1
-          max_labeled_points: 1000
+          max_labeled_points: 3000
         sampler:
           name: uniform
           stratified: true
@@ -64,7 +64,7 @@ meta_blocks:
         log_dir: eval/valid
         config:
           name: limited_supervised
-          num_query_shots: 1
+          num_query_shots: 5
           num_support_shots: 5
           max_labeled_points: 5000
         sampler:
@@ -76,9 +76,9 @@ meta_blocks:
         log_dir: eval/test
         config:
           name: limited_supervised
-          num_query_shots: 1
+          num_query_shots: 5
           num_support_shots: 1
-          max_labeled_points: 1000
+          max_labeled_points: 3000
         sampler:
           name: uniform
           stratified: true
@@ -87,7 +87,7 @@ meta_blocks:
         log_dir: eval/test
         config:
           name: limited_supervised
-          num_query_shots: 1
+          num_query_shots: 5
           num_support_shots: 5
           max_labeled_points: 5000
         sampler:

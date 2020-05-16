@@ -2,7 +2,7 @@
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 50
+      batch_size: 32
       num_classes: 20
     tasks:
       - set_name: train
@@ -13,16 +13,16 @@ meta_blocks:
           num_query_shots: 1
           num_support_shots: 1
     max_steps: 20000
-    log_interval: 10
-    save_interval: 100
+    log_interval: 50
+    save_interval: 200
   eval:
     meta_dataset:
-      batch_size: 50
+      batch_size: 32
       num_classes: 20
     metrics:
       - name: accuracy
         ci: 95
-    repetitions: 2
+    repetitions: 4
     tasks:
       # Train.
       - set_name: train

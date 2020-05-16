@@ -5,6 +5,7 @@ meta_blocks:
       name: feed_forward
     adapt:
       name: reptile
+      batch_size: 20
       num_inner_steps: 10
       inner_optimizer:
         name: sgd

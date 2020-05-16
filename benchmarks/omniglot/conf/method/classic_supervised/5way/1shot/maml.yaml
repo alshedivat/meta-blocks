@@ -9,17 +9,17 @@ meta_blocks:
       num_inner_steps: 5
       inner_optimizer:
         name: sgd
-        learning_rate: 0.002
+        learning_rate: 0.1
     optimizer:
       name: adam
-      learning_rate: 0.005
+      learning_rate: 0.001
   eval:
     model:
       name: feed_forward
     adapt:
       name: maml
       first_order: false
-      num_inner_steps: 10
+      num_inner_steps: 5
       inner_optimizer:
         name: sgd
-        learning_rate: 0.002
+        learning_rate: 0.1

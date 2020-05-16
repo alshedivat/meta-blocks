@@ -5,13 +5,23 @@ meta_blocks:
       name: feed_forward
     adapt:
       name: reptile
-      num_inner_steps: 10
+      batch_size: 10
+      num_inner_steps: 5
       inner_optimizer:
         name: sgd
-        learning_rate: 0.0005
+        learning_rate: 0.001
     optimizer:
       name: sgd
       learning_rate: 1.0
+    tasks:
+      - set_name: train
+        regime: 10shot
+        log_dir: train
+        config:
+          name: classic_supervised
+          num_query_shots: 1
+          num_support_shots: 10
+    max_steps: 100000
   eval:
     model:
       name: feed_forward
@@ -20,4 +30,4 @@ meta_blocks:
       num_inner_steps: 50
       inner_optimizer:
         name: sgd
-        learning_rate: 0.0005
+        learning_rate: 0.001
