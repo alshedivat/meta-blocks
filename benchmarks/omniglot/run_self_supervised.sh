@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 METHOD=maml
-BACKBONE=simple_cnn
+BACKBONE=conv4
 DATASET=omniglot
 NUM_CLASSES=5
 
