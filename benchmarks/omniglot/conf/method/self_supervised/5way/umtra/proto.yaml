@@ -11,7 +11,7 @@ meta_blocks:
     optimizer:
       name: adam
       learning_rate: 0.001
-      decay: 0.0005
+      decay: 0.00025
   eval:
     model:
       name: proto

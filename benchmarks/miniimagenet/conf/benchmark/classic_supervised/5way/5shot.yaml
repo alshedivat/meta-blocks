@@ -2,7 +2,7 @@
 meta_blocks:
   train:
     meta_dataset:
-      batch_size: 20
+      batch_size: 16
       num_classes: 5
     tasks:
       - set_name: train
@@ -10,19 +10,19 @@ meta_blocks:
         log_dir: train
         config:
           name: classic_supervised
-          num_query_shots: 1
+          num_query_shots: 5
           num_support_shots: 5
-    max_steps: 20000
-    log_interval: 10
-    save_interval: 100
+    max_steps: 50000
+    log_interval: 50
+    save_interval: 200
   eval:
     meta_dataset:
-      batch_size: 5
+      batch_size: 8
       num_classes: 5
     metrics:
       - name: accuracy
         ci: 95
-    repetitions: 10
+    repetitions: 20
     tasks:
       # Train.
       - set_name: train
