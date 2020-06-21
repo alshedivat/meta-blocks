@@ -1,5 +1,7 @@
 """A collection of utility functions for sampling."""
 
+from typing import Optional, Union
+
 import tensorflow.compat.v1 as tf
 
 # Transition to V2 will happen in stages.
@@ -7,7 +9,12 @@ tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
 
-def select_indices(size: int, scores: tf.Tensor, indices=None, soft=False) -> tf.Tensor:
+def select_indices(
+    size: Union[int, tf.Tensor],
+    scores: tf.Tensor,
+    indices: Optional[tf.Tensor] = None,
+    soft: bool = False,
+) -> tf.Tensor:
     """Selects indices proportional to the scores.
 
     If `soft=True`, then top-k indices are selected "softly" via Gumbel softmax.
@@ -15,10 +22,10 @@ def select_indices(size: int, scores: tf.Tensor, indices=None, soft=False) -> tf
 
     Parameters
     ----------
-    size : int
+    size : Tensor <int32> []
         Number of samples to label.
 
-    scores : Tensor <float32> [num_samples]
+    scores : Tensor <float32> [None]
         A vector of scores that are used to select which sample to label.
 
     indices : Tensor <int32> [num_instances], optional
@@ -34,6 +41,7 @@ def select_indices(size: int, scores: tf.Tensor, indices=None, soft=False) -> tf
     -------
         selected_indices : Tensor <int32> [size]
     """
+    size = tf.convert_to_tensor(size, dtype=tf.int32)
     if soft:
         uniform_samples = tf.random.uniform(tf.shape(scores))
         z = -tf.math.log(-tf.math.log(uniform_samples))
@@ -47,27 +55,27 @@ def select_indices(size: int, scores: tf.Tensor, indices=None, soft=False) -> tf
 
 
 def select_indices_stratified(
-    size: int,
+    size: Union[int, tf.Tensor],
     scores: tf.Tensor,
     clusters: tf.Tensor,
-    indices=None,
-    soft=False,
-    parallel_iterations=8,
+    indices: Optional[tf.Tensor] = None,
+    soft: bool = False,
+    parallel_iterations: int = 8,
 ) -> tf.Tensor:
     """Selects indices proportional to the scores stratified by cluster.
 
     Parameters
     ----------
-    size : int
+    size : Tensor <int32> []
         Number of samples to label.
 
-    scores : Tensor <float32> [num_samples]
+    scores : Tensor <float32> [None]
         A vector of scores that are used to select which sample to label.
 
-    clusters : Tensor <int32> [num_samples]
+    clusters : Tensor <int32> [None]
         A vector of cluster indices used for sampling stratification.
 
-    indices : Tensor <int32> [num_instances], optional
+    indices : Tensor <int32> [None], optional
         A vector of absolute indices of the samples in a larger collection.
         If not None, the method returns `selected_indices` from `indices`.
         Otherwise, `selected_indices` are relative.
@@ -83,6 +91,7 @@ def select_indices_stratified(
     -------
         selected_indices : Tensor <int32> [size]
     """
+    size = tf.convert_to_tensor(size, dtype=tf.int32)
     # size_per_cluster: <int32> [num_unique_clusters].
     # unique_clusters: <int32> [num_unique_clusters].
     size_per_cluster, unique_clusters = _stratify_by_cluster(
@@ -138,7 +147,7 @@ def _stratify_by_cluster(size, clusters, parallel_iterations=8):
     ----------
     size : int
 
-    clusters : Tensor <float32> [num_samples]
+    clusters : Tensor <float32> [None]
 
     parallel_iterations : int, optional (default: 8)
         A parameter provided to the internal tf.while_loop.

@@ -16,18 +16,14 @@ class Sampler(abc.ABC):
 
     stateful = False
 
-    def __init__(self, stratified: bool = False, name: Optional[str] = None):
+    def __init__(self, name: Optional[str] = None):
         """Instantiates a Sampler.
 
         Parameters
         ----------
-        stratified : bool, optional (default=False)
-            If set to True, use stratification.
-
         name : str, optional (default="Sampler")
             The name of the sampler.
         """
-        self.stratified = stratified
         self.name = name
 
         self._built = False

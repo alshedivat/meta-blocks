@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 import numpy as np
 
 from meta_blocks.samplers import base
-from meta_blocks.tasks.supervised import SupervisedTask
+from meta_blocks.tasks.base import TaskDistribution
 
 __all__ = ["UniformSampler"]
 
@@ -16,9 +16,8 @@ class UniformSampler(base.Sampler):
     stateful = False
 
     def __init__(self, stratified=False, name: Optional[str] = None, **_unused_kwargs):
-        super(UniformSampler, self).__init__(
-            stratified=stratified, name=(name or self.__class__.__name__)
-        )
+        super(UniformSampler, self).__init__(name=(name or self.__class__.__name__))
+        self.stratified = stratified
 
         # Random state must be set globally.
         self._rng = np.random
@@ -28,9 +27,9 @@ class UniformSampler(base.Sampler):
 
     # --- Methods. ---
 
-    def _build(self, tasks: Tuple[SupervisedTask], **_unused_kwargs):
+    def _build(self, *, task_dist: TaskDistribution, **_unused_kwargs):
         """Builds a tuple of selected indices tensors."""
-        self.tasks = tasks
+        self.tasks = task_dist.task_batch
 
     def select_labeled(self, size: int, **_unused_kwargs) -> Tuple[np.ndarray]:
         """Return an actively selected labeled data points from the dataset."""
