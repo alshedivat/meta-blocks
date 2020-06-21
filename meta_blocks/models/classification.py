@@ -247,13 +247,13 @@ class FeedForwardModel(ClassificationModel):
         embeddings = None
         if self._body_network is not None:
             # Build embeddings: <float32> [None, embedding_dim].
-            embeddings = self._body_network(inputs)
+            embeddings = self._body_network(inputs, training=True)
         return embeddings
 
     def _build_logits(self, inputs: tf.Tensor) -> tf.Tensor:
         """Builds a part of the model graph for computing output logits."""
         # Build logits: <float32> [None, num_classes].
-        return self.network(inputs)
+        return self.network(inputs, training=True)
 
 
 class ProtoModel(ClassificationModel):
@@ -357,7 +357,7 @@ class ProtoModel(ClassificationModel):
     def _build_embeddings(self, inputs: tf.Tensor) -> tf.Tensor:
         """Builds a part of the model graph for computing input embeddings."""
         # Build embeddings: <float32> [None, embedding_dim].
-        return self.network(inputs)
+        return self.network(inputs, training=True)
 
     def _build_logits(self, inputs: tf.Tensor) -> tf.Tensor:
         """Builds logits using distances between inputs and prototypes."""

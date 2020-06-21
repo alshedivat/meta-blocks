@@ -65,6 +65,7 @@ def build_convnet(
     pooling: Optional[str] = None,
     pooling_kwargs: Optional[Dict[str, Any]] = None,
     batch_norm: Optional[Dict[str, Any]] = None,
+    final_pooling: Optional[str] = None,
     output_activation: Optional[str] = None,
     name: str = "SimpleConvNet",
     **_unused_kwargs,
@@ -104,7 +105,12 @@ def build_convnet(
                 name=f"maxpool{i}", **(pooling_kwargs or {})
             )
             x = PoolingLayer(x)
-    x = tf.keras.layers.Flatten(name="flatten")(x)
+    if final_pooling == "max":
+        x = tf.keras.layers.GlobalMaxPool2D(name="global_max_pool")(x)
+    elif final_pooling == "avg":
+        x = tf.keras.layers.GlobalAveragePooling2D(name="global_avg_pool")(x)
+    else:
+        x = tf.keras.layers.Flatten(name="flatten")(x)
     # Add a fully connected layer, if necessary.
     if output_size is not None:
         OutputLayer = tf.keras.layers.Dense(
