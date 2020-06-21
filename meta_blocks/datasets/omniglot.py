@@ -34,7 +34,7 @@ DatasetRequest = Tuple[
     # Data source IDs that represent dataset classes.
     np.ndarray,
     # A tuple of selected image ids for each data class.
-    Tuple[np.ndarray],
+    Tuple[np.ndarray, ...],
 ]
 FeedList = List[Tuple[tf.Tensor, np.ndarray]]
 
@@ -86,7 +86,7 @@ class OmniglotCharacter(base.DataSource):
         self.size = len(file_paths)
         # Load data.
         data = []
-        for fpath in file_paths:
+        for fpath in sorted(file_paths):
             with open(fpath, "rb") as fp:
                 image = Image.open(fp).resize(self.IMG_SHAPE[:-1])
                 if self.rotation:
@@ -228,17 +228,19 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
         data_sources: List[OmniglotCharacter],
         data_source_size: Optional[int] = None,
         name: Optional[str] = None,
+        seed: Optional[int] = None,
     ):
         super(OmniglotMetaDataset, self).__init__(
             batch_size=batch_size,
             num_classes=num_classes,
             data_sources=data_sources,
             name=(name or self.__class__.__name__),
+            seed=seed,
         )
         self.data_source_size = data_source_size
 
-        # Random state must be set globally.
-        self._rng = np.random
+        # Set random state.
+        self._rng = np.random.RandomState(self.seed)
 
     def _build(self):
         """Build datasets in the dataset batch."""
@@ -266,6 +268,7 @@ class OmniglotMetaDataset(base.ClfMetaDataset):
                     num_classes=self.num_classes,
                     unique_classes=unique_classes,
                     data_source_size=self.data_source_size,
+                    rng=self._rng,
                 )
                 for _ in range(self.batch_size)
             )

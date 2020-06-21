@@ -3,7 +3,7 @@
 import glob
 import logging
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -48,13 +48,10 @@ class MiniImageNetCategory(base.DataSource):
     IMG_SHAPE = (84, 84, 3)
     IMG_DTYPE = tf.float32
 
-    def __init__(
-        self, data_dir: str, already_cached: bool = False, name: Optional[str] = None
-    ):
+    def __init__(self, data_dir: str, name: Optional[str] = None):
         super(MiniImageNetCategory, self).__init__(
             data_dir, name=(name or self.__class__.__name__)
         )
-        self.already_cached = already_cached
 
         # Internals.
         self.dataset = None
@@ -94,7 +91,7 @@ class MiniImageNetCategory(base.DataSource):
 
         # Build the tf.data.Dataset.
         self.dataset = (
-            tf.data.Dataset.from_tensor_slices(file_paths)
+            tf.data.Dataset.from_tensor_slices(sorted(file_paths))
             .map(self.read, num_parallel_calls=8, deterministic=True)
             .map(self.decode, num_parallel_calls=8, deterministic=True)
             .batch(self.size)
@@ -256,17 +253,19 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
         data_sources: List[MiniImageNetCategory],
         data_source_size: Optional[int] = None,
         name: Optional[str] = None,
+        seed: Optional[int] = None,
     ):
         super(MiniImageNetMetaDataset, self).__init__(
             batch_size=batch_size,
             num_classes=num_classes,
             data_sources=data_sources,
             name=(name or self.__class__.__name__),
+            seed=seed,
         )
         self.data_source_size = data_source_size
 
-        # Random state must be set globally.
-        self._rng = np.random
+        # Set random state.
+        self._rng = np.random.RandomState(self.seed)
 
         # Internals.
         self.dataset_batch = None
@@ -285,13 +284,6 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
             for i in range(self.batch_size)
         )
 
-    def get_feed_list(self, selected_masks: Dict[int, np.ndarray]) -> FeedList:
-        """Returns a feed list of for the internal data source placeholders."""
-        feed_list = []
-        for i, selected_mask in selected_masks.items():
-            feed_list.extend(self.data_sources[i].get_feed_list(selected_mask))
-        return feed_list
-
     def request_datasets(
         self,
         requests_batch: Optional[Tuple[DatasetRequest, ...]] = None,
@@ -306,6 +298,7 @@ class MiniImageNetMetaDataset(base.ClfMetaDataset):
                     num_classes=self.num_classes,
                     unique_classes=unique_classes,
                     data_source_size=self.data_source_size,
+                    rng=self._rng,
                 )
                 for _ in range(self.batch_size)
             )

@@ -11,7 +11,7 @@ DatasetRequest = Tuple[
     # Data source IDs that represent dataset classes.
     np.ndarray,
     # A tuple of selected image ids for each data class.
-    Tuple[np.ndarray],
+    Tuple[np.ndarray, ...],
 ]
 
 

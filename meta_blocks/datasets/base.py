@@ -11,7 +11,15 @@ logger = logging.getLogger(__name__)
 tf.disable_v2_behavior()
 tf.enable_resource_variables()
 
-__all__ = ["DataSource", "Dataset", "MetaDataset"]
+__all__ = [
+    "FeedList",
+    "DatasetRequest",
+    "DataSource",
+    "Dataset",
+    "ClfDataset",
+    "MetaDataset",
+    "ClfMetaDataset",
+]
 
 
 # Types.
@@ -157,6 +165,9 @@ class MetaDataset(abc.ABC):
 
     name : str, optional
         The name of the dataset.
+
+    seed : int, optional
+        Random seed used for dataset generation.
     """
 
     def __init__(
@@ -164,10 +175,12 @@ class MetaDataset(abc.ABC):
         batch_size: int,
         data_sources: List[DataSource],
         name: Optional[str] = None,
+        seed: Optional[int] = None,
     ):
         self.batch_size = batch_size
         self.data_sources = data_sources
         self.name = name or self.__class__.__name__
+        self.seed = seed
 
         # Internals.
         self.built = False
@@ -212,6 +225,9 @@ class ClfMetaDataset(MetaDataset):
 
     name : str, optional
         The name of the dataset.
+
+    seed : int, optional
+        Random seed used for dataset generation.
     """
 
     def __init__(
@@ -220,10 +236,12 @@ class ClfMetaDataset(MetaDataset):
         num_classes: int,
         data_sources: List[DataSource],
         name: Optional[str] = None,
+        seed: Optional[int] = None,
     ):
         super(ClfMetaDataset, self).__init__(
             batch_size=batch_size,
             data_sources=data_sources,
             name=(name or self.__class__.__name__),
+            seed=seed,
         )
         self.num_classes = num_classes
