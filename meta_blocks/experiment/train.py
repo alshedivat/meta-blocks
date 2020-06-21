@@ -117,13 +117,12 @@ def train(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
             # Log metrics.
             # TODO: create a utility function for logging.
             if i % cfg.train.log_interval == 0 or i + 1 == cfg.train.max_steps:
-                log = f"step: {i}"
+                logger.info(f"step: {i}")
                 for loss, td in zip(losses, meta_learner.task_dists):
-                    log += f"\n{td.name}:"
+                    logger.info(f"{td.name}:")
                     if td.num_requested_labels:
-                        log += f"\n* requested labels: {td.num_requested_labels}"
-                    log += f"\n* loss: {loss:.6f}"
-                logger.info(log)
+                        logger.info(f"\trequested labels: {td.num_requested_labels}")
+                    logger.info(f"\tloss: {loss:.6f}")
                 for loss, td, writer in zip(losses, meta_learner.task_dists, writers):
                     feed_dict = {
                         loss_ph: loss,

@@ -160,7 +160,8 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
             # TODO: create a utility function for logging.
             summary_feed_lists = defaultdict(list)
             checkpoint_name = os.path.basename(latest_checkpoint)
-            log = f"{'-' * 50}\n" f"evaluated: {checkpoint_name}"
+            logger.info(f"{'-' * 50}")
+            logger.info(f"evaluated: {checkpoint_name}")
             step = int(checkpoint_name.split("-")[1])
             for m in cfg.eval.metrics:
                 for t in cfg.eval.tasks:
@@ -168,8 +169,8 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
                     # Add metric to the log.
                     mean_value, ci_value = metric_values[task_scope][m.name]
                     ci_delta = (ci_value[1] - ci_value[0]) / 2.0
-                    log += (
-                        f"\n{task_scope}/{m.name} (CI {m.ci:.0f}%):".ljust(35)
+                    logger.info(
+                        f"{task_scope}/{m.name} (CI {m.ci:.0f}%):".ljust(35)
                         + f"{mean_value: >5.2f} ± {ci_delta: >5.2f}"
                     )
                     # Add items to the summary feed list.
@@ -181,8 +182,7 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
                             (upper_ph, ci_value[1]),
                         ]
                     )
-            log += f"\n{'-' * 50}"
-            logger.info(log)
+            logger.info(f"{'-' * 50}")
 
             # Log summaries.
             for log_dir, writer in writers.items():

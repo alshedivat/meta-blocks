@@ -44,36 +44,29 @@ def get_layout_summary(
     """
     set_names = sorted(set(t.set_name for t in tasks))
     task_regimes = sorted(set(t.regime for t in tasks))
-    layout_summary = summary_lib.custom_scalar_pb(
-        layout_pb2.Layout(
-            category=[
-                # Category for each metric.
-                layout_pb2.Category(
-                    title=m.name,
-                    chart=[
-                        # A chart for each type of the eval distribution.
-                        layout_pb2.Chart(
-                            title=f"{t_regime}/{m.name} (CI {m.ci:.0f}%)",
-                            margin=layout_pb2.MarginChartContent(
-                                series=[
-                                    layout_pb2.MarginChartContent.Series(
-                                        value=f"{s_name}/{t_regime}/{m.name}_mean/scalar_summary",
-                                        lower=f"{s_name}/{t_regime}/{m.name}_lower/scalar_summary",
-                                        upper=f"{s_name}/{t_regime}/{m.name}_upper/scalar_summary",
-                                    )
-                                    for s_name in set_names
-                                ]
-                            ),
-                        )
-                        for t_regime in task_regimes
-                    ],
-                    closed=closed,
+    category = []
+    for m in metrics:
+        chart = []
+        for t_regime in task_regimes:
+            series = [
+                layout_pb2.MarginChartContent.Series(
+                    value=f"{s_name}/{t_regime}/{m.name}_mean/scalar_summary",
+                    lower=f"{s_name}/{t_regime}/{m.name}_lower/scalar_summary",
+                    upper=f"{s_name}/{t_regime}/{m.name}_upper/scalar_summary",
                 )
-                for m in metrics
+                for s_name in set_names
             ]
-        )
-    )
-    return layout_summary
+            # A chart for each type of the eval distribution.
+            chart.append(
+                layout_pb2.Chart(
+                    title=f"{t_regime}/{m.name} (CI {m.ci:.0f}%)",
+                    margin=layout_pb2.MarginChartContent(series=series),
+                )
+            )
+        # Category for each metric.
+        category.append(layout_pb2.Category(title=m.name, chart=chart, closed=closed))
+    layout = layout_pb2.Layout(category=category)
+    return summary_lib.custom_scalar_pb(layout)
 
 
 def build_metrics_and_summaries(

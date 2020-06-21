@@ -1,4 +1,4 @@
-# First-order MAML config template.
+# Second-order MAML config template.
 meta_blocks:
   train:
     model:

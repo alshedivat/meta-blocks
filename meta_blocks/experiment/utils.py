@@ -16,6 +16,7 @@ from meta_blocks import (
     models,
     networks,
     optimizers,
+    samplers,
     tasks,
 )
 
@@ -92,19 +93,21 @@ def build_and_initialize(cfg, mode=common.ModeKeys.TRAIN):
         name=cfg.data.name, **cfg.data.source
     ).build()
 
+    # Build meta-datasets.
+    meta_datasets = {}
+    for set_name in set(task.set_name for task in cfg[mode].tasks):
+        meta_datasets[set_name] = datasets.get_meta_dataset(
+            name=cfg.data.name,
+            data_sources=data_source[set_name],
+            **cfg[mode].meta_dataset,
+        ).build()
+
     # Build task distributions.
     task_dists = []
     for task in cfg[mode].tasks:
-        # Build a meta-dataset.
-        meta_dataset = datasets.get_meta_dataset(
-            name=cfg.data.name,
-            data_sources=data_source[task.set_name],
-            **cfg[mode].meta_dataset,
-        ).build()
-        # Build a task distribution.
         task_dist = tasks.get_distribution(
-            meta_dataset=meta_dataset,
-            name_suffix=task.log_dir.replace("/", "_"),
+            meta_dataset=meta_datasets[task.set_name],
+            name_suffix=f"{task.set_name}_{task.regime}",
             sampler_config=task.sampler,
             **task.config,
         ).build()
@@ -145,8 +148,12 @@ def build_and_initialize(cfg, mode=common.ModeKeys.TRAIN):
         sess.run(tf.variables_initializer(meta_learner.non_trainable_parameters))
 
     # Initialize task distributions.
-    for task_dist in task_dists:
-        task_dist.initialize()
+    for task, task_dist in zip(cfg[mode].tasks, task_dists):
+        sampler = None
+        if task.sampler is not None:
+            sampler = samplers.get(**task.sampler)
+            sampler.build(task_dist=task_dist, meta_learner=meta_learner)
+        task_dist.initialize(sampler=sampler)
 
     return meta_learner
 
@@ -155,28 +162,6 @@ class ExperimentFormatter(colorlog.ColoredFormatter):
     """Custom log formatter that nicely indents multiline experiment logs and
     format times relative to the start of the star time of the experiment.
     """
-
-    _COLOR_REGEX = re.compile(r"\033\[[\d;]*m")
-
-    def formatMessage(self, record):
-        # Add nice multiline identation to the message.
-        original_message = record.message.strip()
-        # Reformat the original experiment message if it is multiline.
-        if "meta_blocks.experiment" in record.name and "\n" in original_message:
-            # Determine the length of everything besides the message.
-            record.message = ""
-            indent = len(self._COLOR_REGEX.sub("", self._style.format(record)))
-            # Indent message lines appropriately.
-            original_message_parts = original_message.split("\n")
-            reformatted_message = "\n".join(
-                # Message separator.
-                [original_message_parts[0]]
-                +
-                # Add extra white space indent to all lines after the first one.
-                [(" " * indent) + line.strip() for line in original_message_parts[1:]]
-            )
-            record.message = reformatted_message
-        return self._style.format(record)
 
     def formatTime(self, record, datefmt=None):
         """
