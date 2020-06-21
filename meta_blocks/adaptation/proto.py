@@ -46,10 +46,13 @@ class Proto(base.MetaLearner):
         model_builder: Callable,
         optimizer: tf.train.Optimizer,
         task_dists: List[TaskDistribution],
+        batch_size: Optional[int] = None,
         mode: str = common.ModeKeys.TRAIN,
         name: Optional[str] = None,
         **_unused_kwargs,
     ):
+        self.batch_size = batch_size
+
         super(Proto, self).__init__(
             model_builder=model_builder,
             optimizer=optimizer,
@@ -75,10 +78,17 @@ class Proto(base.MetaLearner):
         # Note: We assume that the number of given data points is proportional
         #       to the number of classes in the data, so we can split it into
         #       the corresponding number of batches.
-        # TODO: make it work with imbalancend classes.
+        # TODO: make it work with imbalanced classes.
         num_steps = num_classes
-        # <int32> [num_steps, batch_size].
-        batched_indices = tf.stack(tf.split(indices, num_steps, axis=0))
+        # Batched indies: <int32> [num_steps, batch_size].
+        # batched_indices = tf.stack(tf.split(indices, num_steps, axis=0))
+        if self.batch_size is not None:
+            batch_size = self.batch_size
+            num_steps = tf.cast(tf.shape(indices)[0] / batch_size, tf.int32)
+        else:
+            num_steps = num_classes
+            batch_size = tf.cast(tf.shape(indices)[0] / num_steps, tf.int32)
+        batched_indices = tf.reshape(indices, shape=(num_steps, batch_size))
 
         def cond_fn(step, _unused_prototypes, _unused_class_counts):
             return tf.less(step, num_steps)

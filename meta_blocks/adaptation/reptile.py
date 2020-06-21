@@ -77,24 +77,33 @@ class Reptile(maml.Maml):
             name=(name or self.__class__.__name__),
         )
 
+    @property
+    def non_trainable_parameters(self):
+        """Collects and returns all non-trainable variables."""
+        non_trainable = super(Reptile, self).non_trainable_parameters
+        non_trainable += self.inner_optimizer.variables()
+        return non_trainable
+
     # --- Methods. ---
 
     def _build_meta_train_ops(self):
         """Builds meta-update op."""
-        # Reptile does not have a proper meta-loss.
-        self.meta_losses = [tf.constant(-1.0) for _ in self.task_dists]
+        self.meta_losses = [
+            # The default meta-loss is
+            tf.reduce_mean([losses["post"]["query"] for losses in td_losses])
+            for td_losses in self.losses
+        ]
         # Compute Reptile's meta-gradients.
         # Note: meta-gradients are computed as the difference between the
         #       initial and adapted model parameters.
         meta_grads = collections.defaultdict(list)
-        for td, td_adapted_models in zip(self.task_dists, self.adapted_models):
-            with tf.name_scope(td.name):
-                for task, adapted_model in zip(td.task_batch, td_adapted_models):
-                    with tf.name_scope(task.name):
-                        initial_params = self.model.trainable_parameters
-                        adapted_params = adapted_model.trainable_parameters
-                        for p, p_upd in zip(initial_params, adapted_params):
-                            meta_grads[p].append(p - p_upd)
+        for td in self.task_dists:
+            for task in td.task_batch:
+                initial_params = self.model.trainable_parameters
+                adapted_model = self.get_adapted_model(td.name, task.name)
+                adapted_params = adapted_model.trainable_parameters
+                for p, p_upd in zip(initial_params, adapted_params):
+                    meta_grads[p].append(p - p_upd)
         # Build meta-train op.
         self.meta_train_op = self.optimizer.apply_gradients(
             [(tf.reduce_mean(g, axis=0), v) for v, g in meta_grads.items()]

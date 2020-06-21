@@ -60,6 +60,7 @@ class MetaLearner(abc.ABC):
         # Internals.
         self.meta_losses = None
         self.meta_train_op = None
+        self.adapted_models = {}
 
         # Build the graph.
         logger.debug(f"Building {self.name}...")
@@ -71,15 +72,14 @@ class MetaLearner(abc.ABC):
             # Build adapted model for each task.
             logger.debug("Building adapted models...")
             with tf.name_scope("adapted"):
-                self.adapted_models = []
                 for td in self.task_dists:
-                    td_adapted_models = []
+                    td_adapted_models = {}
                     with tf.name_scope(td.name):
                         for i, task in enumerate(td.task_batch):
                             with tf.name_scope(task.name):
                                 adapted_model = self.build_adapted_model(task)
-                                td_adapted_models.append(adapted_model)
-                    self.adapted_models.append(td_adapted_models)
+                            td_adapted_models[task.name] = adapted_model
+                    self.adapted_models[td.name] = td_adapted_models
             # Build losses, predictions, and meta-training ops.
             logger.debug("Building meta-learning ops...")
             with tf.name_scope("meta-learn"):
@@ -103,12 +103,17 @@ class MetaLearner(abc.ABC):
     def non_trainable_parameters(self):
         """Collects and returns all non-trainable variables."""
         non_trainable = self.model.non_trainable_parameters
-        for td_adapted_models in self.adapted_models:
-            for adapted_model in td_adapted_models:
+        for td in self.task_dists:
+            for task in td.task_batch:
+                adapted_model = self.get_adapted_model(td.name, task.name)
                 non_trainable += adapted_model.non_trainable_parameters
         return non_trainable
 
     # --- Methods. ---
+
+    def get_adapted_model(self, task_dist_name: str, task_name: str):
+        """Returns the adapted model for the specified task."""
+        return self.adapted_models[task_dist_name][task_name]
 
     def _build_meta_eval_ops(self):
         """Builds pre-/post-adaptation support/query losses and predictions.
@@ -116,11 +121,12 @@ class MetaLearner(abc.ABC):
         """
         self.losses, self.preds_and_labels = [], []
         # Iterate over task distributions.
-        for td, td_adapted_models in zip(self.task_dists, self.adapted_models):
+        for td in self.task_dists:
             td_losses, td_preds_and_labels = [], []
             with tf.name_scope(td.name):
                 # Iterate over tasks in the batch within the distribution.
-                for task, adapted in zip(td.task_batch, td_adapted_models):
+                for task in td.task_batch:
+                    adapted = self.get_adapted_model(td.name, task.name)
                     inputs_s, labels_s = task.support_tensors
                     inputs_q, labels_q = task.query_tensors
                     # Build losses and predictions.
