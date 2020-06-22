@@ -30,9 +30,8 @@ def eval_step(
     *,
     tasks: Tuple[DictConfig, ...],
     metric_fns: Dict[str, Callable],
-    repetitions: int = 1,
     sess: Optional[tf.Session] = None,
-    **kwargs,
+    **sess_kwargs,
 ):
     """Performs one evaluation step.
 
@@ -46,9 +45,6 @@ def eval_step(
     metric_fns : dict of functions
         A dictionary of metric functions that map a list of (prediction, label)
         tuples to a numeric value.
-
-    repetitions : int (default: 1)
-        Number of evaluation repetitions. Typically, set to 1.
 
     sess : tf.Session, optional
         The TF session used for executing the computation graph.
@@ -70,20 +66,18 @@ def eval_step(
     for preds_and_labels_batch_tf, td, t in zip(
         meta_learner.preds_and_labels, meta_learner.task_dists, tasks
     ):
-        # Compute preds_and_labels and labels.
+        # Compute predictions and labels.
         preds_and_labels_np = []
-        for _ in range(repetitions):
-            # Sample from the task distribution.
-            feed_list = td.sample_task_feed()
+        for feed_batch in td.epoch():
             # Predict query set labels using adapted model.
             # TODO: compute all pre/post metrics on support/query.
             preds_and_labels_batch_np = sess.run(
                 [pl["post"]["query"] for pl in preds_and_labels_batch_tf],
-                feed_dict=dict(feed_list),
-                **kwargs,
+                feed_dict=dict(feed_batch),
+                **sess_kwargs,
             )
             preds_and_labels_np.extend(preds_and_labels_batch_np)
-        # Compute compute metrics.
+        # Compute metrics.
         task_scope = f"{t.set_name}/{t.regime}"
         for metric_name, metric_fn in metric_fns.items():
             metric_values[task_scope][metric_name] = metric_fn(preds_and_labels_np)
@@ -149,11 +143,7 @@ def evaluate(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
 
             # Run evaluation.
             metric_values = eval_step(
-                meta_learner,
-                tasks=cfg.eval.tasks,
-                metric_fns=metric_fns,
-                repetitions=cfg.eval.repetitions,
-                sess=sess,
+                meta_learner, tasks=cfg.eval.tasks, metric_fns=metric_fns, sess=sess
             )
 
             # Log results and build feed list for saving summaries.

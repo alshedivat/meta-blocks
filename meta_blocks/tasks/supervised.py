@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets.base import ClfDataset, ClfMetaDataset
+from meta_blocks.datasets.base import ClfDataset, ClfMetaDataset, FeedList
 from meta_blocks.samplers.base import Sampler
 from meta_blocks.tasks import base
 
@@ -183,7 +183,6 @@ class SupervisedTaskDistribution(base.TaskDistribution):
     def __init__(
         self,
         meta_dataset: ClfMetaDataset,
-        sampler: Sampler,
         num_query_shots: int = 1,
         num_support_shots: int = 1,
         name: Optional[str] = None,
@@ -194,9 +193,9 @@ class SupervisedTaskDistribution(base.TaskDistribution):
             name=(name or self.__class__.__name__),
         )
         self.num_support_shots = num_support_shots
-        self.sampler = sampler
 
         # Internals.
+        self.sampler = None
         self.num_requested_labels = None
         self._requests = None
         self._requested_ids = None
@@ -224,11 +223,11 @@ class SupervisedTaskDistribution(base.TaskDistribution):
             for i, dataset in enumerate(self.meta_dataset.dataset_batch)
         )
 
-    def initialize(self, **kwargs):
+    def initialize(self, *, sampler: Optional[Sampler] = None):
         """Initializes task distribution."""
+        if sampler is not None:
+            self.sampler = sampler
+
         self._requests = []
         self._requested_ids = []
         self.num_requested_labels = 0
-
-        # Build the sampler.
-        self.sampler.build(tasks=self.task_batch, **kwargs)

@@ -12,9 +12,10 @@ meta_blocks:
           name: classic_supervised
           num_query_shots: 1
           num_support_shots: 1
+          num_batches_per_epoch: 500
     max_steps: 20000
     log_interval: 50
-    save_interval: 200
+    save_interval: 100
   eval:
     meta_dataset:
       batch_size: 32
@@ -22,7 +23,6 @@ meta_blocks:
     metrics:
       - name: accuracy
         ci: 95
-    repetitions: 4
     tasks:
       # Train.
       - set_name: train

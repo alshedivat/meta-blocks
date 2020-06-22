@@ -1,6 +1,6 @@
 """Classical supervised tasks and task distributions."""
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Iterator, Optional
 
 import tensorflow.compat.v1 as tf
 
@@ -52,25 +52,33 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         meta_dataset: ClfMetaDataset,
         num_query_shots: int = 1,
         num_support_shots: int = 1,
-        num_task_batches_to_cache: int = 100,
+        num_batches_per_epoch: int = 100,
         name: Optional[str] = None,
+        stratified: bool = True,
         **_unused_kwargs,
     ):
         super(ClassicSupervisedTaskDistribution, self).__init__(
             meta_dataset=meta_dataset,
             num_query_shots=num_query_shots,
             num_support_shots=num_support_shots,
-            sampler=samplers.get(name="uniform", stratified=True),
             name=(name or self.__class__.__name__),
         )
-        self.num_task_batches_to_cache = num_task_batches_to_cache
+        self.num_batches_per_epoch = num_batches_per_epoch
+        self.stratified = stratified
 
     # --- Methods. ---
+
+    def initialize(self, **_unused_kwargs):
+        """Initializes the task distribution using uniform sampler."""
+        sampler = samplers.get(name="uniform", stratified=self.stratified)
+        super(ClassicSupervisedTaskDistribution, self).initialize(
+            sampler=sampler.build(task_dist=self)
+        )
 
     def _refresh_requests(self):
         """Re-samples new task requests."""
         logger.debug(f"Sampling new task batches from {self.name}... ")
-        for i in range(self.num_task_batches_to_cache):
+        for i in range(self.num_batches_per_epoch):
             # Construct a batch of requests.
             requests_batch, feed_list = self.meta_dataset.request_datasets(
                 unique_classes=True
@@ -97,3 +105,8 @@ class ClassicSupervisedTaskDistribution(SupervisedTaskDistribution):
         for task, ids in zip(self.task_batch, ids_batch):
             feed_list.extend(task.get_feed_list(ids))
         return feed_list
+
+    def epoch(self, **kwargs) -> Iterator[FeedList]:
+        """A generator that yields task batches."""
+        for i in range(self.num_batches_per_epoch):
+            yield self.sample_task_feed()

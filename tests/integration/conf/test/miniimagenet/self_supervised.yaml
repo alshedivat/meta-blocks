@@ -14,7 +14,8 @@ train:
       config:
         name: self_supervised
         num_augmented_shots: 1
-  max_steps: 5
+        num_batches_per_epoch: 2
+  max_steps: 4
   log_interval: 1
   save_interval: 5
 eval:
@@ -25,7 +26,6 @@ eval:
   metrics:
     - name: accuracy
       ci: 95
-  repetitions: 1
   tasks:
     # Test.
     - set_name: test

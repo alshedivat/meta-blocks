@@ -6,7 +6,7 @@ generated using various heuristics. Hence, self-supervised is a more accurate
 term to use for such tasks.
 """
 import logging
-from typing import Optional, Tuple
+from typing import Iterator, Optional, Tuple
 
 import albumentations as alb
 import numpy as np
@@ -195,7 +195,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
 
     stratified : bool, optional (default: True)
 
-    num_task_batches_to_cache : int, optional (default: 100)
+    num_batches_per_epoch : int, optional (default: 100)
 
     name: str, optional
 
@@ -208,7 +208,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
         num_augmented_shots: int = 1,
         inverse: bool = True,
         stratified: bool = False,
-        num_task_batches_to_cache: int = 100,
+        num_batches_per_epoch: int = 100,
         name: Optional[str] = None,
         **_unused_kwargs,
     ):
@@ -217,7 +217,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
         )
         self.inverse = inverse
         self.stratified = stratified
-        self.num_task_batches_to_cache = num_task_batches_to_cache
+        self.num_batches_per_epoch = num_batches_per_epoch
 
         # Determine the number of support and query shots.
         self.num_augmented_shots = num_augmented_shots
@@ -266,7 +266,7 @@ class UmtraTaskDistribution(base.TaskDistribution):
     def _refresh_requests(self):
         """Expands the number of labeled points by sampling more tasks."""
         logger.debug(f"Sampling new task batches from {self.name}... ")
-        for i in range(self.num_task_batches_to_cache):
+        for i in range(self.num_batches_per_epoch):
             requests_batch, _ = self.meta_dataset.request_datasets(
                 # If not stratified, samples classes with replacement,
                 # which results in tasks that may have different classes
@@ -284,3 +284,8 @@ class UmtraTaskDistribution(base.TaskDistribution):
         # Build feed list for the meta-batch of tasks.
         _, feed_list = self.meta_dataset.request_datasets(requests_batch)
         return feed_list
+
+    def epoch(self, **kwargs) -> Iterator[FeedList]:
+        """A generator that yields task batches."""
+        for i in range(self.num_batches_per_epoch):
+            yield self.sample_task_feed()

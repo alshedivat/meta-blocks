@@ -1,11 +1,11 @@
 """Task interfaces for meta-learning."""
 import abc
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import tensorflow.compat.v1 as tf
 
-from meta_blocks.datasets.base import Dataset, MetaDataset
+from meta_blocks.datasets.base import Dataset, FeedList, MetaDataset
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +174,13 @@ class TaskDistribution(abc.ABC):
         """Initializes task distribution. Must be implemented in a subclass."""
 
     @abc.abstractmethod
-    def sample_task_feed(self, **kwargs) -> List[Tuple[tf.Tensor, Any]]:
+    def sample_task_feed(self, **kwargs) -> FeedList:
         """Returns placeholder feed for the task distribution.
+        Must be implemented in a subclass.
+        """
+
+    @abc.abstractmethod
+    def epoch(self, **kwargs) -> Iterator[FeedList]:
+        """A generator that yields task batches.
         Must be implemented in a subclass.
         """

@@ -3,7 +3,7 @@
 import logging
 import os
 import random
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -21,13 +21,19 @@ tf.enable_resource_variables()
 
 
 def train_step(
-    meta_learner: MetaLearner, *, sess: Optional[tf.Session] = None, **kwargs
+    meta_learner: MetaLearner,
+    feed_batch: Tuple[common.FeedList],
+    *,
+    sess: Optional[tf.Session] = None,
+    **sess_kwargs,
 ):
     """Performs one meta-training step.
 
     Parameters
     ----------
     meta_learner : MetaLearner
+
+    feed_batch : tuple of FeedLists
 
     sess : tf.Session, optional
 
@@ -39,14 +45,11 @@ def train_step(
     if sess is None:
         sess = tf.get_default_session()
 
-    # Sample from the task distribution.
-    feed_lists = [td.sample_task_feed() for td in meta_learner.task_dists]
-
     # Make a training step and compute loss.
     losses, _ = sess.run(
         [meta_learner.meta_losses, meta_learner.meta_train_op],
-        feed_dict=dict(sum(feed_lists, [])),
-        **kwargs,
+        feed_dict=dict(sum(feed_batch, [])),
+        **sess_kwargs,
     )
 
     return losses
@@ -86,9 +89,7 @@ def train(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
             tf.summary.FileWriter(logdir=os.path.join(work_dir, task.log_dir))
             for task in cfg[common.ModeKeys.TRAIN].tasks
         ]
-        label_budget_ph = tf.placeholder(tf.int32, shape=())
         loss_ph = tf.placeholder(tf.float32, shape=())
-        tf.summary.scalar("label_budget", label_budget_ph)
         tf.summary.scalar("loss", loss_ph)
         merged = tf.summary.merge_all()
 
@@ -103,44 +104,35 @@ def train(cfg: DictConfig, work_dir: Optional[str] = None, **session_kwargs):
 
         # Do meta-learning iterations.
         logger.info("Training...")
-        for i in range(cfg.train.max_steps):
-            # Do multiple steps if the optimizer is multi-step.
-            if cfg.train.optimizer.n is not None:
-                losses = [
-                    train_step(meta_learner, sess=sess)
-                    for _ in range(cfg.train.optimizer.n)
-                ]
-                losses = list(map(np.mean, zip(*losses)))
-            else:
-                losses = train_step(meta_learner, sess=sess)
+        epoch = 0
+        global_step = 0
+        while global_step < cfg.train.max_steps:
+            epoch += 1
+            logger.info("-" * 48)
+            logger.info(f"EPOCH: {epoch}")
+            logger.info("-" * 48)
 
-            # Log metrics.
-            # TODO: create a utility function for logging.
-            if i % cfg.train.log_interval == 0 or i + 1 == cfg.train.max_steps:
-                logger.info(f"step: {i}")
-                for loss, td in zip(losses, meta_learner.task_dists):
-                    logger.info(f"{td.name}:")
-                    if td.num_requested_labels:
-                        logger.info(f"\trequested labels: {td.num_requested_labels}")
-                    logger.info(f"\tloss: {loss:.6f}")
-                for loss, td, writer in zip(losses, meta_learner.task_dists, writers):
-                    feed_dict = {
-                        loss_ph: loss,
-                        label_budget_ph: td.num_requested_labels,
-                    }
-                    summary = sess.run(merged, feed_dict=feed_dict)
-                    writer.add_summary(summary, i)
-                    writer.flush()
-            # Save model.
-            if i % cfg.train.save_interval == 0 or i + 1 == cfg.train.max_steps:
-                saver.save(checkpoint_number=i)
-            # Update task distribution (if necessary).
-            # TODO: make this more flexible.
-            if (
-                cfg.train.budget_interval is not None
-                and i % cfg.train.budget_interval == 0
-            ):
-                for td, task in zip(meta_learner.task_dists, cfg.train.tasks):
-                    td.expand(num_labeled_points=(task.labels_per_step * i), sess=sess)
-                if cfg.train.do_reinit:
-                    sess.run(tf.global_variables_initializer())
+            feed_epoch = list(zip(*[td.epoch() for td in meta_learner.task_dists]))
+            for batch, feed_batch in enumerate(feed_epoch):
+                global_step += 1
+                losses = train_step(meta_learner, feed_batch, sess=sess)
+
+                # Log metrics.
+                # TODO: create a utility function for logging.
+                if global_step % cfg.train.log_interval == 0:
+                    logger.info(f"global step: {global_step}")
+                    logger.info(f"batch: {batch + 1}/{len(feed_epoch)}")
+                    for loss, td in zip(losses, meta_learner.task_dists):
+                        logger.info(f"{td.name}:")
+                        logger.info(f"\tloss: {loss:.6f}")
+                    for loss, writer in zip(losses, writers):
+                        summary = sess.run(merged, feed_dict={loss_ph: loss})
+                        writer.add_summary(summary, global_step)
+                        writer.flush()
+
+                # Save model.
+                if global_step % cfg.train.save_interval == 0:
+                    saver.save(checkpoint_number=global_step)
+
+        # Save the final model.
+        saver.save(checkpoint_number=global_step)
