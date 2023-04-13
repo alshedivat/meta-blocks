@@ -1,1 +1,0 @@
-# Benchmarking Speed and Efficiency
